@@ -138,7 +138,7 @@ on conflict (id) do update set
   rarete = excluded.rarete;
 
 -- Insertion des Tickets Support KLF
-insert into tip.sf_tickets_klf (id, service text, demandeur, titre, description, urgence, points_valeur, statut) values
+insert into tip.sf_tickets_klf (id, service, demandeur, titre, description, urgence, points_valeur, statut) values
 ('TCK-101', 'Facturation & Douane', 'Corinne MONROSE', 'Urgent : Erreurs #N/A et calcul d''Octroi de mer sur manifeste conteneurs', 'Bonjour le support. Mon classeur de suivi des arrivages maritimes affiche #N/A sur toutes les lignes de transit et les taux d''Octroi de mer (8.5% Guadeloupe) ne s''appliquent plus automatiquement. La douane attend les déclarations avant 16h !', 'P1', 150, 'ouvert'),
 ('TCK-102', 'Quai & Entrepôts', 'Sébastien LEBLANC', 'Confection du tutoriel d''utilisation des tablettes durcies Zebra caristes', 'Salut l''équipe IT. Nos 8 caristes reçoivent leurs nouvelles tablettes Zebra TC57 pour scanner les conteneurs au quai n°3. Il me faut une fiche réflexe 1-page plastifiée avec photos claires pour allumer, scanner et vider le cache en cas de freeze.', 'P2', 200, 'ouvert'),
 ('TCK-103', 'Ressources Humaines', 'Élodie THEOPHILE', 'Campagne de publipostage des 60 convocations visites médicales', 'Bonjour. Je dois expédier ce soir 60 courriers personnalisés pour les visites médicales périodiques du personnel de Jarry et de Fort-de-France. À chaque tentative de fusion Word, les prénoms sautent d''une ligne.', 'P2', 150, 'ouvert')
@@ -203,3 +203,12 @@ insert into tip.sf_dp_suivi (apprenant_id, rubrique_1, rubrique_2, rubrique_3, r
 ('00000000-0000-0000-0000-000000000003', true, true, false, false, false, 'brouillon'),
 ('00000000-0000-0000-0000-000000000004', true, false, false, false, false, 'brouillon')
 on conflict (apprenant_id) do nothing;
+
+-- 10. PERMISSIONS SCHEMA POUR RÔLES SUPABASE
+grant usage on schema tip to anon, authenticated, service_role;
+grant all on all tables in schema tip to anon, authenticated, service_role;
+grant all on all sequences in schema tip to anon, authenticated, service_role;
+grant all on all routines in schema tip to anon, authenticated, service_role;
+alter default privileges in schema tip grant all on tables to anon, authenticated, service_role;
+alter default privileges in schema tip grant all on sequences to anon, authenticated, service_role;
+alter default privileges in schema tip grant all on routines to anon, authenticated, service_role;
