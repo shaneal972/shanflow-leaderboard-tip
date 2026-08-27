@@ -50,7 +50,7 @@ export const RgpdNoticeModal: React.FC<RgpdNoticeModalProps> = ({ isOpen: contro
                 </div>
                 <div>
                   <h3 className="text-base font-semibold text-white font-['Lexend']">
-                    Notice de Protection des Données Personnelles
+                    Notice de protection des données personnelles
                   </h3>
                   <p className="text-xs text-slate-400">
                     Conformité RGPD • Promotion TIP C26031A (METAFORE / FORE Alternance)
@@ -72,7 +72,7 @@ export const RgpdNoticeModal: React.FC<RgpdNoticeModalProps> = ({ isOpen: contro
               <div className="p-3 rounded-lg bg-white/5 border border-white/5 flex gap-3">
                 <FileText className="w-5 h-5 text-teal-400 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-semibold text-slate-100 mb-1">1. Finalité du Traitement</h4>
+                  <h4 className="font-semibold text-slate-100 mb-1">1. Finalité du traitement</h4>
                   <p className="text-slate-300">
                     L'application <strong>« KLF Tech Passport & Leaderboard »</strong> a pour unique finalité le suivi pédagogique,
                     la gamification de l'apprentissage et l'évaluation continue des compétences dans le cadre de la préparation au 
@@ -84,7 +84,7 @@ export const RgpdNoticeModal: React.FC<RgpdNoticeModalProps> = ({ isOpen: contro
               <div className="p-3 rounded-lg bg-white/5 border border-white/5 flex gap-3">
                 <Lock className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-semibold text-slate-100 mb-1">2. Base Légale & Minimisation des Données</h4>
+                  <h4 className="font-semibold text-slate-100 mb-1">2. Base légale et minimisation des données</h4>
                   <p className="text-slate-300">
                     Base légale : <em>Exécution d'une mission de formation professionnelle contractuelle</em>.<br />
                     <strong>Minimisation stricte :</strong> Sur le classement public, l'adresse email est strictement invisible.
@@ -97,7 +97,7 @@ export const RgpdNoticeModal: React.FC<RgpdNoticeModalProps> = ({ isOpen: contro
               <div className="p-3 rounded-lg bg-white/5 border border-white/5 flex gap-3">
                 <Clock className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-semibold text-slate-100 mb-1">3. Durée de Conservation & Purge</h4>
+                  <h4 className="font-semibold text-slate-100 mb-1">3. Durée de conservation et purge</h4>
                   <p className="text-slate-300">
                     Les données sont conservées pour la durée stricte de la session de formation jusqu'en <strong>Juin 2027</strong>.
                     À l'issue de la délibération du jury de certification du Ministère du Travail, une purge intégrale des données
@@ -109,7 +109,7 @@ export const RgpdNoticeModal: React.FC<RgpdNoticeModalProps> = ({ isOpen: contro
               <div className="p-3 rounded-lg bg-white/5 border border-white/5 flex gap-3">
                 <UserCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-semibold text-slate-100 mb-1">4. Exercice des Droits</h4>
+                  <h4 className="font-semibold text-slate-100 mb-1">4. Exercice des droits</h4>
                   <p className="text-slate-300">
                     Conformément au RGPD et à la loi Informatique et Libertés, chaque apprenant dispose d'un droit d'accès, de rectification
                     et de suppression de ses données personnelles, exerçable directement auprès du formateur référent 

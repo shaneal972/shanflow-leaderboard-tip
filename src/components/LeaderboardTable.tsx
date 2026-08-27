@@ -102,7 +102,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({ initialData 
             aria-label="Filtrer par escouade ou équipe"
             className="px-3 py-1.5 rounded-lg bg-[#070F1E] border border-white/10 text-xs text-slate-200 focus:outline-none focus:border-teal-400 transition-colors cursor-pointer"
           >
-            <option value="all">Toutes les Escouades ({initialData.length})</option>
+            <option value="all">Toutes les escouades ({initialData.length})</option>
             {teams.map((team) => (
               <option key={team} value={team}>
                 {team}
@@ -114,7 +114,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({ initialData 
         {/* Indicateur RGPD */}
         <div className="hidden md:flex items-center gap-1.5 text-[11px] font-mono text-teal-400 bg-teal-500/10 px-2.5 py-1 rounded-md border border-teal-500/20">
           <ShieldCheck className="w-3.5 h-3.5" />
-          <span>VUE PSEUDO-ANONYMISÉE (RGPD)</span>
+          <span>Vue pseudo-anonymisée (RGPD)</span>
         </div>
 
       </div>
@@ -128,7 +128,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({ initialData 
                 <th className="py-3.5 px-4 w-16 text-center">Rang</th>
                 <th className="py-3.5 px-4">Technicien TIP</th>
                 <th className="py-3.5 px-4">Escouade</th>
-                <th className="py-3.5 px-4">Palier Actuel</th>
+                <th className="py-3.5 px-4">Palier actuel</th>
                 <th className="py-3.5 px-4 text-center">Badges</th>
                 <th className="py-3.5 px-4 text-right">Points KLF</th>
                 <th className="py-3.5 px-4 text-center w-36 sticky-actions-col">

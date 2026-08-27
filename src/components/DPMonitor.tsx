@@ -151,7 +151,7 @@ export const DPMonitor: React.FC<DPMonitorProps> = ({
               <span className="text-xs text-slate-400 font-mono">CCP 1 • Support Utilisateur</span>
             </div>
             <h1 className="text-2xl font-bold text-white font-['Lexend']">
-              Audit Dossier Professionnel (DP) • {apprenantName}
+              Audit du dossier professionnel (DP) • {apprenantName}
             </h1>
             <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
               Contrôle de conformité de la <strong>Fiche Exemple de Pratique Professionnelle</strong>.
@@ -172,7 +172,7 @@ export const DPMonitor: React.FC<DPMonitorProps> = ({
           <div className="flex items-center justify-between text-xs font-mono mb-2">
             <span className="text-slate-300 flex items-center gap-1.5">
               <FileCheck className="w-4 h-4 text-emerald-400" />
-              CONFORMITÉ DES 5 RUBRIQUES MINISTÈRE DU TRAVAIL
+              Conformité des 5 rubriques Ministère du Travail
             </span>
             <span className={`font-bold ${progress === 100 ? 'text-emerald-400' : 'text-amber-400'}`}>
               {validCount}/5 Validées ({progress}%)
@@ -196,7 +196,7 @@ export const DPMonitor: React.FC<DPMonitorProps> = ({
       <div className="space-y-4">
         <h2 className="text-base font-semibold text-white font-['Lexend'] flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 text-teal-400" />
-          Grille de Vérification des 5 Rubriques Consécutives
+          Grille de vérification des 5 rubriques consécutives
         </h2>
 
         <div className="space-y-3">
@@ -260,7 +260,7 @@ export const DPMonitor: React.FC<DPMonitorProps> = ({
       <div className="p-5 rounded-2xl slate-glass flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="text-xs text-slate-300 leading-relaxed">
           <strong className="text-white font-['Lexend'] block mb-1">
-            Validation Finale du Titre Professionnel TIP :
+            Validation finale du titre professionnel TIP :
           </strong>
           Une fois les 5 rubriques validées, le dossier est exportable pour relecture par le formateur référent (David JACQUA)
           avant l&apos;oral blanc de 15 minutes devant le simulateur de jury.
@@ -274,7 +274,7 @@ export const DPMonitor: React.FC<DPMonitorProps> = ({
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold text-xs transition-all active:scale-95 shrink-0"
         >
           <Send className="w-3.5 h-3.5" />
-          <span>Transmettre au Formateur</span>
+          <span>Transmettre au formateur</span>
         </button>
       </div>
 

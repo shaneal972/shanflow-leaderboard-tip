@@ -54,7 +54,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenRgpd }) => {
               className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-slate-200 hover:text-white hover:bg-white/5 transition-colors"
             >
               <BookOpen className="w-4 h-4 text-emerald-400" />
-              Suivi Dossier Pro
+              Suivi dossier pro
             </Link>
           </nav>
 
@@ -65,14 +65,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenRgpd }) => {
               <span className="text-[10px] text-slate-500">Titre Pro TIP • METAFORE</span>
             </div>
 
-            <StatusDot status="operational" label="DSI EN LIGNE" />
+            <StatusDot status="operational" label="DSI en ligne" />
 
             {onOpenRgpd && (
               <button
                 type="button"
                 onClick={onOpenRgpd}
                 className="p-2 rounded-md text-slate-400 hover:text-white hover:bg-white/5 border border-white/5 transition-colors"
-                title="Conformité RGPD & Données"
+                title="Conformité RGPD et données"
               >
                 <ShieldCheck className="w-4 h-4 text-teal-400" />
               </button>
@@ -94,7 +94,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenRgpd }) => {
         </Link>
         <Link href="/dp" className="flex items-center gap-1 text-xs text-slate-300 hover:text-teal-400">
           <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
-          Dossier Pro
+          Dossier pro
         </Link>
       </div>
     </header>

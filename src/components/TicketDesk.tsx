@@ -101,12 +101,12 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({ initialTickets }) => {
           <div>
             <div className="flex items-center gap-2">
               <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase bg-teal-500/10 text-teal-400 border border-teal-500/20">
-                Simulation Helpdesk DSI
+                Simulation helpdesk DSI
               </span>
               <span className="text-xs text-slate-400 font-mono">GLPI / KLF Support Desk</span>
             </div>
             <h1 className="text-2xl font-bold text-white font-['Lexend'] mt-1">
-              KLF Ticket Desk • Incidents Usagers
+              KLF ticket desk • Incidents usagers
             </h1>
             <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
               Résolvez les incidents réels des collaborateurs de Karukera Logistique & Fret (Jarry).
@@ -235,7 +235,7 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({ initialTickets }) => {
                 <div className="p-4 rounded-xl bg-teal-500/5 border border-teal-500/20 space-y-3">
                   <div className="flex items-center gap-2 text-xs font-semibold text-teal-300 font-['Lexend']">
                     <Calculator className="w-4 h-4 text-teal-400" />
-                    Simulateur de Formule Tableur : Octroi de Mer & TVA Antilles (8.5%)
+                    Simulateur de formule tableur : Octroi de mer et TVA Antilles (8.5%)
                   </div>
                   
                   <div className="grid grid-cols-3 gap-2 text-xs font-mono">
@@ -288,7 +288,7 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({ initialTickets }) => {
                 <div className="p-3.5 rounded-xl bg-purple-500/5 border border-purple-500/20 text-xs text-slate-300 space-y-1">
                   <div className="flex items-center gap-1.5 text-purple-300 font-semibold font-['Lexend']">
                     <BookOpen className="w-4 h-4 text-purple-400" />
-                    Critères d&apos;évaluation REAC (Fiche Réflexe 1-page A4)
+                    Critères d&apos;évaluation REAC (fiche réflexe 1-page A4)
                   </div>
                   <p>
                     Le tutoriel doit comporter des captures nettes de l&apos;application Zebra, la procédure de redémarrage forcé,
@@ -302,7 +302,7 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({ initialTickets }) => {
                 <div className="p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-slate-300 space-y-1">
                   <div className="flex items-center gap-1.5 text-amber-300 font-semibold font-['Lexend']">
                     <Mail className="w-4 h-4 text-amber-400" />
-                    Diagnostic Fusion Word
+                    Diagnostic de fusion Word
                   </div>
                   <p>
                     Le décalage provient d&apos;un saut de paragraphe involontaire dans le bloc d&apos;adresses ou d&apos;un format de date non verrouillé <code>\@ &quot;dd/MM/yyyy&quot;</code>.

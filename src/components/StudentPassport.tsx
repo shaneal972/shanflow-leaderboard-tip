@@ -55,7 +55,7 @@ export const StudentPassport: React.FC<StudentPassportProps> = ({
           className="inline-flex items-center gap-2 text-xs font-mono text-slate-400 hover:text-teal-400 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>RETOUR AU LEADERBOARD PROMO</span>
+          <span>Retour au leaderboard promo</span>
         </Link>
 
         <button
@@ -138,7 +138,7 @@ export const StudentPassport: React.FC<StudentPassportProps> = ({
         {/* Jauge globale de progression */}
         <div className="mt-6 pt-6 border-t border-white/10">
           <div className="flex items-center justify-between text-xs font-mono mb-2">
-            <span className="text-slate-400">PROGRESSION GLOBALE PASSEPORT KLF</span>
+            <span className="text-slate-400">Progression globale du passeport KLF</span>
             <span className="text-teal-400 font-bold">{progressPercent}%</span>
           </div>
           <div className="w-full h-2.5 rounded-full bg-white/5 overflow-hidden p-0.5 border border-white/10">
@@ -151,12 +151,12 @@ export const StudentPassport: React.FC<StudentPassportProps> = ({
 
       </div>
 
-      {/* Frise Chronologique des 5 Paliers KLF */}
+      {/* Frise chronologique des 5 paliers KLF */}
       <div className="p-6 rounded-2xl slate-glass space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold text-white font-['Lexend'] flex items-center gap-2">
             <Trophy className="w-4 h-4 text-amber-400" />
-            Les 5 Paliers de Compétences TIP
+            Les 5 paliers de compétences TIP
           </h2>
           <span className="text-xs font-mono text-slate-400">
             Référentiel REAC Ministère du Travail
@@ -204,7 +204,7 @@ export const StudentPassport: React.FC<StudentPassportProps> = ({
         </div>
       </div>
 
-      {/* Résumé du Dossier Professionnel (DP REAC) */}
+      {/* Résumé du dossier professionnel (DP REAC) */}
       <div className="p-5 rounded-2xl slate-glass flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
@@ -212,7 +212,7 @@ export const StudentPassport: React.FC<StudentPassportProps> = ({
           </div>
           <div>
             <h3 className="text-sm font-semibold text-white font-['Lexend']">
-              Statut Dossier Professionnel (Fiche CCP 1)
+              Statut du dossier professionnel (fiche CCP 1)
             </h3>
             <p className="text-xs text-slate-400">
               {dpValidCount} sur 5 rubriques officielles Cerfa validées
@@ -228,11 +228,11 @@ export const StudentPassport: React.FC<StudentPassportProps> = ({
         </Link>
       </div>
 
-      {/* Grille des Badges KLF */}
+      {/* Grille des badges KLF */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold text-white font-['Lexend']">
-            Armoire des Trophées KLF ({unlockedBadges.length}/{badges.length})
+            Armoire des trophées KLF ({unlockedBadges.length}/{badges.length})
           </h2>
           <span className="text-xs font-mono text-slate-400">
             Cliquez sur un badge validé pour célébrer

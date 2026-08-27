@@ -119,16 +119,16 @@ create policy "Lecture publique dp" on tip.sf_dp_suivi for select using (true);
 
 -- Insertion des 10 Badges KLF
 insert into tip.sf_badges (id, titre, description, palier, points_requis, icone_url, rarete) values
-('ran_keyboard_ninja', 'Ninja du Clavier', 'Maîtrise des 12 raccourcis essentiels sans toucher à la souris (Ctrl+Shift+V, Ctrl+H, sélection rapide).', 'Palier 0', 50, '⌨️', 'commun'),
-('ran_zero_defaut', 'Hygiène de Poste DSI', 'Configuration de l''arborescence KLF standardisée et application stricte des règles de nommage.', 'Palier 0', 50, '📁', 'commun'),
-('dsi_charte_master', 'Garant de la Charte KLF', 'Mise en page de documents techniques aux normes DSI (Styles Titres, sauts de page forcés, zéros espaces parasites).', 'Palier 1', 100, '📄', 'rare'),
-('excel_data_cleaner', 'Nettoyeur de Parc Jarry', 'Audit, nettoyage et normalisation de l''inventaire brut des 65 postes informatiques KLF sur tableur.', 'Palier 1', 100, '📊', 'rare'),
-('corinne_savior', 'Sauveur de Facturation', 'Dépannage critique de Corinne : correction des erreurs #N/A et paramétrage de l''Octroi de mer & TVA 8.5%.', 'Palier 2', 150, '💡', 'epique'),
-('quai_tutor_pro', 'Pédagogue de Quai Zebra', 'Création du tutoriel illustré pas-à-pas pour les tablettes durcies des caristes de Sébastien (Épreuve REAC).', 'Palier 2', 200, '📱', 'epique'),
-('rh_mailmerge_ace', 'As du Publipostage RH', 'Exécution de la campagne de publipostage de 60 contrats et attestations sans aucun décalage pour Élodie.', 'Palier 2', 150, '✉️', 'rare'),
-('ia_prompt_copilot', 'Prompt Crafter TIP', 'Utilisation augmentée de Claude & Copilot pour accélérer le diagnostic support et générer des scripts d''assistance.', 'Palier 3', 150, '🤖', 'epique'),
-('audit_securite_ia', 'Sentinelle RGPD & Données', 'Audit de sécurité des données sensibles usagers et filtrage préventif des prompts IA (Prompt Masking).', 'Palier 3', 150, '🛡️', 'epique'),
-('n8n_flow_master', 'Maître de l''Automatisation', 'Conception et mise en production d''un workflow n8n d''aiguillage automatique des tickets avec alertes WhatsApp.', 'Palier 4', 250, '⚡', 'legendaire')
+('ran_keyboard_ninja', 'Ninja du clavier', 'Maîtrise des 12 raccourcis essentiels sans toucher à la souris (Ctrl+Shift+V, Ctrl+H, sélection rapide).', 'Palier 0', 50, '⌨️', 'commun'),
+('ran_zero_defaut', 'Hygiène de poste DSI', 'Configuration de l''arborescence KLF standardisée et application stricte des règles de nommage.', 'Palier 0', 50, '📁', 'commun'),
+('dsi_charte_master', 'Garant de la charte KLF', 'Mise en page de documents techniques aux normes DSI (Styles Titres, sauts de page forcés, zéros espaces parasites).', 'Palier 1', 100, '📄', 'rare'),
+('excel_data_cleaner', 'Nettoyeur de parc Jarry', 'Audit, nettoyage et normalisation de l''inventaire brut des 65 postes informatiques KLF sur tableur.', 'Palier 1', 100, '📊', 'rare'),
+('corinne_savior', 'Sauveur de facturation', 'Dépannage critique de Corinne : correction des erreurs #N/A et paramétrage de l''Octroi de mer & TVA 8.5%.', 'Palier 2', 150, '💡', 'epique'),
+('quai_tutor_pro', 'Pédagogue de quai Zebra', 'Création du tutoriel illustré pas-à-pas pour les tablettes durcies des caristes de Sébastien (Épreuve REAC).', 'Palier 2', 200, '📱', 'epique'),
+('rh_mailmerge_ace', 'As du publipostage RH', 'Exécution de la campagne de publipostage de 60 contrats et attestations sans aucun décalage pour Élodie.', 'Palier 2', 150, '✉️', 'rare'),
+('ia_prompt_copilot', 'Prompt crafter TIP', 'Utilisation augmentée de Claude & Copilot pour accélérer le diagnostic support et générer des scripts d''assistance.', 'Palier 3', 150, '🤖', 'epique'),
+('audit_securite_ia', 'Sentinelle RGPD et données', 'Audit de sécurité des données sensibles usagers et filtrage préventif des prompts IA (Prompt Masking).', 'Palier 3', 150, '🛡️', 'epique'),
+('n8n_flow_master', 'Maître de l''automatisation', 'Conception et mise en production d''un workflow n8n d''aiguillage automatique des tickets avec alertes WhatsApp.', 'Palier 4', 250, '⚡', 'legendaire')
 on conflict (id) do update set 
   titre = excluded.titre,
   description = excluded.description,

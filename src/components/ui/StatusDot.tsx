@@ -8,7 +8,7 @@ interface StatusDotProps {
 
 export const StatusDot: React.FC<StatusDotProps> = ({ 
   status = 'operational', 
-  label = 'SYSTÈME OPÉRATIONNEL',
+  label = 'Système opérationnel',
   className = '' 
 }) => {
   const statusColors = {
@@ -38,7 +38,7 @@ export const StatusDot: React.FC<StatusDotProps> = ({
         <span className={`relative inline-flex rounded-full h-2 w-2 ${current.bg} ${current.glow}`} />
       </span>
       {label && (
-        <span className={`text-[11px] font-mono font-medium tracking-wider uppercase ${current.text}`}>
+        <span className={`text-[11px] font-mono font-medium tracking-wide ${current.text}`}>
           {label}
         </span>
       )}

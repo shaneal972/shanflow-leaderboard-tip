@@ -3,7 +3,7 @@ import { Apprenant, Badge, LeaderboardApprenant, TicketKLF, DPSuivi } from '@/ty
 export const MOCK_BADGES: Badge[] = [
   {
     id: 'ran_keyboard_ninja',
-    titre: 'Ninja du Clavier',
+    titre: 'Ninja du clavier',
     description: 'Maîtrise des 12 raccourcis essentiels sans toucher à la souris (Ctrl+Shift+V, Ctrl+H, sélection rapide).',
     palier: 'Palier 0',
     points_requis: 50,
@@ -12,7 +12,7 @@ export const MOCK_BADGES: Badge[] = [
   },
   {
     id: 'ran_zero_defaut',
-    titre: 'Hygiène de Poste DSI',
+    titre: 'Hygiène de poste DSI',
     description: 'Configuration de l\'arborescence KLF standardisée et application stricte des règles de nommage.',
     palier: 'Palier 0',
     points_requis: 50,
@@ -21,7 +21,7 @@ export const MOCK_BADGES: Badge[] = [
   },
   {
     id: 'dsi_charte_master',
-    titre: 'Garant de la Charte KLF',
+    titre: 'Garant de la charte KLF',
     description: 'Mise en page de documents techniques aux normes DSI (Styles Titres, sauts de page forcés, zéro espace parasite).',
     palier: 'Palier 1',
     points_requis: 100,
@@ -30,7 +30,7 @@ export const MOCK_BADGES: Badge[] = [
   },
   {
     id: 'excel_data_cleaner',
-    titre: 'Nettoyeur de Parc Jarry',
+    titre: 'Nettoyeur de parc Jarry',
     description: 'Audit, nettoyage et normalisation de l\'inventaire brut des 65 postes informatiques KLF sur tableur.',
     palier: 'Palier 1',
     points_requis: 100,
@@ -39,7 +39,7 @@ export const MOCK_BADGES: Badge[] = [
   },
   {
     id: 'corinne_savior',
-    titre: 'Sauveur de Facturation',
+    titre: 'Sauveur de facturation',
     description: 'Dépannage critique de Corinne : correction des erreurs #N/A et paramétrage de l\'Octroi de mer & TVA 8.5%.',
     palier: 'Palier 2',
     points_requis: 150,
@@ -48,7 +48,7 @@ export const MOCK_BADGES: Badge[] = [
   },
   {
     id: 'quai_tutor_pro',
-    titre: 'Pédagogue de Quai Zebra',
+    titre: 'Pédagogue de quai Zebra',
     description: 'Création du tutoriel illustré pas-à-pas pour les tablettes durcies des caristes de Sébastien (Épreuve REAC).',
     palier: 'Palier 2',
     points_requis: 200,
@@ -57,7 +57,7 @@ export const MOCK_BADGES: Badge[] = [
   },
   {
     id: 'rh_mailmerge_ace',
-    titre: 'As du Publipostage RH',
+    titre: 'As du publipostage RH',
     description: 'Exécution de la campagne de publipostage de 60 contrats et attestations sans aucun décalage pour Élodie.',
     palier: 'Palier 2',
     points_requis: 150,
@@ -66,7 +66,7 @@ export const MOCK_BADGES: Badge[] = [
   },
   {
     id: 'ia_prompt_copilot',
-    titre: 'Prompt Crafter TIP',
+    titre: 'Prompt crafter TIP',
     description: 'Utilisation augmentée de Claude & Copilot pour accélérer le diagnostic support et générer des scripts d\'assistance.',
     palier: 'Palier 3',
     points_requis: 150,
@@ -75,7 +75,7 @@ export const MOCK_BADGES: Badge[] = [
   },
   {
     id: 'audit_securite_ia',
-    titre: 'Sentinelle RGPD & Données',
+    titre: 'Sentinelle RGPD et données',
     description: 'Audit de sécurité des données sensibles usagers et filtrage préventif des prompts IA (Prompt Masking).',
     palier: 'Palier 3',
     points_requis: 150,
@@ -84,7 +84,7 @@ export const MOCK_BADGES: Badge[] = [
   },
   {
     id: 'n8n_flow_master',
-    titre: 'Maître de l\'Automatisation',
+    titre: 'Maître de l\'automatisation',
     description: 'Conception et mise en production d\'un workflow n8n d\'aiguillage automatique des tickets avec alertes WhatsApp.',
     palier: 'Palier 4',
     points_requis: 250,

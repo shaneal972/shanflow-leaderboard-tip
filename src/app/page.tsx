@@ -41,7 +41,7 @@ export default async function HomePage() {
 
           <div className="max-w-3xl">
             <h1 className="text-3xl sm:text-4xl font-extrabold text-white font-['Lexend'] tracking-tight">
-              KLF Tech Passport & Classement Promo
+              KLF Tech Passport et classement promo
             </h1>
             <p className="text-sm sm:text-base text-slate-300 mt-2 leading-relaxed">
               Plateforme officielle de simulation et de suivi des compétences pour le 
@@ -50,7 +50,7 @@ export default async function HomePage() {
             </p>
           </div>
 
-          {/* Baromètre de Performance Collective de la Promotion */}
+          {/* Baromètre de performance collective de la promotion */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-4 border-t border-white/10 font-mono">
             <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5">
               <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mb-1">
@@ -66,7 +66,7 @@ export default async function HomePage() {
             <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5">
               <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mb-1">
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                Points Collectifs
+                Points collectifs
               </div>
               <div className="text-xl sm:text-2xl font-bold text-amber-400 font-['Lexend']">
                 {totalPointsPromo}
@@ -77,7 +77,7 @@ export default async function HomePage() {
             <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5">
               <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mb-1">
                 <Trophy className="w-3.5 h-3.5 text-indigo-400" />
-                Badges Conquis
+                Badges conquis
               </div>
               <div className="text-xl sm:text-2xl font-bold text-indigo-300 font-['Lexend']">
                 {totalBadgesUnlocked}
@@ -93,7 +93,7 @@ export default async function HomePage() {
               <div className="text-xl sm:text-2xl font-bold text-emerald-400 font-['Lexend']">
                 CCP 1
               </div>
-              <div className="text-[10px] text-slate-400">Support Usagers</div>
+              <div className="text-[10px] text-slate-400">Support usagers</div>
             </div>
           </div>
 
@@ -111,10 +111,10 @@ export default async function HomePage() {
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded text-xs font-mono font-semibold bg-teal-500/10 text-teal-400 border border-teal-500/20">
               <Ticket className="w-3.5 h-3.5" />
-              Incidents Réels KLF
+              Incidents réels KLF
             </div>
             <h2 className="text-lg font-bold text-white font-['Lexend'] group-hover:text-teal-300 transition-colors">
-              KLF Helpdesk Ticket Desk
+              KLF helpdesk ticket desk
             </h2>
             <p className="text-xs text-slate-300 max-w-sm leading-relaxed">
               Résolvez le ticket #101 de Corinne (Facturation TVA/Octroi de mer), le tutoriel tablettes Zebra de Sébastien et le publipostage d&apos;Élodie.
@@ -136,7 +136,7 @@ export default async function HomePage() {
               Conformité Ministère du Travail
             </div>
             <h2 className="text-lg font-bold text-white font-['Lexend'] group-hover:text-emerald-300 transition-colors">
-              Audit Dossier Professionnel (DP)
+              Audit du dossier professionnel (DP)
             </h2>
             <p className="text-xs text-slate-300 max-w-sm leading-relaxed">
               Vérifiez la conformité Cerfa de votre Fiche Exemple CCP 1 selon les 5 rubriques officielles requises pour l&apos;obtention du Titre.
@@ -155,7 +155,7 @@ export default async function HomePage() {
           <div>
             <h2 className="text-xl font-bold text-white font-['Lexend'] flex items-center gap-2">
               <Trophy className="w-5 h-5 text-amber-400" />
-              Classement Officiel de la Promotion (Leaderboard)
+              Classement officiel de la promotion (leaderboard)
             </h2>
             <p className="text-xs text-slate-400">
               Mise à jour en temps réel • Données pseudo-anonymisées conformes RGPD
