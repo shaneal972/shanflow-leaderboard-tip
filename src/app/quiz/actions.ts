@@ -152,3 +152,90 @@ export async function submitQuizAnswersAction(data: {
     return { success: false, error: err.message || 'Erreur serveur inattendue.' };
   }
 }
+
+const logInfractionSchema = z.object({
+  quizId: z.string().min(1),
+  apprenantId: z.string().uuid(),
+  infractionType: z.string().min(1),
+  timestamp: z.string(),
+  currentAnswers: z.record(z.string()).optional(),
+});
+
+export async function logQuizInfractionAction(data: {
+  quizId: string;
+  apprenantId: string;
+  infractionType: string;
+  timestamp: string;
+  currentAnswers?: Record<string, string>;
+}) {
+  const parsed = logInfractionSchema.safeParse(data);
+  if (!parsed.success) {
+    return { success: false, error: 'Données d\'infraction invalides.' };
+  }
+
+  const { quizId, apprenantId, infractionType, timestamp, currentAnswers = {} } = parsed.data;
+
+  try {
+    // 1. Récupérer ou initialiser la soumission
+    const { data: existingSub } = await supabaseServer
+      .from('sf_quiz_submissions')
+      .select('*')
+      .eq('quiz_id', quizId)
+      .eq('apprenant_id', apprenantId)
+      .maybeSingle();
+
+    const currentCount = (existingSub?.infractions_count || 0) + 1;
+    const existingLog = Array.isArray(existingSub?.infractions_log) ? existingSub.infractions_log : [];
+    const newLog = [
+      ...existingLog,
+      {
+        type: infractionType,
+        timestamp: timestamp || new Date().toISOString(),
+      }
+    ];
+
+    const isClosedForCheating = currentCount >= 3;
+
+    const upsertData: any = {
+      quiz_id: quizId,
+      apprenant_id: apprenantId,
+      reponses_choisies: existingSub?.reponses_choisies || currentAnswers,
+      infractions_count: currentCount,
+      infractions_log: newLog,
+      closed_for_cheating: isClosedForCheating || !!existingSub?.closed_for_cheating,
+    };
+
+    // Si 3ème infraction : la copie est scellée immédiatement
+    if (isClosedForCheating) {
+      upsertData.score_obtenu = 0;
+      upsertData.score_pourcentage = 0;
+      upsertData.is_validated = false;
+      upsertData.submitted_at = new Date().toISOString();
+    }
+
+    const { error: upsertErr } = await supabaseServer
+      .from('sf_quiz_submissions')
+      .upsert(upsertData, { onConflict: 'quiz_id,apprenant_id' });
+
+    if (upsertErr) {
+      console.error('Erreur logQuizInfractionAction:', upsertErr);
+      return { success: false, error: upsertErr.message };
+    }
+
+    revalidatePath('/admin');
+    revalidatePath(`/quiz/${quizId}`);
+
+    return {
+      success: true,
+      count: currentCount,
+      closedForCheating: isClosedForCheating,
+      message: isClosedForCheating
+        ? 'Copie clôturée pour infractions répétées au protocole d\'examen.'
+        : `Infraction ${currentCount}/3 enregistrée.`
+    };
+  } catch (err: any) {
+    console.error('Erreur logQuizInfractionAction:', err);
+    return { success: false, error: err.message || 'Erreur serveur.' };
+  }
+}
+

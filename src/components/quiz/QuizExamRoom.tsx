@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useTransition } from 'react';
+import React, { useState, useEffect, useTransition, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
@@ -10,7 +10,7 @@ import {
   QuizSubmission, 
   Apprenant 
 } from '@/types/tip';
-import { submitQuizAnswersAction } from '@/app/quiz/actions';
+import { submitQuizAnswersAction, logQuizInfractionAction } from '@/app/quiz/actions';
 import { 
   CheckCircle2, 
   XCircle, 
@@ -27,7 +27,13 @@ import {
   Trophy,
   ChevronLeft,
   ChevronRight,
-  ShieldAlert
+  ShieldAlert,
+  Shield,
+  Monitor,
+  Maximize2,
+  AlertTriangle,
+  Ban,
+  EyeOff
 } from 'lucide-react';
 
 interface QuizExamRoomProps {
@@ -80,6 +86,154 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
   const isRevealed = quiz.statut === 'correction_publiee';
   const hasSubmitted = !!initialSubmission;
 
+  /* ==========================================================================
+     BOUCLIER ANTI-TRICHE KLF SENTINEL LOCK
+     ========================================================================== */
+  const [hasEnteredFullscreen, setHasEnteredFullscreen] = useState<boolean>(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+
+  // Compteur d'infractions & Alerte
+  const [infractionsCount, setInfractionsCount] = useState<number>(() => {
+    return initialSubmission?.infractions_count || 0;
+  });
+  const [currentAlertInfraction, setCurrentAlertInfraction] = useState<{
+    count: number;
+    timestamp: string;
+  } | null>(null);
+  const [isClosedForCheating, setIsClosedForCheating] = useState<boolean>(() => {
+    return !!initialSubmission?.closed_for_cheating;
+  });
+  const lastInfractionTimeRef = useRef<number>(0);
+
+  // 1. Gestion du plein écran (Fullscreen API)
+  const handleEnterFullscreen = async () => {
+    try {
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+      } else if ((document.documentElement as any).webkitRequestFullscreen) {
+        await (document.documentElement as any).webkitRequestFullscreen();
+      }
+      setHasEnteredFullscreen(true);
+      setIsFullscreen(true);
+    } catch (err) {
+      console.warn("Plein écran refusé ou non supporté:", err);
+      // Autoriser quand même pour ne pas bloquer les navigateurs stricts
+      setHasEnteredFullscreen(true);
+      setIsFullscreen(true);
+    }
+  };
+
+  // Écoute continue de fullscreenchange
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      const inFs = !!(document.fullscreenElement || (document as any).webkitFullscreenElement);
+      setIsFullscreen(inFs);
+    };
+
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', onFullscreenChange);
+    };
+  }, []);
+
+  // 2. Détection changement d'onglet & perte de focus (Page Visibility & Blur)
+  useEffect(() => {
+    if (quiz.statut !== 'session_ouverte' || hasSubmitted || !hasEnteredFullscreen || isClosedForCheating) {
+      return;
+    }
+
+    const triggerInfraction = async (reason: string) => {
+      const now = Date.now();
+      // Anti-rebond : au moins 2.5 secondes entre 2 détections pour ne pas doubler blur + visibilitychange
+      if (now - lastInfractionTimeRef.current < 2500) {
+        return;
+      }
+      lastInfractionTimeRef.current = now;
+
+      const timeString = new Date().toLocaleTimeString('fr-FR');
+      const nextCount = infractionsCount + 1;
+      setInfractionsCount(nextCount);
+
+      if (nextCount < 3) {
+        setCurrentAlertInfraction({
+          count: nextCount,
+          timestamp: timeString,
+        });
+
+        // Journalisation BDD en direct pour David
+        if (studentId) {
+          await logQuizInfractionAction({
+            quizId: quiz.id,
+            apprenantId: studentId,
+            infractionType: reason,
+            timestamp: new Date().toISOString(),
+            currentAnswers: answers,
+          });
+        }
+      } else {
+        // 3ème infraction : Auto-clôture punitive immédiate
+        setIsClosedForCheating(true);
+        if (studentId) {
+          await logQuizInfractionAction({
+            quizId: quiz.id,
+            apprenantId: studentId,
+            infractionType: `${reason} - 3ᵉ avertissement : Copie clôturée d'office`,
+            timestamp: new Date().toISOString(),
+            currentAnswers: answers,
+          });
+        }
+        router.refresh();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        triggerInfraction("Changement d'onglet détecté (Page Visibility API)");
+      }
+    };
+
+    const handleBlur = () => {
+      triggerInfraction("Perte de focus de la fenêtre d'examen (Window Blur)");
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleBlur);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, [quiz.statut, hasSubmitted, hasEnteredFullscreen, isClosedForCheating, infractionsCount, studentId, quiz.id, answers, router]);
+
+  // 3. Neutralisation des raccourcis clavier suspects (Ctrl+C, Ctrl+V, Ctrl+U, F12, DevTools)
+  useEffect(() => {
+    if (quiz.statut !== 'session_ouverte' || hasSubmitted || !hasEnteredFullscreen) {
+      return;
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isCtrlC = (e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C');
+      const isCtrlV = (e.ctrlKey || e.metaKey) && (e.key === 'v' || e.key === 'V');
+      const isCtrlU = (e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U');
+      const isDevTools = (e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'i' || e.key === 'I');
+      const isF12 = e.key === 'F12';
+
+      if (isCtrlC || isCtrlV || isCtrlU || isDevTools || isF12) {
+        e.preventDefault();
+        e.stopPropagation();
+        setErrorMessage("Action bloquée : Le copier-coller et l'inspection de code sont neutralisés par KLF Sentinel Lock.");
+        setTimeout(() => setErrorMessage(null), 3500);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [quiz.statut, hasSubmitted, hasEnteredFullscreen]);
+
   // Effet confettis si validé en mode correction
   useEffect(() => {
     if (isRevealed && initialSubmission?.is_validated) {
@@ -103,7 +257,7 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
 
   // Timer
   useEffect(() => {
-    if (quiz.statut !== 'session_ouverte' || hasSubmitted) return;
+    if (quiz.statut !== 'session_ouverte' || hasSubmitted || isClosedForCheating) return;
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -114,7 +268,7 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [quiz.statut, hasSubmitted]);
+  }, [quiz.statut, hasSubmitted, isClosedForCheating]);
 
   // Polling automatique si en attente
   useEffect(() => {
@@ -133,7 +287,7 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
   };
 
   const handleSelectOption = (questionId: string, optionId: string) => {
-    if (hasSubmitted || quiz.statut !== 'session_ouverte') return;
+    if (hasSubmitted || quiz.statut !== 'session_ouverte' || isClosedForCheating) return;
     setAnswers((prev) => ({
       ...prev,
       [questionId]: optionId,
@@ -168,6 +322,53 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
   const totalQuestions = questions.length;
   const progressPercent = totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0;
   const currentQuestion = questions[currentIndex];
+
+  /* --------------------------------------------------------------------------
+     CAS 0 : COPIE CLÔTURÉE POUR TRICHE (3 infractions constatées)
+     -------------------------------------------------------------------------- */
+  if (isClosedForCheating || initialSubmission?.closed_for_cheating) {
+    return (
+      <div className="max-w-2xl mx-auto py-12 px-4 space-y-6">
+        <div className="p-8 rounded-3xl slate-glass border border-rose-500/50 text-center space-y-6 relative overflow-hidden shadow-2xl bg-rose-950/20">
+          <div className="w-20 h-20 mx-auto rounded-3xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 shadow-xl animate-bounce">
+            <Ban className="w-10 h-10" />
+          </div>
+
+          <div className="space-y-3">
+            <span className="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/40">
+              ⛔ Protocole KLF Sentinel Lock : Épreuve Interrompue
+            </span>
+            <h1 className="text-2xl font-bold text-white font-['Lexend'] tracking-tight">
+              Copie clôturée pour infractions répétées
+            </h1>
+            <p className="text-sm text-slate-300 leading-relaxed max-w-lg mx-auto">
+              Votre copie a été automatiquement verrouillée et scellée suite à <strong>3 sorties d&apos;examen non autorisées</strong> (changement d&apos;onglet ou perte de focus).
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-black/40 border border-rose-500/30 text-left text-xs font-mono space-y-2 text-slate-300">
+            <p className="text-rose-400 font-bold flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4" /> Rapport d&apos;incident transmis à David :
+            </p>
+            <p>• Sanction : Note conservatoire de 0/20 (0 point attribué)</p>
+            <p>• Motif : Non-respect des règles de composition du centre de formation</p>
+            <p>• Statut : Entretien obligatoire avec le formateur référent</p>
+          </div>
+
+          {activeStudent && (
+            <div className="pt-2">
+              <Link
+                href={`/passport/${activeStudent.id}`}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-xs font-mono transition-all"
+              >
+                <span>Retourner sur mon passeport</span>
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   /* --------------------------------------------------------------------------
      CAS 1 : ÉPREUVE FERMÉE (Et l'apprenant n'a pas composé)
@@ -353,7 +554,6 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
               const chosenOptionId = initialSubmission.reponses_choisies?.[q.id];
               const correctOption = q.options.find((o) => o.is_correct);
               const isQuestionSuccess = chosenOptionId === correctOption?.id;
-              const chosenOption = q.options.find((o) => o.id === chosenOptionId);
 
               return (
                 <div
@@ -458,39 +658,181 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
   }
 
   /* --------------------------------------------------------------------------
-     CAS 4 : PHASE D'ÉPREUVE EN COURS (Accès ouvert, apprenant compose)
+     CAS 4A : SAS D'ACCUEIL PLEIN ÉCRAN OBLIGATOIRE (SENTINEL LOCK)
+     -------------------------------------------------------------------------- */
+  if (!hasEnteredFullscreen) {
+    return (
+      <div className="max-w-3xl mx-auto py-12 px-4 space-y-6">
+        <div className="p-8 rounded-3xl slate-glass border border-teal-500/30 space-y-6 text-center shadow-2xl relative overflow-hidden">
+          <div className="w-20 h-20 mx-auto rounded-3xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 shadow-xl">
+            <Shield className="w-10 h-10" />
+          </div>
+
+          <div className="space-y-2">
+            <span className="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-teal-500/10 text-teal-300 border border-teal-500/20">
+              Protocole d&apos;Examen Haute Sécurité : KLF Sentinel Lock
+            </span>
+            <h1 className="text-2xl font-bold text-white font-['Lexend']">
+              {quiz.titre}
+            </h1>
+            <p className="text-xs text-slate-400 max-w-xl mx-auto leading-relaxed">
+              Pour garantir l&apos;équité de la promotion et le respect des normes d&apos;évaluation, cette épreuve fonctionne sous surveillance active.
+            </p>
+          </div>
+
+          {/* Sélecteur apprenant dans le sas */}
+          <div className="max-w-xs mx-auto p-3 rounded-2xl bg-white/[0.02] border border-white/10 text-left">
+            <label className="text-[11px] font-mono text-slate-400 block mb-1.5">
+              Confirmez votre identité d&apos;apprenant :
+            </label>
+            <select
+              value={studentId}
+              onChange={(e) => handleStudentSelect(e.target.value)}
+              className="w-full bg-slate-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono focus:border-teal-500 outline-none"
+            >
+              <option value="">-- Sélectionnez votre nom --</option>
+              {students.map((st) => (
+                <option key={st.id} value={st.id}>
+                  {st.prenom} {st.nom} ({st.equipe})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Règles de sécurité */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-left text-xs text-slate-300 max-w-xl mx-auto">
+            <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 flex items-start gap-2.5">
+              <Monitor className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
+              <span><strong>Mode plein écran exclusif :</strong> Vous devez composer en plein écran continu.</span>
+            </div>
+            <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 flex items-start gap-2.5">
+              <EyeOff className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <span><strong>Surveillance d&apos;onglets :</strong> 3 sorties d&apos;épreuve = clôture automatique immédiate.</span>
+            </div>
+            <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 flex items-start gap-2.5">
+              <Ban className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+              <span><strong>Anti Copier-Coller :</strong> Clic droit, sélection et raccourcis d&apos;inspection neutralisés.</span>
+            </div>
+            <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 flex items-start gap-2.5">
+              <ShieldAlert className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
+              <span><strong>Journal en direct :</strong> Toute anomalie est transmise instantanément à David.</span>
+            </div>
+          </div>
+
+          <div className="pt-4">
+            <button
+              type="button"
+              onClick={handleEnterFullscreen}
+              disabled={!studentId}
+              className="px-6 py-3.5 rounded-2xl text-xs font-mono font-bold bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 text-slate-950 shadow-xl shadow-teal-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-2"
+            >
+              <Maximize2 className="w-4 h-4" />
+              <span>🖥️ Activer le mode examen plein écran pour composer</span>
+            </button>
+            {!studentId && (
+              <p className="text-[11px] text-amber-400 font-mono mt-2">
+                Veuillez sélectionner votre nom avant d&apos;activer le mode examen.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* --------------------------------------------------------------------------
+     CAS 4B : SALLE D'ÉPREUVE ACTIVE SOUS SENTINEL LOCK
      -------------------------------------------------------------------------- */
   return (
-    <div className="max-w-4xl mx-auto py-6 px-4 space-y-6">
+    <div 
+      className="max-w-4xl mx-auto py-6 px-4 space-y-6 select-none"
+      onContextMenu={(e) => e.preventDefault()}
+      onCopy={(e) => e.preventDefault()}
+      onCut={(e) => e.preventDefault()}
+      onPaste={(e) => e.preventDefault()}
+    >
       
-      {/* Barre supérieure : Identité apprenant, Titre, Chrono */}
+      {/* ⚠️ OVERLAY ROUGE BLOQUANT SI SORTIE DU PLEIN ÉCRAN */}
+      {!isFullscreen && (
+        <div className="fixed inset-0 z-50 bg-rose-950/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center space-y-6 animate-in fade-in">
+          <div className="w-20 h-20 rounded-3xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 animate-pulse">
+            <AlertTriangle className="w-10 h-10" />
+          </div>
+          <div className="space-y-2 max-w-md">
+            <h2 className="text-2xl font-bold text-white font-['Lexend']">
+              ⚠️ Plein écran désactivé !
+            </h2>
+            <p className="text-xs text-rose-200 leading-relaxed">
+              Le protocole <strong>KLF Sentinel Lock</strong> exige le maintien strict du plein écran pendant toute l&apos;épreuve. Veuillez le réactiver immédiatement pour poursuivre votre composition.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleEnterFullscreen}
+            className="px-6 py-3 rounded-xl bg-white text-slate-950 font-mono font-bold text-xs hover:bg-slate-200 transition-all shadow-xl inline-flex items-center gap-2"
+          >
+            <Maximize2 className="w-4 h-4" />
+            <span>🖥️ Réactiver le plein écran</span>
+          </button>
+        </div>
+      )}
+
+      {/* 🚨 MODALE D'ALERTE ROUGE CRITIQUE (Infraction 1/3 ou 2/3) */}
+      {currentAlertInfraction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-in fade-in">
+          <div className="w-full max-w-md p-6 rounded-3xl bg-rose-950/90 border border-rose-500 text-center space-y-5 shadow-2xl animate-pulse">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400">
+              <ShieldAlert className="w-8 h-8" />
+            </div>
+
+            <div className="space-y-2">
+              <span className="px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-rose-500/30 text-rose-200 border border-rose-500/50">
+                Avertissement de Sécurité
+              </span>
+              <h3 className="text-lg font-bold text-white font-['Lexend']">
+                🚨 ALERTE ANTI-TRICHE (Infraction {currentAlertInfraction.count}/3)
+              </h3>
+              <p className="text-xs text-rose-200 leading-relaxed">
+                Sortie de l&apos;épreuve détectée à <strong className="text-white font-mono">{currentAlertInfraction.timestamp}</strong> !
+              </p>
+              <p className="text-xs text-rose-300/80 leading-relaxed">
+                Cet événement a été transmis en temps réel au tableau de bord de David. À la <strong>3ᵉ infraction</strong>, votre copie sera automatiquement verrouillée avec une note de 0/20.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setCurrentAlertInfraction(null)}
+              className="w-full py-2.5 rounded-xl bg-white text-slate-950 font-mono font-bold text-xs hover:bg-slate-200 transition-all shadow-lg"
+            >
+              J&apos;ai compris, je retourne à mon épreuve
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Barre supérieure : Identité apprenant, Titre, Chrono & Sentinel Badge */}
       <div className="p-4 rounded-2xl slate-glass border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
         
-        {/* Sélecteur Apprenant si non défini */}
+        {/* Identité élève */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-teal-500/20 border border-teal-500/30 flex items-center justify-center font-bold text-teal-400">
             {activeStudent ? activeStudent.prenom[0] : <User className="w-5 h-5" />}
           </div>
           <div>
-            {students.length > 0 ? (
-              <select
-                value={studentId}
-                onChange={(e) => handleStudentSelect(e.target.value)}
-                className="bg-slate-900 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white font-mono focus:border-teal-500 outline-none"
-              >
-                <option value="">-- Sélectionnez votre nom --</option>
-                {students.map((st) => (
-                  <option key={st.id} value={st.id}>
-                    {st.prenom} {st.nom} ({st.equipe})
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <p className="text-xs text-slate-400">Session ouverte</p>
-            )}
-            <p className="text-[11px] text-slate-400 font-mono mt-0.5">
-              {quiz.titre}
+            <p className="text-xs font-bold text-white font-['Lexend']">
+              {activeStudent ? `${activeStudent.prenom} ${activeStudent.nom}` : 'Épreuve KLF'}
             </p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[10px] text-teal-400 font-mono flex items-center gap-1">
+                <Shield className="w-3 h-3" /> Sentinel Lock Actif
+              </span>
+              {infractionsCount > 0 && (
+                <span className="text-[10px] text-amber-400 font-mono font-bold">
+                  • {infractionsCount}/3 avertissement(s)
+                </span>
+              )}
+            </div>
           </div>
         </div>
 

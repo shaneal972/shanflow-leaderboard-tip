@@ -115,6 +115,12 @@ export interface Quiz {
   questions_count?: number;
 }
 
+export interface QuizInfractionLog {
+  type: string;
+  timestamp: string;
+  details?: string;
+}
+
 export interface QuizSubmission {
   id: string;
   quiz_id: string;
@@ -125,6 +131,9 @@ export interface QuizSubmission {
   is_validated: boolean;
   submitted_at: string;
   points_attribues: number;
+  infractions_count?: number;
+  infractions_log?: QuizInfractionLog[];
+  closed_for_cheating?: boolean;
   apprenant?: Apprenant;
 }
 

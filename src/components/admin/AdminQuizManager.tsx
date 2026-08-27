@@ -32,7 +32,10 @@ import {
   Eye,
   FileCode,
   Check,
-  X
+  X,
+  Shield,
+  ShieldAlert,
+  Ban
 } from 'lucide-react';
 
 interface AdminQuizManagerProps {
@@ -381,24 +384,64 @@ export const AdminQuizManager: React.FC<AdminQuizManagerProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex flex-col items-end gap-1 shrink-0">
                       {hasSub ? (
-                        <div className="text-right">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-                            <Check className="w-3 h-3 text-emerald-400" />
-                            {activeQuiz.statut === 'correction_publiee'
-                              ? `${submission?.score_pourcentage}%`
-                              : 'Rendu'}
-                          </span>
+                        <>
+                          <div className="flex items-center gap-1.5">
+                            {submission?.closed_for_cheating ? (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1">
+                                <Ban className="w-3 h-3 text-rose-400" />
+                                Clôturé (Triche)
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                                <Check className="w-3 h-3 text-emerald-400" />
+                                {activeQuiz.statut === 'correction_publiee'
+                                  ? `${submission?.score_pourcentage}%`
+                                  : 'Rendu'}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Indicateur de Sécurité & Infractions Sentinel Lock */}
+                          <div className="text-right">
+                            {submission?.closed_for_cheating ? (
+                              <span className="text-[10px] font-mono text-rose-400 font-bold block">
+                                🔴 3 infractions (Auto-scellé)
+                              </span>
+                            ) : (submission?.infractions_count || 0) >= 2 ? (
+                              <span 
+                                className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-rose-500/10 text-rose-300 border border-rose-500/20 flex items-center gap-1 cursor-help"
+                                title={submission?.infractions_log?.map(l => `${new Date(l.timestamp).toLocaleTimeString('fr-FR')}: ${l.type}`).join('\n') || '2 sorties constatées'}
+                              >
+                                <ShieldAlert className="w-3 h-3 text-rose-400" />
+                                🔴 {submission?.infractions_count} sorties (Suspicion)
+                              </span>
+                            ) : (submission?.infractions_count || 0) === 1 ? (
+                              <span 
+                                className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20 flex items-center gap-1 cursor-help"
+                                title={submission?.infractions_log?.map(l => `${new Date(l.timestamp).toLocaleTimeString('fr-FR')}: ${l.type}`).join('\n') || '1 sortie constatée'}
+                              >
+                                <AlertTriangle className="w-3 h-3 text-amber-400" />
+                                🟡 1 sortie (Averti)
+                              </span>
+                            ) : (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-teal-500/5 text-teal-400 border border-teal-500/20 flex items-center gap-1">
+                                <Shield className="w-3 h-3 text-teal-400" />
+                                🟢 0 sortie (Verrouillé)
+                              </span>
+                            )}
+                          </div>
+
                           <button
                             type="button"
                             onClick={() => handleResetStudent(activeQuiz.id, st.id, `${st.prenom} ${st.nom}`)}
-                            title="Réinitialiser la tentative"
-                            className="text-[10px] font-mono text-slate-500 hover:text-rose-400 underline mt-0.5 block"
+                            title="Réinitialiser la copie et effacer les infractions"
+                            className="text-[10px] font-mono text-slate-500 hover:text-rose-400 underline mt-0.5"
                           >
                             Rattrapage
                           </button>
-                        </div>
+                        </>
                       ) : (
                         <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20 flex items-center gap-1">
                           <Clock className="w-3 h-3 text-amber-400" /> En cours
