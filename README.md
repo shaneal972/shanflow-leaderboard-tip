@@ -25,7 +25,7 @@
 
 ## 🛠️ Stack Technique
 
-- **Frontend :** Next.js 15 (App Router, Turbopack), React 19, Tailwind CSS.
+- **Frontend :** Next.js 16.3.0 (App Router, Turbopack), React 19.2.8, Tailwind CSS.
 - **Typage & Validation :** TypeScript strict, Zod avec sanitisation anti-XSS.
 - **Base de Données :** Instance Supabase (`https://supabase.shandev.cloud`) avec **schéma dédié `tip`** et Row Level Security (RLS).
 - **Automation :** Route Webhook sécurisée (`/api/webhooks`) avec authentification Bearer token et table d'idempotence (`tip.sf_idempotency`).
