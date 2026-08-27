@@ -311,7 +311,7 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({ initialTickets }) => {
               )}
 
               {/* Formulaire de résolution */}
-              <form onSubmit={handleResolveTicket} className="space-y-3 pt-2">
+              <form noValidate onSubmit={handleResolveTicket} className="space-y-3 pt-2">
                 <label className="block text-xs font-semibold text-slate-200">
                   Rapport de résolution & Procédure appliquée :
                 </label>
