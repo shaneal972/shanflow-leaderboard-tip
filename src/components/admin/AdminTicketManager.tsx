@@ -24,9 +24,18 @@ import {
 interface AdminTicketManagerProps {
   tickets: TicketKLF[];
   students: Apprenant[];
+  onTicketCreated?: (ticket: TicketKLF) => void;
+  onTicketStatusChanged?: (ticketId: string, newStatus: 'ouvert' | 'en_cours' | 'resolu') => void;
+  onPointsAdjusted?: (studentId: string, newPoints: number, newPalier: string) => void;
 }
 
-export const AdminTicketManager: React.FC<AdminTicketManagerProps> = ({ tickets, students }) => {
+export const AdminTicketManager: React.FC<AdminTicketManagerProps> = ({ 
+  tickets, 
+  students,
+  onTicketCreated,
+  onTicketStatusChanged,
+  onPointsAdjusted,
+}) => {
   const router = useRouter();
   const [ticketsList, setTicketsList] = useState<TicketKLF[]>(tickets);
   const [isPending, startTransition] = useTransition();
@@ -71,6 +80,7 @@ export const AdminTicketManager: React.FC<AdminTicketManagerProps> = ({ tickets,
       if (res.success) {
         if (res.ticket) {
           setTicketsList((prev) => [res.ticket, ...prev]);
+          if (onTicketCreated) onTicketCreated(res.ticket);
         }
         setIsCreateOpen(false);
         setDemandeur('');
@@ -87,12 +97,14 @@ export const AdminTicketManager: React.FC<AdminTicketManagerProps> = ({ tickets,
   };
 
   const handleToggleStatus = (ticket: TicketKLF, newStatus: 'ouvert' | 'en_cours' | 'resolu') => {
+    setTicketsList((prev) =>
+      prev.map((t) => (t.id === ticket.id ? { ...t, statut: newStatus } : t))
+    );
+    if (onTicketStatusChanged) onTicketStatusChanged(ticket.id, newStatus);
+
     startTransition(async () => {
       const res = await toggleTicketStatusAction(ticket.id, newStatus);
       if (res.success) {
-        setTicketsList((prev) =>
-          prev.map((t) => (t.id === ticket.id ? { ...t, statut: newStatus } : t))
-        );
         setMessage({ type: 'success', text: `Statut du ticket ${ticket.id} mis à jour.` });
         router.refresh();
         setTimeout(() => setMessage(null), 3000);
@@ -108,12 +120,24 @@ export const AdminTicketManager: React.FC<AdminTicketManagerProps> = ({ tickets,
 
     const student = students.find((s) => s.id === selectedStudentId);
 
+    // Optimistic UI : marquer résolu immédiatement
+    setTicketsList((prev) =>
+      prev.map((t) => (t.id === awardingTicket.id ? { ...t, statut: 'resolu' } : t))
+    );
+    if (onTicketStatusChanged) onTicketStatusChanged(awardingTicket.id, 'resolu');
+
     startTransition(async () => {
       const res = await awardTicketToStudentAction(awardingTicket.id, selectedStudentId);
       if (res.success) {
-        setTicketsList((prev) =>
-          prev.map((t) => (t.id === awardingTicket.id ? { ...t, statut: 'resolu' } : t))
-        );
+        if (student && onPointsAdjusted) {
+          const newPts = student.points_total + awardingTicket.points_valeur;
+          let newPal = student.palier_actuel;
+          if (newPts >= 1000) newPal = 'Palier 4';
+          else if (newPts >= 650) newPal = 'Palier 3';
+          else if (newPts >= 350) newPal = 'Palier 2';
+          else if (newPts >= 150) newPal = 'Palier 1';
+          onPointsAdjusted(student.id, newPts, newPal);
+        }
         setAwardingTicket(null);
         setMessage({ 
           type: 'success', 

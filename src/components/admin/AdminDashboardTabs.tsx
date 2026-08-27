@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Apprenant, TicketKLF, Badge, DPSuivi } from '@/types/tip';
 import { Users, Ticket, Trophy, FileCheck2 } from 'lucide-react';
 import { AdminStudentTable } from './AdminStudentTable';
@@ -23,13 +24,64 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
   achievements,
   dpRecords,
 }) => {
+  const router = useRouter();
+  const [studentsList, setStudentsList] = useState<Apprenant[]>(students);
+  const [ticketsList, setTicketsList] = useState<TicketKLF[]>(tickets);
   const [activeTab, setActiveTab] = useState<'apprenants' | 'tickets' | 'badges' | 'dp'>('apprenants');
+
+  // Synchronisation avec les props serveur reçues
+  useEffect(() => {
+    setStudentsList(students);
+  }, [students]);
+
+  useEffect(() => {
+    setTicketsList(tickets);
+  }, [tickets]);
+
+  // Callbacks de mise à jour instantanée (Optimistic UI 0ms)
+  const handleStudentCreated = (newStudent: Apprenant) => {
+    setStudentsList((prev) => [newStudent, ...prev]);
+    router.refresh();
+  };
+
+  const handleStudentUpdated = (updated: Apprenant) => {
+    setStudentsList((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+    router.refresh();
+  };
+
+  const handleStudentDeleted = (studentId: string) => {
+    setStudentsList((prev) => prev.filter((s) => s.id !== studentId));
+    router.refresh();
+  };
+
+  const handlePointsAdjusted = (studentId: string, newPoints: number, newPalier: string) => {
+    setStudentsList((prev) =>
+      prev.map((s) =>
+        s.id === studentId
+          ? { ...s, points_total: newPoints, palier_actuel: (newPalier as any) || s.palier_actuel }
+          : s
+      )
+    );
+    router.refresh();
+  };
+
+  const handleTicketCreated = (newTicket: TicketKLF) => {
+    setTicketsList((prev) => [newTicket, ...prev]);
+    router.refresh();
+  };
+
+  const handleTicketStatusChanged = (ticketId: string, newStatus: 'ouvert' | 'en_cours' | 'resolu') => {
+    setTicketsList((prev) =>
+      prev.map((t) => (t.id === ticketId ? { ...t, statut: newStatus } : t))
+    );
+    router.refresh();
+  };
 
   const tabs = [
     {
       id: 'apprenants',
       label: 'Gestion des apprenants',
-      count: students.length,
+      count: studentsList.length,
       icon: Users,
       color: 'text-teal-400',
       activeBg: 'bg-teal-500/10 border-teal-500/30 text-teal-300',
@@ -37,7 +89,7 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
     {
       id: 'tickets',
       label: 'Gestionnaire des tickets KLF',
-      count: tickets.length,
+      count: ticketsList.length,
       icon: Ticket,
       color: 'text-amber-400',
       activeBg: 'bg-amber-500/10 border-amber-500/30 text-amber-300',
@@ -93,16 +145,28 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
       {/* Rendu dynamique du module sélectionné */}
       <div>
         {activeTab === 'apprenants' && (
-          <AdminStudentTable students={students} />
+          <AdminStudentTable 
+            students={studentsList} 
+            onStudentCreated={handleStudentCreated}
+            onStudentUpdated={handleStudentUpdated}
+            onStudentDeleted={handleStudentDeleted}
+            onPointsAdjusted={handlePointsAdjusted}
+          />
         )}
 
         {activeTab === 'tickets' && (
-          <AdminTicketManager tickets={tickets} students={students} />
+          <AdminTicketManager 
+            tickets={ticketsList} 
+            students={studentsList} 
+            onTicketCreated={handleTicketCreated}
+            onTicketStatusChanged={handleTicketStatusChanged}
+            onPointsAdjusted={handlePointsAdjusted}
+          />
         )}
 
         {activeTab === 'badges' && (
           <AdminBadgeMatrix 
-            students={students} 
+            students={studentsList} 
             badges={badges} 
             achievements={achievements} 
           />
@@ -110,7 +174,7 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
 
         {activeTab === 'dp' && (
           <AdminDPOverview 
-            students={students} 
+            students={studentsList} 
             dpRecords={dpRecords} 
           />
         )}

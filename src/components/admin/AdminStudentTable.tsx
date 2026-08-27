@@ -25,9 +25,19 @@ import {
 
 interface AdminStudentTableProps {
   students: Apprenant[];
+  onStudentCreated?: (student: Apprenant) => void;
+  onStudentUpdated?: (student: Apprenant) => void;
+  onStudentDeleted?: (studentId: string) => void;
+  onPointsAdjusted?: (studentId: string, newPoints: number, newPalier: string) => void;
 }
 
-export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({ students }) => {
+export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({ 
+  students,
+  onStudentCreated,
+  onStudentUpdated,
+  onStudentDeleted,
+  onPointsAdjusted,
+}) => {
   const router = useRouter();
   const [studentsList, setStudentsList] = useState<Apprenant[]>(students);
   const [search, setSearch] = useState('');
@@ -66,17 +76,19 @@ export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({ students }
         reason: `Ajustement formateur direct (${delta > 0 ? '+' : ''}${delta} pts)`,
       });
       if (res.success) {
+        const newPts = res.newPoints !== undefined ? res.newPoints : 0;
+        const newPal = (res.newPalier as any) || 'Palier 0';
+
         setStudentsList((prev) =>
           prev.map((s) =>
             s.id === studentId
-              ? { 
-                  ...s, 
-                  points_total: res.newPoints !== undefined ? res.newPoints : s.points_total, 
-                  palier_actuel: (res.newPalier as any) || s.palier_actuel 
-                }
+              ? { ...s, points_total: newPts, palier_actuel: newPal }
               : s
           )
         );
+        if (onPointsAdjusted) {
+          onPointsAdjusted(studentId, newPts, newPal);
+        }
         setMessage({ type: 'success', text: `Points ajustés avec succès (${delta > 0 ? '+' : ''}${delta} pts).` });
         router.refresh();
         setTimeout(() => setMessage(null), 3000);
@@ -102,6 +114,9 @@ export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({ students }
       });
       if (res.success && res.student) {
         setStudentsList((prev) => [res.student, ...prev]);
+        if (onStudentCreated) {
+          onStudentCreated(res.student);
+        }
         setIsAddOpen(false);
         setNewPrenom('');
         setNewNom('');
@@ -132,6 +147,9 @@ export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({ students }
         setStudentsList((prev) =>
           prev.map((s) => (s.id === editingStudent.id ? res.student : s))
         );
+        if (onStudentUpdated) {
+          onStudentUpdated(res.student);
+        }
         setEditingStudent(null);
         setMessage({ type: 'success', text: 'Profil mis à jour avec succès.' });
         router.refresh();
@@ -147,15 +165,25 @@ export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({ students }
       return;
     }
 
+    // Disparition immédiate de l'écran à 0ms
+    setStudentsList((prev) => prev.filter((s) => s.id !== student.id));
+    if (onStudentDeleted) {
+      onStudentDeleted(student.id);
+    }
+    setMessage({ type: 'success', text: `Apprenant ${student.prenom} ${student.nom} supprimé.` });
+
     startTransition(async () => {
       const res = await deleteStudentAction(student.id);
-      if (res.success) {
-        setStudentsList((prev) => prev.filter((s) => s.id !== student.id));
-        setMessage({ type: 'success', text: 'Apprenant supprimé.' });
+      if (!res.success) {
+        // En cas d'erreur de suppression, on réintègre l'apprenant
+        setStudentsList((prev) => [student, ...prev]);
+        if (onStudentCreated) {
+          onStudentCreated(student);
+        }
+        setMessage({ type: 'error', text: res.error || 'Erreur lors de la suppression.' });
+      } else {
         router.refresh();
         setTimeout(() => setMessage(null), 3000);
-      } else {
-        setMessage({ type: 'error', text: res.error || 'Erreur lors de la suppression.' });
       }
     });
   };
