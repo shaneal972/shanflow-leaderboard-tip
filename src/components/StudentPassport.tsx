@@ -166,7 +166,8 @@ export const StudentPassport: React.FC<StudentPassportProps> = ({
               const isClosed = q.statut === 'ferme';
               const scorePct = q.submission?.score_pourcentage ?? 0;
               const isValidated = q.submission?.is_validated ?? false;
-              const scoreSur20 = ((scorePct / 100) * 20).toFixed(1);
+              const rawScore20 = (scorePct / 100) * 20;
+              const scoreSur20 = Number.isInteger(rawScore20) ? rawScore20.toString() : rawScore20.toFixed(1);
 
               return (
                 <div

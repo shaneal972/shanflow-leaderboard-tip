@@ -260,7 +260,8 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
   if (isRevealed && hasSubmitted) {
     const scorePourcentage = initialSubmission?.score_pourcentage ?? 0;
     const isValidated = initialSubmission?.is_validated ?? false;
-    const scoreSur20 = ((scorePourcentage / 100) * 20).toFixed(1);
+    const rawScore20 = (scorePourcentage / 100) * 20;
+    const scoreSur20 = Number.isInteger(rawScore20) ? rawScore20.toString() : rawScore20.toFixed(1);
 
     return (
       <div className="max-w-4xl mx-auto py-8 px-4 space-y-8">
@@ -287,12 +288,22 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
         }`}>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
             <div className="flex items-center gap-5">
-              <div className={`w-20 h-20 rounded-3xl flex items-center justify-center text-3xl font-bold shadow-2xl border ${
+              <div className={`min-w-[6.5rem] px-4 py-3.5 rounded-2xl flex flex-col items-center justify-center shrink-0 shadow-2xl border ${
                 isValidated
                   ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
                   : 'bg-amber-500/20 border-amber-500/40 text-amber-400'
               }`}>
-                {scoreSur20}/20
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-black font-['Lexend'] tracking-tight">
+                    {scoreSur20}
+                  </span>
+                  <span className="text-sm font-mono font-bold opacity-75">
+                    /20
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono font-medium uppercase tracking-wider opacity-60 mt-0.5">
+                  Note finale
+                </span>
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
