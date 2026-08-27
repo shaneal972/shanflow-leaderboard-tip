@@ -54,14 +54,18 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // Apprenant actif
-  const [studentId, setStudentId] = useState<string>(() => {
-    if (initialApprenantId) return initialApprenantId;
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('klf_active_student_id') || '';
+  // Apprenant actif (100% déterministe en SSR pour éradiquer tout Hydration Mismatch)
+  const [studentId, setStudentId] = useState<string>(initialApprenantId || '');
+
+  // Synchronisation avec localStorage UNIQUEMENT après le montage client effectif
+  useEffect(() => {
+    if (!initialApprenantId) {
+      const saved = localStorage.getItem('klf_active_student_id');
+      if (saved) {
+        setStudentId(saved);
+      }
     }
-    return '';
-  });
+  }, [initialApprenantId]);
 
   const activeStudent = students.find((s) => s.id === studentId);
 
@@ -428,7 +432,7 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
               </div>
               <div className="text-left text-xs">
                 <p className="font-semibold text-white">{activeStudent.prenom} {activeStudent.nom}</p>
-                <p className="text-slate-400 font-mono">Remis à {new Date(initialSubmission.submitted_at).toLocaleTimeString('fr-FR')}</p>
+                <p className="text-slate-400 font-mono" suppressHydrationWarning>Remis à {new Date(initialSubmission.submitted_at).toLocaleTimeString('fr-FR')}</p>
               </div>
             </div>
           )}
