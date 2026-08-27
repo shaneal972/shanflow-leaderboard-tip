@@ -79,7 +79,7 @@ export async function createStudentAction(data: {
   const avatarUrl = parsed.data.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`;
 
   try {
-    const { error } = await supabaseServer.from('sf_apprenants').insert({
+    const { data: newStudent, error } = await supabaseServer.from('sf_apprenants').insert({
       prenom: parsed.data.prenom,
       nom: parsed.data.nom,
       email: parsed.data.email,
@@ -88,7 +88,7 @@ export async function createStudentAction(data: {
       avatar_url: avatarUrl,
       points_total: 0,
       is_admin: false,
-    });
+    }).select().single();
 
     if (error) {
       return { success: false, error: error.message };
@@ -96,7 +96,7 @@ export async function createStudentAction(data: {
 
     revalidatePath('/admin');
     revalidatePath('/');
-    return { success: true };
+    return { success: true, student: newStudent };
   } catch (err: any) {
     return { success: false, error: err.message || 'Erreur serveur.' };
   }
@@ -128,7 +128,7 @@ export async function updateStudentAction(data: {
   }
 
   try {
-    const { error } = await supabaseServer
+    const { data: updatedStudent, error } = await supabaseServer
       .from('sf_apprenants')
       .update({
         prenom: parsed.data.prenom,
@@ -137,7 +137,9 @@ export async function updateStudentAction(data: {
         equipe: parsed.data.equipe,
         palier_actuel: parsed.data.palier_actuel,
       })
-      .eq('id', parsed.data.id);
+      .eq('id', parsed.data.id)
+      .select()
+      .single();
 
     if (error) {
       return { success: false, error: error.message };
@@ -146,7 +148,7 @@ export async function updateStudentAction(data: {
     revalidatePath('/admin');
     revalidatePath('/');
     revalidatePath(`/passport/${parsed.data.id}`);
-    return { success: true };
+    return { success: true, student: updatedStudent };
   } catch (err: any) {
     return { success: false, error: err.message || 'Erreur serveur.' };
   }
@@ -266,10 +268,10 @@ export async function createTicketAction(data: {
   }
 
   try {
-    const { error } = await supabaseServer.from('sf_tickets_klf').insert({
+    const { data: newTicket, error } = await supabaseServer.from('sf_tickets_klf').insert({
       ...parsed.data,
       statut: 'ouvert',
-    });
+    }).select().single();
 
     if (error) {
       return { success: false, error: error.message };
@@ -277,7 +279,7 @@ export async function createTicketAction(data: {
 
     revalidatePath('/admin');
     revalidatePath('/tickets');
-    return { success: true };
+    return { success: true, ticket: newTicket };
   } catch (err: any) {
     return { success: false, error: err.message || 'Erreur serveur.' };
   }

@@ -10,6 +10,7 @@ import {
 } from '@/lib/supabase';
 import { AdminDashboardTabs } from '@/components/admin/AdminDashboardTabs';
 
+export const dynamic = 'force-dynamic';
 export const revalidate = 0; // Données temps réel pour l'administration
 
 export default async function AdminPage() {

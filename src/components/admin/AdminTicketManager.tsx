@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { TicketKLF, Apprenant } from '@/types/tip';
 import { 
   Plus, 
@@ -26,8 +27,14 @@ interface AdminTicketManagerProps {
 }
 
 export const AdminTicketManager: React.FC<AdminTicketManagerProps> = ({ tickets, students }) => {
+  const router = useRouter();
+  const [ticketsList, setTicketsList] = useState<TicketKLF[]>(tickets);
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  useEffect(() => {
+    setTicketsList(tickets);
+  }, [tickets]);
 
   // Modal création
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -62,12 +69,16 @@ export const AdminTicketManager: React.FC<AdminTicketManagerProps> = ({ tickets,
       });
 
       if (res.success) {
+        if (res.ticket) {
+          setTicketsList((prev) => [res.ticket, ...prev]);
+        }
         setIsCreateOpen(false);
         setDemandeur('');
         setTitre('');
         setDescription('');
         setTicketId(`TCK-${Math.floor(200 + Math.random() * 700)}`);
         setMessage({ type: 'success', text: `Ticket ${ticketId} créé et publié avec succès.` });
+        router.refresh();
         setTimeout(() => setMessage(null), 3000);
       } else {
         setMessage({ type: 'error', text: res.error || 'Erreur lors de la création du ticket.' });
@@ -79,7 +90,11 @@ export const AdminTicketManager: React.FC<AdminTicketManagerProps> = ({ tickets,
     startTransition(async () => {
       const res = await toggleTicketStatusAction(ticket.id, newStatus);
       if (res.success) {
+        setTicketsList((prev) =>
+          prev.map((t) => (t.id === ticket.id ? { ...t, statut: newStatus } : t))
+        );
         setMessage({ type: 'success', text: `Statut du ticket ${ticket.id} mis à jour.` });
+        router.refresh();
         setTimeout(() => setMessage(null), 3000);
       } else {
         setMessage({ type: 'error', text: res.error || 'Erreur statut.' });
@@ -96,11 +111,15 @@ export const AdminTicketManager: React.FC<AdminTicketManagerProps> = ({ tickets,
     startTransition(async () => {
       const res = await awardTicketToStudentAction(awardingTicket.id, selectedStudentId);
       if (res.success) {
+        setTicketsList((prev) =>
+          prev.map((t) => (t.id === awardingTicket.id ? { ...t, statut: 'resolu' } : t))
+        );
         setAwardingTicket(null);
         setMessage({ 
           type: 'success', 
           text: `Ticket résolu avec succès ! +${awardingTicket.points_valeur} pts crédités à ${student?.prenom} ${student?.nom}.` 
         });
+        router.refresh();
         setTimeout(() => setMessage(null), 4000);
       } else {
         setMessage({ type: 'error', text: res.error || 'Erreur d\'attribution.' });
@@ -163,7 +182,7 @@ export const AdminTicketManager: React.FC<AdminTicketManagerProps> = ({ tickets,
 
       {/* Grille des tickets */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {tickets.map((ticket) => {
+        {ticketsList.map((ticket) => {
           const isResolved = ticket.statut === 'resolu';
 
           return (

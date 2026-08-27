@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { Apprenant } from '@/types/tip';
 import { 
   UserPlus, 
@@ -27,10 +28,17 @@ interface AdminStudentTableProps {
 }
 
 export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({ students }) => {
+  const router = useRouter();
+  const [studentsList, setStudentsList] = useState<Apprenant[]>(students);
   const [search, setSearch] = useState('');
   const [selectedTeam, setSelectedTeam] = useState('all');
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Synchronisation avec les props serveur
+  useEffect(() => {
+    setStudentsList(students);
+  }, [students]);
 
   // Modal Ajout
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -42,9 +50,9 @@ export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({ students }
   // Modal Édition
   const [editingStudent, setEditingStudent] = useState<Apprenant | null>(null);
 
-  const teams = Array.from(new Set(students.map((s) => s.equipe)));
+  const teams = Array.from(new Set(studentsList.map((s) => s.equipe)));
 
-  const filtered = students.filter((s) => {
+  const filtered = studentsList.filter((s) => {
     const matchSearch = `${s.prenom} ${s.nom} ${s.email}`.toLowerCase().includes(search.toLowerCase());
     const matchTeam = selectedTeam === 'all' || s.equipe === selectedTeam;
     return matchSearch && matchTeam;
@@ -58,7 +66,19 @@ export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({ students }
         reason: `Ajustement formateur direct (${delta > 0 ? '+' : ''}${delta} pts)`,
       });
       if (res.success) {
+        setStudentsList((prev) =>
+          prev.map((s) =>
+            s.id === studentId
+              ? { 
+                  ...s, 
+                  points_total: res.newPoints !== undefined ? res.newPoints : s.points_total, 
+                  palier_actuel: (res.newPalier as any) || s.palier_actuel 
+                }
+              : s
+          )
+        );
         setMessage({ type: 'success', text: `Points ajustés avec succès (${delta > 0 ? '+' : ''}${delta} pts).` });
+        router.refresh();
         setTimeout(() => setMessage(null), 3000);
       } else {
         setMessage({ type: 'error', text: res.error || 'Erreur lors de l\'ajustement.' });
@@ -80,12 +100,14 @@ export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({ students }
         email: newEmail,
         equipe: newEquipe,
       });
-      if (res.success) {
+      if (res.success && res.student) {
+        setStudentsList((prev) => [res.student, ...prev]);
         setIsAddOpen(false);
         setNewPrenom('');
         setNewNom('');
         setNewEmail('');
         setMessage({ type: 'success', text: `Apprenant ${newPrenom} ${newNom} ajouté avec succès.` });
+        router.refresh();
         setTimeout(() => setMessage(null), 3000);
       } else {
         setMessage({ type: 'error', text: res.error || 'Erreur lors de la création.' });
@@ -106,9 +128,13 @@ export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({ students }
         equipe: editingStudent.equipe,
         palier_actuel: editingStudent.palier_actuel,
       });
-      if (res.success) {
+      if (res.success && res.student) {
+        setStudentsList((prev) =>
+          prev.map((s) => (s.id === editingStudent.id ? res.student : s))
+        );
         setEditingStudent(null);
         setMessage({ type: 'success', text: 'Profil mis à jour avec succès.' });
+        router.refresh();
         setTimeout(() => setMessage(null), 3000);
       } else {
         setMessage({ type: 'error', text: res.error || 'Erreur lors de la mise à jour.' });
@@ -124,7 +150,9 @@ export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({ students }
     startTransition(async () => {
       const res = await deleteStudentAction(student.id);
       if (res.success) {
+        setStudentsList((prev) => prev.filter((s) => s.id !== student.id));
         setMessage({ type: 'success', text: 'Apprenant supprimé.' });
+        router.refresh();
         setTimeout(() => setMessage(null), 3000);
       } else {
         setMessage({ type: 'error', text: res.error || 'Erreur lors de la suppression.' });
