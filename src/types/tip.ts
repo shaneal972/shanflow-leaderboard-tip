@@ -79,3 +79,58 @@ export interface DPSuivi {
   statut_dp: DPStatus;
   updated_at?: string;
 }
+
+export type QuizStatus = 'ferme' | 'session_ouverte' | 'correction_publiee';
+
+export interface QuizOption {
+  id: string;
+  question_id: string;
+  lettre: 'A' | 'B' | 'C' | 'D';
+  texte: string;
+  is_correct?: boolean; // Présent uniquement si session clôturée et corrigé publié
+  dsi_explanation?: string; // Présent uniquement si session clôturée et corrigé publié
+}
+
+export interface QuizQuestion {
+  id: string;
+  quiz_id: string;
+  ordre: number;
+  theme: string;
+  enonce: string;
+  points: number;
+  options: QuizOption[];
+}
+
+export interface Quiz {
+  id: string;
+  titre: string;
+  description: string;
+  palier: PalierType | string;
+  seuil_validation: number;
+  points_recompense: number;
+  duree_minutes: number;
+  badge_recompense?: string;
+  statut: QuizStatus;
+  created_at?: string;
+  questions_count?: number;
+}
+
+export interface QuizSubmission {
+  id: string;
+  quiz_id: string;
+  apprenant_id: string;
+  reponses_choisies: Record<string, string>; // { [question_id]: option_id }
+  score_obtenu: number;
+  score_pourcentage: number;
+  is_validated: boolean;
+  submitted_at: string;
+  points_attribues: number;
+  apprenant?: Apprenant;
+}
+
+export interface QuizWithStats extends Quiz {
+  total_submissions?: number;
+  total_students?: number;
+  average_score?: number;
+  submissions?: QuizSubmission[];
+}

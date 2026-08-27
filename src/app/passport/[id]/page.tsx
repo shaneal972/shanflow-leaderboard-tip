@@ -1,6 +1,11 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
-import { getApprenantById, getBadgesWithStatus, getDPSuiviByApprenant } from '@/lib/supabase';
+import { 
+  getApprenantById, 
+  getBadgesWithStatus, 
+  getDPSuiviByApprenant,
+  getApprenantQuizzesStatus 
+} from '@/lib/supabase';
 import { StudentPassport } from '@/components/StudentPassport';
 
 interface PassportPageProps {
@@ -9,7 +14,8 @@ interface PassportPageProps {
   }>;
 }
 
-export const revalidate = 5;
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function PassportPage({ params }: PassportPageProps) {
   const resolvedParams = await params;
@@ -21,8 +27,11 @@ export default async function PassportPage({ params }: PassportPageProps) {
     notFound();
   }
 
-  const badges = await getBadgesWithStatus(id);
-  const dpSuivi = await getDPSuiviByApprenant(id);
+  const [badges, dpSuivi, quizRes] = await Promise.all([
+    getBadgesWithStatus(id),
+    getDPSuiviByApprenant(id),
+    getApprenantQuizzesStatus(id)
+  ]);
 
   return (
     <div className="w-full">
@@ -30,6 +39,7 @@ export default async function PassportPage({ params }: PassportPageProps) {
         apprenant={apprenant}
         badges={badges}
         dpSuivi={dpSuivi}
+        quizzes={quizRes.quizzes}
       />
     </div>
   );

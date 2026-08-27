@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Apprenant, TicketKLF, Badge, DPSuivi } from '@/types/tip';
-import { Users, Ticket, Trophy, FileCheck2 } from 'lucide-react';
+import { Apprenant, TicketKLF, Badge, DPSuivi, QuizWithStats } from '@/types/tip';
+import { Users, Ticket, Trophy, FileCheck2, BookOpen } from 'lucide-react';
 import { AdminStudentTable } from './AdminStudentTable';
 import { AdminTicketManager } from './AdminTicketManager';
 import { AdminBadgeMatrix } from './AdminBadgeMatrix';
 import { AdminDPOverview } from './AdminDPOverview';
+import { AdminQuizManager } from './AdminQuizManager';
 
 interface AdminDashboardTabsProps {
   students: Apprenant[];
@@ -15,6 +16,7 @@ interface AdminDashboardTabsProps {
   badges: Badge[];
   achievements: { apprenant_id: string; badge_id: string }[];
   dpRecords: DPSuivi[];
+  quizzes?: QuizWithStats[];
 }
 
 export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
@@ -23,11 +25,12 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
   badges,
   achievements,
   dpRecords,
+  quizzes = [],
 }) => {
   const router = useRouter();
   const [studentsList, setStudentsList] = useState<Apprenant[]>(students);
   const [ticketsList, setTicketsList] = useState<TicketKLF[]>(tickets);
-  const [activeTab, setActiveTab] = useState<'apprenants' | 'tickets' | 'badges' | 'dp'>('apprenants');
+  const [activeTab, setActiveTab] = useState<'apprenants' | 'tickets' | 'badges' | 'dp' | 'quiz'>('apprenants');
 
   // Synchronisation avec les props serveur reçues
   useEffect(() => {
@@ -85,6 +88,14 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
       icon: Users,
       color: 'text-teal-400',
       activeBg: 'bg-teal-500/10 border-teal-500/30 text-teal-300',
+    },
+    {
+      id: 'quiz',
+      label: 'Épreuves & Quiz KLF',
+      count: quizzes.length,
+      icon: BookOpen,
+      color: 'text-purple-400',
+      activeBg: 'bg-purple-500/10 border-purple-500/30 text-purple-300',
     },
     {
       id: 'tickets',
@@ -151,6 +162,13 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
             onStudentUpdated={handleStudentUpdated}
             onStudentDeleted={handleStudentDeleted}
             onPointsAdjusted={handlePointsAdjusted}
+          />
+        )}
+
+        {activeTab === 'quiz' && (
+          <AdminQuizManager 
+            quizzes={quizzes} 
+            students={studentsList} 
           />
         )}
 

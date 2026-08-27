@@ -490,3 +490,238 @@ export async function updateDPChecklistAction(data: {
     return { success: false, error: err.message || 'Erreur serveur.' };
   }
 }
+
+
+/* ==========================================================================
+   6. GESTION DU MOTEUR DE QUIZ KLF (FORMATEUR)
+   ========================================================================== */
+
+export async function updateQuizStatusAction(quizId: string, newStatus: 'ferme' | 'session_ouverte' | 'correction_publiee') {
+  const isAuth = await isAdminAuthenticated();
+  if (!isAuth) return { success: false, error: 'Accès non autorisé.' };
+
+  try {
+    const { error } = await supabaseServer
+      .from('sf_quizzes')
+      .update({ statut: newStatus })
+      .eq('id', quizId);
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath('/admin');
+    revalidatePath(`/quiz/${quizId}`);
+    revalidatePath('/');
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Erreur serveur.' };
+  }
+}
+
+export async function publishQuizCorrectionAction(quizId: string) {
+  const isAuth = await isAdminAuthenticated();
+  if (!isAuth) return { success: false, error: 'Accès non autorisé.' };
+
+  try {
+    // 1. Récupérer le quiz
+    const { data: quiz, error: qErr } = await supabaseServer
+      .from('sf_quizzes')
+      .select('*')
+      .eq('id', quizId)
+      .single();
+
+    if (qErr || !quiz) return { success: false, error: 'Quiz introuvable.' };
+
+    // 2. Récupérer les questions et options avec is_correct
+    const { data: questions } = await supabaseServer
+      .from('sf_quiz_questions')
+      .select('id, points')
+      .eq('quiz_id', quizId);
+
+    const { data: options } = await supabaseServer
+      .from('sf_quiz_options')
+      .select('id, question_id, is_correct');
+
+    const correctOptionsSet = new Set(
+      (options || []).filter(o => o.is_correct).map(o => o.id)
+    );
+
+    let totalPointsPossibles = 0;
+    (questions || []).forEach(q => {
+      totalPointsPossibles += (q.points || 1);
+    });
+
+    // 3. Récupérer toutes les soumissions de ce quiz
+    const { data: submissions } = await supabaseServer
+      .from('sf_quiz_submissions')
+      .select('*')
+      .eq('quiz_id', quizId);
+
+    // 4. Calculer le score de chaque copie et attribuer les points/badges
+    for (const sub of (submissions || [])) {
+      let scoreObtenu = 0;
+      (questions || []).forEach(q => {
+        const chosen = sub.reponses_choisies?.[q.id];
+        if (chosen && correctOptionsSet.has(chosen)) {
+          scoreObtenu += (q.points || 1);
+        }
+      });
+
+      const scorePourcentage = totalPointsPossibles > 0 
+        ? Math.round((scoreObtenu / totalPointsPossibles) * 100) 
+        : 0;
+      const isValidated = scorePourcentage >= (quiz.seuil_validation || 75);
+      const pointsToAward = isValidated ? (quiz.points_recompense || 200) : 0;
+
+      // Si l'élève a validé et n'a pas encore reçu ses points
+      if (isValidated && (sub.points_attribues || 0) === 0) {
+        const { data: appData } = await supabaseServer
+          .from('sf_apprenants')
+          .select('points_total')
+          .eq('id', sub.apprenant_id)
+          .single();
+
+        if (appData) {
+          await supabaseServer
+            .from('sf_apprenants')
+            .update({ points_total: (appData.points_total || 0) + pointsToAward })
+            .eq('id', sub.apprenant_id);
+        }
+
+        // Débloquer le badge
+        if (quiz.badge_recompense) {
+          await supabaseServer
+            .from('sf_achievements')
+            .upsert({
+              apprenant_id: sub.apprenant_id,
+              badge_id: quiz.badge_recompense,
+              obtenu_le: new Date().toISOString()
+            }, { onConflict: 'apprenant_id,badge_id' });
+        }
+      }
+
+      // Mise à jour de la soumission
+      await supabaseServer
+        .from('sf_quiz_submissions')
+        .update({
+          score_obtenu: scoreObtenu,
+          score_pourcentage: scorePourcentage,
+          is_validated: isValidated,
+          points_attribues: isValidated ? pointsToAward : sub.points_attribues
+        })
+        .eq('id', sub.id);
+    }
+
+    // 5. Basculer le quiz en statut 'correction_publiee'
+    await supabaseServer
+      .from('sf_quizzes')
+      .update({ statut: 'correction_publiee' })
+      .eq('id', quizId);
+
+    revalidatePath('/admin');
+    revalidatePath(`/quiz/${quizId}`);
+    revalidatePath('/passport');
+    revalidatePath('/');
+
+    return { 
+      success: true, 
+      countEvaluated: (submissions || []).length,
+      message: 'Correction publiée avec succès pour toute la classe.' 
+    };
+  } catch (err: any) {
+    console.error('Erreur publishQuizCorrectionAction:', err);
+    return { success: false, error: err.message || 'Erreur lors de la publication.' };
+  }
+}
+
+export async function resetStudentQuizAttemptAction(quizId: string, apprenantId: string) {
+  const isAuth = await isAdminAuthenticated();
+  if (!isAuth) return { success: false, error: 'Accès non autorisé.' };
+
+  try {
+    const { error } = await supabaseServer
+      .from('sf_quiz_submissions')
+      .delete()
+      .eq('quiz_id', quizId)
+      .eq('apprenant_id', apprenantId);
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath('/admin');
+    revalidatePath(`/quiz/${quizId}`);
+    revalidatePath(`/passport/${apprenantId}`);
+    return { success: true, message: 'Tentative réinitialisée avec succès.' };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Erreur serveur.' };
+  }
+}
+
+export async function importQuizJsonAction(jsonString: string) {
+  const isAuth = await isAdminAuthenticated();
+  if (!isAuth) return { success: false, error: 'Accès non autorisé.' };
+
+  try {
+    const parsed = JSON.parse(jsonString);
+    if (!parsed.title || !Array.isArray(parsed.questions)) {
+      return { success: false, error: 'Structure JSON invalide (title ou questions manquants).' };
+    }
+
+    const quizId = 'quiz-' + (parsed.id || Date.now().toString(36));
+    const letters = ['A', 'B', 'C', 'D'];
+
+    // Insertion du Quiz
+    const { error: qErr } = await supabaseServer
+      .from('sf_quizzes')
+      .upsert({
+        id: quizId,
+        titre: parsed.title,
+        description: parsed.description || 'Évaluation importée via le cockpit KLF.',
+        palier: parsed.palier || 'Palier 0',
+        seuil_validation: parsed.seuil_validation || 75,
+        points_recompense: parsed.points_recompense || 200,
+        duree_minutes: parsed.duree_minutes || 30,
+        badge_recompense: parsed.badge_recompense || null,
+        statut: 'ferme'
+      });
+
+    if (qErr) return { success: false, error: qErr.message };
+
+    // Nettoyer questions existantes si écrasement
+    await supabaseServer.from('sf_quiz_questions').delete().eq('quiz_id', quizId);
+
+    // Insertion questions et options
+    for (let i = 0; i < parsed.questions.length; i++) {
+      const q = parsed.questions[i];
+      const { data: qRow, error: questErr } = await supabaseServer
+        .from('sf_quiz_questions')
+        .insert({
+          quiz_id: quizId,
+          ordre: i + 1,
+          theme: q.theme || 'Général',
+          enonce: q.question || q.enonce || `Question ${i + 1}`,
+          points: q.points || 1
+        })
+        .select()
+        .single();
+
+      if (questErr || !qRow) continue;
+
+      const opts = (q.options || []).map((optText: string, oIdx: number) => ({
+        question_id: qRow.id,
+        lettre: letters[oIdx] || 'A',
+        texte: optText,
+        is_correct: oIdx === q.correct,
+        dsi_explanation: oIdx === q.correct
+          ? (q.feedback || 'Bonne réponse.')
+          : `Incorrect. ${q.feedback || ''}`
+      }));
+
+      await supabaseServer.from('sf_quiz_options').insert(opts);
+    }
+
+    revalidatePath('/admin');
+    return { success: true, quizId, count: parsed.questions.length };
+  } catch (err: any) {
+    return { success: false, error: 'JSON non parsable : ' + (err.message || String(err)) };
+  }
+}
+

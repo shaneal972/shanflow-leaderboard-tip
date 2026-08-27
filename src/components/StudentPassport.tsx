@@ -2,31 +2,36 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Apprenant, Badge, DPSuivi } from '@/types/tip';
+import { Apprenant, Badge, DPSuivi, Quiz, QuizSubmission } from '@/types/tip';
 import { BadgeGrid } from './BadgeGrid';
-import { ConfettiTrigger } from './ui/ConfettiTrigger';
 import { 
   ArrowLeft, 
   Trophy, 
   CheckCircle2, 
   Circle, 
   User, 
-  Mail, 
-  Building2, 
   FileCheck2,
-  Share2
+  Share2,
+  BookOpen,
+  Play,
+  Lock,
+  Clock,
+  Sparkles,
+  AlertCircle
 } from 'lucide-react';
 
 interface StudentPassportProps {
   apprenant: Apprenant;
   badges: Badge[];
   dpSuivi?: DPSuivi;
+  quizzes?: (Quiz & { submission: QuizSubmission | null })[];
 }
 
 export const StudentPassport: React.FC<StudentPassportProps> = ({
   apprenant,
   badges,
   dpSuivi,
+  quizzes = [],
 }) => {
   const paliers = [
     { id: 'Palier 0', name: 'Palier 0 : Raccourcis & Hygiène', desc: 'RAN & Standards clavier', minPoints: 0 },
@@ -99,56 +104,199 @@ export const StudentPassport: React.FC<StudentPassportProps> = ({
                 <span className="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-teal-500/10 text-teal-400 border border-teal-500/20">
                   {apprenant.palier_actuel}
                 </span>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-slate-400 font-mono">
-                <span className="flex items-center gap-1.5">
-                  <Building2 className="w-3.5 h-3.5 text-slate-500" />
+                <span className="px-2 py-0.5 rounded text-[11px] font-mono text-slate-400 bg-white/5 border border-white/10">
                   {apprenant.equipe}
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <Mail className="w-3.5 h-3.5 text-slate-500" />
-                  {apprenant.email}
-                </span>
               </div>
+              <p className="text-xs text-slate-400 mt-1 font-mono">{apprenant.email}</p>
             </div>
           </div>
 
-          {/* Score & Déclencheur Célébration */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="text-left sm:text-right">
-              <div className="text-3xl font-extrabold text-white font-['Lexend'] flex items-baseline sm:justify-end gap-1">
-                <span>{apprenant.points_total}</span>
-                <span className="text-sm font-mono text-teal-400">/ {totalPossiblePoints} pts</span>
-              </div>
-              <p className="text-xs text-slate-400 font-mono">
-                {unlockedBadges.length} sur {badges.length} badges débloqués
-              </p>
+          <div className="flex items-center gap-6 self-end md:self-auto border-t md:border-t-0 md:border-l border-white/10 pt-4 md:pt-0 md:pl-6">
+            <div>
+              <p className="text-[11px] font-mono text-slate-400">Total KLF Points</p>
+              <p className="text-3xl font-bold text-teal-400 font-['Lexend']">{apprenant.points_total}</p>
             </div>
-
-            <ConfettiTrigger
-              label="Célébrer ma progression"
-              points={apprenant.points_total}
-              className="mt-1 sm:mt-0"
-            />
+            <div>
+              <p className="text-[11px] font-mono text-slate-400">Progression globale</p>
+              <p className="text-3xl font-bold text-white font-['Lexend']">{progressPercent}%</p>
+            </div>
           </div>
 
         </div>
 
-        {/* Jauge globale de progression */}
-        <div className="mt-6 pt-6 border-t border-white/10">
-          <div className="flex items-center justify-between text-xs font-mono mb-2">
-            <span className="text-slate-400">Progression globale du passeport KLF</span>
-            <span className="text-teal-400 font-bold">{progressPercent}%</span>
-          </div>
-          <div className="w-full h-2.5 rounded-full bg-white/5 overflow-hidden p-0.5 border border-white/10">
+        {/* Barre de progression des points */}
+        <div className="mt-6 space-y-1.5 relative z-10">
+          <div className="w-full h-2 rounded-full bg-white/5 overflow-hidden">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-teal-500 to-amber-400 transition-all duration-700"
+              className="h-full bg-gradient-to-r from-teal-500 to-emerald-400 transition-all duration-500"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
+          <div className="flex justify-between text-[10px] font-mono text-slate-400">
+            <span>{apprenant.points_total} points acquis</span>
+            <span>Objectif : {totalPossiblePoints} points</span>
+          </div>
         </div>
 
+      </div>
+
+      {/* Module Évaluations & Quiz Interactifs KLF (Anti-Triche & Correction Différée) */}
+      <div className="p-6 rounded-2xl slate-glass space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-white font-['Lexend'] flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-teal-400" />
+            Évaluations & Quiz interactifs KLF
+          </h2>
+          <span className="text-xs font-mono text-slate-400">
+            Correction différée & Standards DSI Marc Verdier
+          </span>
+        </div>
+
+        {quizzes.length === 0 ? (
+          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 text-center text-xs text-slate-400">
+            Aucune session d&apos;évaluation programmée pour le moment.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {quizzes.map((q) => {
+              const hasSub = !!q.submission;
+              const isExamOpen = q.statut === 'session_ouverte';
+              const isCorrected = q.statut === 'correction_publiee';
+              const isClosed = q.statut === 'ferme';
+              const scorePct = q.submission?.score_pourcentage ?? 0;
+              const isValidated = q.submission?.is_validated ?? false;
+              const scoreSur20 = ((scorePct / 100) * 20).toFixed(1);
+
+              return (
+                <div
+                  key={q.id}
+                  className={`p-5 rounded-2xl border transition-all space-y-3 ${
+                    isCorrected && isValidated
+                      ? 'bg-emerald-500/5 border-emerald-500/30'
+                      : isCorrected && !isValidated
+                      ? 'bg-amber-500/5 border-amber-500/30'
+                      : isExamOpen
+                      ? 'bg-teal-500/5 border-teal-500/40 shadow-lg shadow-teal-500/5'
+                      : 'bg-white/[0.02] border-white/5'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-white/5 text-slate-300 border border-white/10">
+                          {q.palier}
+                        </span>
+                        <span className="text-[11px] font-mono text-teal-400">
+                          +{q.points_recompense} PTS
+                        </span>
+                      </div>
+                      <h3 className="text-sm font-bold text-white font-['Lexend'] leading-snug">
+                        {q.titre}
+                      </h3>
+                    </div>
+
+                    {/* Badge de Statut Dynamique */}
+                    <div>
+                      {!hasSub && isClosed && (
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-mono bg-white/5 text-slate-400 border border-white/10 inline-flex items-center gap-1">
+                          <Circle className="w-3 h-3 text-slate-500" /> Non commencé
+                        </span>
+                      )}
+
+                      {!hasSub && isExamOpen && (
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-mono bg-amber-500/10 text-amber-300 border border-amber-500/30 inline-flex items-center gap-1 animate-pulse">
+                          <Play className="w-3 h-3 text-amber-400 fill-current" /> Épreuve ouverte
+                        </span>
+                      )}
+
+                      {!hasSub && isCorrected && (
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-mono bg-slate-500/10 text-slate-400 border border-slate-500/30 inline-flex items-center gap-1">
+                          Non composé
+                        </span>
+                      )}
+
+                      {hasSub && !isCorrected && (
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-mono bg-sky-500/10 text-sky-300 border border-sky-500/30 inline-flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-sky-400" /> Copie scellée • En attente
+                        </span>
+                      )}
+
+                      {hasSub && isCorrected && isValidated && (
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 inline-flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Validé ({scoreSur20}/20 - {scorePct}%)
+                        </span>
+                      )}
+
+                      {hasSub && isCorrected && !isValidated && (
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-mono bg-rose-500/10 text-rose-300 border border-rose-500/30 inline-flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3 text-rose-400" /> À rattraper ({scoreSur20}/20)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                    {q.description}
+                  </p>
+
+                  <div className="pt-2 flex items-center justify-between border-t border-white/5">
+                    <span className="text-[11px] font-mono text-slate-500">
+                      Durée : {q.duree_minutes} min • Seuil : {q.seuil_validation}%
+                    </span>
+
+                    {/* Boutons d'Action selon le Statut */}
+                    <div>
+                      {!hasSub && isExamOpen && (
+                        <Link
+                          href={`/quiz/${q.id}?apprenantId=${apprenant.id}`}
+                          className="px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-teal-500 hover:bg-teal-400 text-slate-950 shadow-md shadow-teal-500/20 inline-flex items-center gap-1.5 transition-all"
+                        >
+                          <Play className="w-3 h-3 fill-current" />
+                          <span>Démarrer l&apos;épreuve</span>
+                        </Link>
+                      )}
+
+                      {!hasSub && isClosed && (
+                        <span className="text-xs font-mono text-slate-500 inline-flex items-center gap-1">
+                          <Lock className="w-3 h-3" /> En attente de David
+                        </span>
+                      )}
+
+                      {!hasSub && isCorrected && (
+                        <Link
+                          href={`/quiz/${q.id}?apprenantId=${apprenant.id}`}
+                          className="px-3 py-1.5 rounded-lg text-xs font-mono text-slate-300 bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+                        >
+                          Composer maintenant
+                        </Link>
+                      )}
+
+                      {hasSub && !isCorrected && (
+                        <Link
+                          href={`/quiz/${q.id}?apprenantId=${apprenant.id}`}
+                          className="px-3 py-1.5 rounded-lg text-xs font-mono text-sky-300 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 transition-colors"
+                        >
+                          Voir salle d&apos;attente
+                        </Link>
+                      )}
+
+                      {hasSub && isCorrected && (
+                        <Link
+                          href={`/quiz/${q.id}?apprenantId=${apprenant.id}`}
+                          className="px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 inline-flex items-center gap-1.5 transition-all"
+                        >
+                          <Sparkles className="w-3 h-3 text-emerald-400" />
+                          <span>Voir le corrigé DSI</span>
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Frise chronologique des 5 paliers KLF */}

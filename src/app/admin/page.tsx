@@ -6,7 +6,8 @@ import {
   getTicketsData, 
   getAllBadgesAdmin, 
   getAllAchievementsAdmin, 
-  getAllDPSuiviAdmin 
+  getAllDPSuiviAdmin,
+  getAllQuizzesAdmin 
 } from '@/lib/supabase';
 import { AdminDashboardTabs } from '@/components/admin/AdminDashboardTabs';
 
@@ -19,13 +20,14 @@ export default async function AdminPage() {
     redirect('/admin/login');
   }
 
-  // Chargement parallèle des 4 jeux de données
-  const [students, tickets, badges, achievements, dpRecords] = await Promise.all([
+  // Chargement parallèle des jeux de données cockpit
+  const [students, tickets, badges, achievements, dpRecords, quizzes] = await Promise.all([
     getAllApprenantsAdmin(),
     getTicketsData(),
     getAllBadgesAdmin(),
     getAllAchievementsAdmin(),
     getAllDPSuiviAdmin(),
+    getAllQuizzesAdmin(),
   ]);
 
   return (
@@ -35,6 +37,7 @@ export default async function AdminPage() {
       badges={badges}
       achievements={achievements}
       dpRecords={dpRecords}
+      quizzes={quizzes}
     />
   );
 }
