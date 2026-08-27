@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+:root {
+  --bg-abyssal: #070F1E;
+  --bg-surface: #0A192F;
+  --card-slate: #112240;
+  --card-border: rgba(255, 255, 255, 0.08);
+  --teal-caribbean: #00B4D8;
+  --teal-glow: rgba(0, 180, 216, 0.35);
+  --gold-warm: #F59E0B;
+  --gold-glow: rgba(245, 158, 11, 0.4);
+}
+
+@theme {
+  --color-klf-navy: #070F1E;
+  --color-klf-surface: #0A192F;
+  --color-klf-card: #112240;
+  --color-klf-border: rgba(255, 255, 255, 0.08);
+  --color-klf-teal: #00B4D8;
+  --color-klf-teal-dark: #008080;
+  --color-klf-gold: #F59E0B;
+  --color-klf-gold-light: #FCD34D;
+  --color-status-green: #10B981;
+  --color-status-amber: #F59E0B;
+  --color-status-red: #EF4444;
+  --font-heading: var(--font-lexend), system-ui, sans-serif;
+  --font-body: var(--font-inter), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+}
+
+html, body {
+  background-color: #070F1E;
+  color: #E2E8F0;
+  font-family: var(--font-body);
+  overflow-x: hidden;
+}
+
+/* Railway Blueprint Technical Grid */
+.blueprint-grid {
+  background-color: #070F1E;
+  background-image: 
+    radial-gradient(rgba(0, 180, 216, 0.12) 1px, transparent 1px),
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 24px 24px, 96px 96px, 96px 96px;
+}
+
+/* Slate Glassmorphism Cards */
+.slate-glass {
+  background: rgba(17, 34, 64, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s ease-in-out;
+}
+
+.slate-glass:hover {
+  border-color: rgba(0, 180, 216, 0.3);
+  box-shadow: 0 8px 32px -8px rgba(0, 180, 216, 0.15);
+}
+
+/* Gold Achievement Glow */
+.gold-glow {
+  box-shadow: 0 0 20px -3px rgba(245, 158, 11, 0.35);
+}
+
+/* Teal Active Glow */
+.teal-glow {
+  box-shadow: 0 0 20px -3px rgba(0, 180, 216, 0.35);
+}
+
+/* Shimmer Loading Skeleton (Antilles Network Latency Buffer) */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
+}
+
+/* Sticky Action Column with High Contrast Shadow */
+.sticky-actions-col {
+  position: sticky;
+  right: 0;
+  z-index: 10;
+  background-color: #112240;
+  box-shadow: -10px 0 16px -4px rgba(7, 15, 30, 0.85);
+}
+
+/* Monospaced Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #070F1E;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 180, 216, 0.25);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 180, 216, 0.5);
+}
