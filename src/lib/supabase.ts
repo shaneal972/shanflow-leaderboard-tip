@@ -179,3 +179,89 @@ export async function getDPSuiviByApprenant(apprenantId: string): Promise<DPSuiv
     };
   }
 }
+
+/**
+ * Récupère tous les apprenants avec identité complète pour l'administration.
+ */
+export async function getAllApprenantsAdmin(): Promise<Apprenant[]> {
+  try {
+    const { data, error } = await supabaseServer
+      .from('sf_apprenants')
+      .select('*')
+      .order('points_total', { ascending: false });
+
+    if (error || !data || data.length === 0) {
+      return MOCK_APPRENANTS;
+    }
+    return data;
+  } catch {
+    return MOCK_APPRENANTS;
+  }
+}
+
+/**
+ * Récupère tous les badges pour le cockpit d'administration.
+ */
+export async function getAllBadgesAdmin(): Promise<Badge[]> {
+  try {
+    const { data, error } = await supabaseServer
+      .from('sf_badges')
+      .select('*')
+      .order('points_requis', { ascending: true });
+
+    if (error || !data || data.length === 0) {
+      return MOCK_BADGES;
+    }
+    return data;
+  } catch {
+    return MOCK_BADGES;
+  }
+}
+
+/**
+ * Récupère toutes les liaisons apprenant-badges (achievements).
+ */
+export async function getAllAchievementsAdmin(): Promise<{ apprenant_id: string; badge_id: string; obtenu_le?: string }[]> {
+  try {
+    const { data, error } = await supabaseServer
+      .from('sf_achievements')
+      .select('apprenant_id, badge_id, obtenu_le');
+
+    if (error || !data) {
+      const mockList: { apprenant_id: string; badge_id: string; obtenu_le?: string }[] = [];
+      Object.entries(MOCK_ACHIEVEMENTS).forEach(([apprenantId, badgeIds]) => {
+        badgeIds.forEach((badgeId) => {
+          mockList.push({ apprenant_id: apprenantId, badge_id: badgeId, obtenu_le: new Date().toISOString() });
+        });
+      });
+      return mockList;
+    }
+    return data;
+  } catch {
+    const mockList: { apprenant_id: string; badge_id: string; obtenu_le?: string }[] = [];
+    Object.entries(MOCK_ACHIEVEMENTS).forEach(([apprenantId, badgeIds]) => {
+      badgeIds.forEach((badgeId) => {
+        mockList.push({ apprenant_id: apprenantId, badge_id: badgeId, obtenu_le: new Date().toISOString() });
+      });
+    });
+    return mockList;
+  }
+}
+
+/**
+ * Récupère l'ensemble des fiches de suivi DP pour la promotion.
+ */
+export async function getAllDPSuiviAdmin(): Promise<DPSuivi[]> {
+  try {
+    const { data, error } = await supabaseServer
+      .from('sf_dp_suivi')
+      .select('*');
+
+    if (error || !data || data.length === 0) {
+      return Object.values(MOCK_DP_SUIVI);
+    }
+    return data;
+  } catch {
+    return Object.values(MOCK_DP_SUIVI);
+  }
+}

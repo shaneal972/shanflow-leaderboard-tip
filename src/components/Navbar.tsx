@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { StatusDot } from './ui/StatusDot';
-import { ShieldCheck, Trophy, Ticket, BookOpen, Anchor } from 'lucide-react';
+import { ShieldCheck, Trophy, Ticket, BookOpen, Anchor, Lock } from 'lucide-react';
 
 interface NavbarProps {
   onOpenRgpd?: () => void;
@@ -66,6 +66,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenRgpd }) => {
             </div>
 
             <StatusDot status="operational" label="DSI en ligne" />
+
+            <Link
+              href="/admin"
+              className="p-2 rounded-md text-slate-400 hover:text-white hover:bg-white/5 border border-white/5 transition-colors"
+              title="Cockpit d'administration formateur"
+            >
+              <Lock className="w-4 h-4 text-amber-400/80 hover:text-amber-400" />
+            </Link>
 
             {onOpenRgpd && (
               <button
