@@ -590,6 +590,38 @@ export const AdminQualiopiModal: React.FC<AdminQualiopiModalProps> = ({ isOpen, 
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Bandeau légende & référentiel des compétences */}
+                  <div className="flex flex-wrap items-center justify-between gap-2.5 p-3 rounded-xl bg-slate-900/60 border border-white/10 text-xs text-slate-400">
+                    <div className="flex items-center gap-2 text-teal-400 font-semibold text-[11px] uppercase tracking-wider">
+                      <span>📌 Référentiel des domaines &amp; repères :</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px]">
+                      <span className="inline-flex items-center gap-1.5">
+                        <code className="px-1.5 py-0.5 rounded bg-white/10 text-slate-200 border border-white/10 font-mono text-[10px]">Fic</code>
+                        <span>Hygiène fichiers &amp; Windows</span>
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <code className="px-1.5 py-0.5 rounded bg-white/10 text-slate-200 border border-white/10 font-mono text-[10px]">Wrd</code>
+                        <span>Traitement de texte &amp; publipostage</span>
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <code className="px-1.5 py-0.5 rounded bg-white/10 text-slate-200 border border-white/10 font-mono text-[10px]">Xls</code>
+                        <span>Tableur &amp; formules</span>
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <code className="px-1.5 py-0.5 rounded bg-white/10 text-slate-200 border border-white/10 font-mono text-[10px]">DSI</code>
+                        <span>Posture &amp; règles DSI</span>
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <code className="px-1.5 py-0.5 rounded bg-white/10 text-slate-200 border border-white/10 font-mono text-[10px]">DP</code>
+                        <span>Rubriques Cerfa (/5 REAC CCP 1)</span>
+                      </span>
+                      <span className="text-slate-300">
+                        <strong className="text-emerald-400">Seuil validé :</strong> ≥ 15/20 (75%)
+                      </span>
+                    </div>
+                  </div>
                 </div>
               )}
 

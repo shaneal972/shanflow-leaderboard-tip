@@ -326,6 +326,53 @@ export function generateQualiopiPdfHtml(data: QualiopiReportData): string {
       font-size: 6.5pt;
     }
 
+    /* Bandeau légende & référentiel des compétences */
+    .legend-container {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 5px;
+      padding: 4px 8px;
+      margin-bottom: 7px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px 8px;
+      font-size: 6.5pt;
+      color: #475569;
+    }
+    .legend-title {
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #008080;
+      font-size: 6.5pt;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .legend-items {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px 10px;
+    }
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .legend-code {
+      font-family: monospace;
+      font-weight: 700;
+      background: #EDF2F7;
+      color: #1E293B;
+      border: 1px solid #CBD5E1;
+      padding: 0.5px 3.5px;
+      border-radius: 3px;
+      font-size: 6pt;
+    }
+
     /* Cadre d'émargement et pied de page */
     .footer-container {
       display: flex;
@@ -449,6 +496,21 @@ export function generateQualiopiPdfHtml(data: QualiopiReportData): string {
       ${rowsHtml}
     </tbody>
   </table>
+
+  <!-- Bandeau légende & référentiel des compétences -->
+  <div class="legend-container">
+    <div class="legend-title">
+      <span>📌 Référentiel des domaines &amp; repères d&apos;évaluation :</span>
+    </div>
+    <div class="legend-items">
+      <div class="legend-item"><span class="legend-code">Fic</span> Hygiène fichiers &amp; Windows</div>
+      <div class="legend-item"><span class="legend-code">Wrd</span> Traitement de texte &amp; publipostage (Word)</div>
+      <div class="legend-item"><span class="legend-code">Xls</span> Tableur &amp; formules de calcul (Sheets / Excel)</div>
+      <div class="legend-item"><span class="legend-code">DSI</span> Posture &amp; règles informatiques DSI</div>
+      <div class="legend-item"><span class="legend-code">DP</span> Rubriques Cerfa validées (/5 REAC CCP 1)</div>
+      <div class="legend-item"><strong>Seuil de validation :</strong> ≥ 15/20 (75%)</div>
+    </div>
+  </div>
 
   <!-- Pied de page avec cadre d'émargement et visa -->
   <footer class="footer-container">
