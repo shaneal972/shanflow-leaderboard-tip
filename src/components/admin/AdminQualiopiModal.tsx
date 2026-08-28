@@ -16,9 +16,9 @@ import {
   ChevronUp, 
   Search, 
   Building2, 
-  HelpCircle,
   ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  FileText
 } from 'lucide-react';
 import { QualiopiReportData, QualiopiStudentRow } from '@/types/tip';
 import { getQualiopiReportDataAction } from '@/app/admin/actions';
@@ -644,7 +644,7 @@ export const AdminQualiopiModal: React.FC<AdminQualiopiModalProps> = ({ isOpen, 
             <span>Données prêtes pour l&apos;audit qualité • Encodage UTF-8 BOM &amp; séparateur point-virgule</span>
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
             <button
               type="button"
               onClick={onClose}
@@ -657,11 +657,24 @@ export const AdminQualiopiModal: React.FC<AdminQualiopiModalProps> = ({ isOpen, 
               type="button"
               onClick={handleDownloadCsv}
               disabled={!data || data.students.length === 0}
-              className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 border border-emerald-400/30 shadow-lg shadow-emerald-950/40 transition-all disabled:opacity-50 cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:text-white bg-white/10 hover:bg-white/15 border border-white/15 transition-all disabled:opacity-50 cursor-pointer"
+              title="Exporter les données brutes au format tableur .CSV"
             >
               <Download className="w-4 h-4" />
-              <span>📥 Télécharger l&apos;export officiel (.CSV Excel)</span>
+              <span>Tableur (.CSV)</span>
             </button>
+
+            <a
+              href="/api/admin/qualiopi/pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              download
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 border border-teal-400/30 shadow-lg shadow-teal-950/40 transition-all cursor-pointer"
+              title="Générer et télécharger le PDF officiel A4 paysage via Gotenberg Chromium"
+            >
+              <FileText className="w-4 h-4" />
+              <span>📄 Télécharger le bilan Qualiopi officiel (PDF Gotenberg)</span>
+            </a>
           </div>
         </footer>
 

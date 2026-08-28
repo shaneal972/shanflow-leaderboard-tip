@@ -1,0 +1,143 @@
+{
+  "name": "[KLF] Générateur Bilan Qualiopi PDF (Gotenberg)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "qualiopi-pdf-generate",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Qualiopi PDF",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 300],
+      "webhookId": "qualiopi-pdf-generate"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst headers = item.headers || {};\nconst auth = headers.authorization || headers.Authorization || \"\";\n\n// Validation du token Bearer\nconst expectedToken = \"klf_tip_bearer_secret_2026_jarry_secure!\";\nif (!auth.includes(expectedToken)) {\n  throw new Error(\"Accès non autorisé : Bearer token invalide ou manquant.\");\n}\n\nconst body = item.body || item;\nconst html = body.html || \"<html><body><h1>Document Qualiopi vide</h1></body></html>\";\nconst filename = body.filename || \"Bilan-Qualiopi_TIP-C26031A.pdf\";\n\nreturn [{\n  json: {\n    filename: filename\n  },\n  binary: {\n    \"files\": {\n      data: Buffer.from(html, \"utf-8\").toString(\"base64\"),\n      mimeType: \"text/html\",\n      fileName: \"index.html\"\n    }\n  }\n}];"
+      },
+      "id": "prepare-binary",
+      "name": "Préparation Binaire HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://utility-gotenberg:3000/forms/chromium/convert/html",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "files"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "gotenberg-render",
+      "name": "Gotenberg Render PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nreturn [{\n  json: item.json,\n  binary: {\n    data: item.binary.data\n  }\n}];"
+      },
+      "id": "isolate-pdf",
+      "name": "Isoler Binaire PDF",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "responseDataSource": "firstIncomingItem",
+        "responseBinaryPropertyName": "data",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/pdf"
+              },
+              {
+                "name": "Content-Disposition",
+                "value": "attachment; filename=\"Bilan-Qualiopi_TIP-C26031A.pdf\""
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [980, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Qualiopi PDF": {
+      "main": [
+        [
+          {
+            "node": "Préparation Binaire HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Préparation Binaire HTML": {
+      "main": [
+        [
+          {
+            "node": "Gotenberg Render PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gotenberg Render PDF": {
+      "main": [
+        [
+          {
+            "node": "Isoler Binaire PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Isoler Binaire PDF": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
