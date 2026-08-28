@@ -143,3 +143,64 @@ export interface QuizWithStats extends Quiz {
   average_score?: number;
   submissions?: QuizSubmission[];
 }
+
+// =========================================================================
+// MODULE QUALIOPI AUDIT & REPORTING ENGINE (CFA FORE ALTERNANCE)
+// =========================================================================
+
+export interface QualiopiDomainDetail {
+  domaine: string;
+  total_questions: number;
+  reponses_correctes: number;
+  pourcentage: number;
+  acquis: boolean;
+}
+
+export interface QualiopiStudentRow {
+  apprenant_id: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  equipe: string;
+  avatar_url: string;
+  points_klf_total: number;
+  palier_actuel: string;
+  // Indicateur 8 : Positionnement initial à l'entrée
+  has_submitted_positionnement: boolean;
+  date_test_positionnement: string;
+  date_test_iso?: string;
+  score_positionnement_sur_20: number | null;
+  score_positionnement_pourcentage: number | null;
+  seuil_atteint: boolean;
+  statut_positionnement: 'Validé' | 'À consolider' | 'Non effectué';
+  domaines: QualiopiDomainDetail[];
+  // Indicateur 11 : Progression continue & DP
+  badges_obtenus_total: number;
+  dp_rubriques_validees_count: number;
+  dp_rubrique_1: boolean;
+  dp_rubrique_2: boolean;
+  dp_rubrique_3: boolean;
+  dp_rubrique_4: boolean;
+  dp_rubrique_5: boolean;
+  statut_dossier_professionnel: DPStatus | string;
+  avis_formateur: string;
+}
+
+export interface QualiopiKPIs {
+  total_stagiaires: number;
+  count_passage_test: number;
+  taux_passage_test: number;
+  moyenne_generale_positionnement: number;
+  taux_avancement_moyen_dp: number;
+  total_badges_distribues: number;
+  promotion_nom: string;
+  session_code: string;
+  formateur_nom: string;
+  centre_formation: string;
+  generated_at: string;
+}
+
+export interface QualiopiReportData {
+  students: QualiopiStudentRow[];
+  kpis: QualiopiKPIs;
+}

@@ -3,12 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Apprenant, TicketKLF, Badge, DPSuivi, QuizWithStats } from '@/types/tip';
-import { Users, Ticket, Trophy, FileCheck2, BookOpen } from 'lucide-react';
+import { Users, Ticket, Trophy, FileCheck2, BookOpen, FileSpreadsheet } from 'lucide-react';
 import { AdminStudentTable } from './AdminStudentTable';
 import { AdminTicketManager } from './AdminTicketManager';
 import { AdminBadgeMatrix } from './AdminBadgeMatrix';
 import { AdminDPOverview } from './AdminDPOverview';
 import { AdminQuizManager } from './AdminQuizManager';
+import { AdminQualiopiModal } from './AdminQualiopiModal';
 
 interface AdminDashboardTabsProps {
   students: Apprenant[];
@@ -31,6 +32,7 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
   const [studentsList, setStudentsList] = useState<Apprenant[]>(students);
   const [ticketsList, setTicketsList] = useState<TicketKLF[]>(tickets);
   const [activeTab, setActiveTab] = useState<'apprenants' | 'tickets' | 'badges' | 'dp' | 'quiz'>('apprenants');
+  const [isQualiopiOpen, setIsQualiopiOpen] = useState<boolean>(false);
 
   // Synchronisation avec les props serveur reçues
   useEffect(() => {
@@ -126,31 +128,46 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
   return (
     <div className="space-y-6">
       
-      {/* Barre d'onglets de navigation rapide */}
-      <div className="flex items-center gap-2 p-1.5 rounded-2xl slate-glass border border-white/10 overflow-x-auto">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
+      {/* Barre d'onglets de navigation rapide & actions */}
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 p-1.5 rounded-2xl slate-glass border border-white/10 overflow-x-auto">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
 
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 border ${
-                isActive
-                  ? `${tab.activeBg} shadow-lg shadow-black/20`
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border-transparent'
-              }`}
-            >
-              <Icon className={`w-4 h-4 ${tab.color}`} />
-              <span>{tab.label}</span>
-              <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono bg-white/5 border border-white/5 text-slate-300">
-                {tab.count}
-              </span>
-            </button>
-          );
-        })}
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 border ${
+                  isActive
+                    ? `${tab.activeBg} shadow-lg shadow-black/20`
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border-transparent'
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${tab.color}`} />
+                <span>{tab.label}</span>
+                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono bg-white/5 border border-white/5 text-slate-300">
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Bouton d'action proéminent Bilan Qualiopi Promo */}
+        <button
+          type="button"
+          onClick={() => setIsQualiopiOpen(true)}
+          className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-xs font-bold text-emerald-300 hover:text-white bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 hover:border-emerald-500/50 shadow-lg shadow-emerald-950/30 transition-all cursor-pointer whitespace-nowrap self-start xl:self-auto shrink-0"
+        >
+          <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+          <span>📊 Bilan Qualiopi Promo</span>
+          <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+            Ind. 8 &amp; 11
+          </span>
+        </button>
       </div>
 
       {/* Rendu dynamique du module sélectionné */}
@@ -197,6 +214,12 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
           />
         )}
       </div>
+
+      {/* Modale d'audit Qualiopi pour le formateur */}
+      <AdminQualiopiModal
+        isOpen={isQualiopiOpen}
+        onClose={() => setIsQualiopiOpen(false)}
+      />
 
     </div>
   );
