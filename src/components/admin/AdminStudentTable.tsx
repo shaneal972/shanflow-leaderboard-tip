@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useTransition } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Apprenant } from '@/types/tip';
 import { 
@@ -14,13 +15,19 @@ import {
   Sparkles, 
   X, 
   Check, 
-  AlertCircle 
+  AlertCircle,
+  Eye,
+  EyeOff,
+  KeyRound,
+  ExternalLink,
+  RefreshCw
 } from 'lucide-react';
 import { 
   createStudentAction, 
   updateStudentAction, 
   deleteStudentAction, 
-  adjustPointsAction 
+  adjustPointsAction,
+  updateStudentPinAction
 } from '@/app/admin/actions';
 
 interface AdminStudentTableProps {
@@ -59,6 +66,51 @@ export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({
 
   // Modal Édition
   const [editingStudent, setEditingStudent] = useState<Apprenant | null>(null);
+
+  // Gestion des Codes PIN DSI
+  const [revealedPins, setRevealedPins] = useState<Record<string, boolean>>({});
+  const [pinModalStudent, setPinModalStudent] = useState<Apprenant | null>(null);
+  const [pinModalValue, setPinModalValue] = useState('');
+
+  const togglePin = (id: string) => {
+    setRevealedPins((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleUpdatePinSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pinModalStudent) return;
+    const clean = pinModalValue.trim();
+    if (!/^\d{4,6}$/.test(clean)) {
+      setMessage({ type: 'error', text: 'Le code PIN doit comporter entre 4 et 6 chiffres.' });
+      return;
+    }
+
+    startTransition(async () => {
+      const res = await updateStudentPinAction(pinModalStudent.id, clean);
+      if (res.success) {
+        setStudentsList((prev) =>
+          prev.map((s) => (s.id === pinModalStudent.id ? { ...s, pin_code: clean } : s))
+        );
+        if (onStudentUpdated) {
+          onStudentUpdated({ ...pinModalStudent, pin_code: clean });
+        }
+        setPinModalStudent(null);
+        setMessage({
+          type: 'success',
+          text: `Code PIN de ${pinModalStudent.prenom} mis à jour : ${clean}`,
+        });
+        router.refresh();
+        setTimeout(() => setMessage(null), 3000);
+      } else {
+        setMessage({ type: 'error', text: res.error || 'Erreur lors de la mise à jour du PIN.' });
+      }
+    });
+  };
+
+  const generateRandomPin = () => {
+    const rand = Math.floor(1000 + Math.random() * 9000).toString();
+    setPinModalValue(rand);
+  };
 
   const teams = Array.from(new Set(studentsList.map((s) => s.equipe)));
 
@@ -142,6 +194,7 @@ export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({
         email: editingStudent.email,
         equipe: editingStudent.equipe,
         palier_actuel: editingStudent.palier_actuel,
+        pin_code: editingStudent.pin_code,
       });
       if (res.success && res.student) {
         setStudentsList((prev) =>
@@ -258,6 +311,7 @@ export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({
                 <th className="py-3 px-4">Escouade</th>
                 <th className="py-3 px-4">Palier</th>
                 <th className="py-3 px-4 text-center">Score KLF</th>
+                <th className="py-3 px-4 text-center">Code PIN</th>
                 <th className="py-3 px-4 text-center">Ajustement rapide</th>
                 <th className="py-3 px-4 text-center w-28 sticky-actions-col">
                   Action
@@ -276,8 +330,16 @@ export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({
                         {student.prenom[0]}
                       </div>
                       <div>
-                        <div className="font-semibold text-white font-['Lexend']">
-                          {student.prenom} {student.nom}
+                        <div className="flex items-center gap-1.5 font-semibold text-white font-['Lexend']">
+                          <span>{student.prenom} {student.nom}</span>
+                          <Link
+                            href={`/passport/${student.id}`}
+                            target="_blank"
+                            className="text-slate-500 hover:text-teal-300 transition-colors p-0.5"
+                            title="Ouvrir le passeport (Accès Maître)"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                          </Link>
                         </div>
                         {student.is_admin && (
                           <span className="text-[10px] font-mono text-amber-400">Formateur DSI</span>
@@ -300,6 +362,32 @@ export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({
                   </td>
                   <td className="py-3 px-4 text-center font-mono font-bold text-amber-400 text-sm">
                     {student.points_total} pts
+                  </td>
+                  <td className="py-3 px-4 text-center">
+                    <div className="inline-flex items-center gap-1.5 font-mono text-xs">
+                      <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-teal-300 font-semibold tracking-wider text-[11px]">
+                        {revealedPins[student.id] ? (student.pin_code || '2026') : '••••'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => togglePin(student.id)}
+                        className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                        title={revealedPins[student.id] ? "Masquer le code PIN" : "Révéler le code PIN"}
+                      >
+                        {revealedPins[student.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPinModalStudent(student);
+                          setPinModalValue(student.pin_code || '2026');
+                        }}
+                        className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-amber-300 transition-colors"
+                        title="Réinitialiser ou modifier le code PIN"
+                      >
+                        <KeyRound className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </td>
                   <td className="py-3 px-4 text-center">
                     <div className="inline-flex items-center gap-1 font-mono">
@@ -525,6 +613,25 @@ export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({
                 </div>
               </div>
 
+              <div>
+                <label className="text-slate-300 block mb-1">Code PIN agent (4 chiffres)</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
+                  value={editingStudent.pin_code || ''}
+                  onChange={(e) =>
+                    setEditingStudent({
+                      ...editingStudent,
+                      pin_code: e.target.value.replace(/\D/g, ''),
+                    })
+                  }
+                  placeholder="Ex: 2026"
+                  className="w-full px-3 py-2 rounded-lg bg-[#070F1E] border border-white/10 text-white font-mono tracking-widest focus:outline-none focus:border-teal-400"
+                />
+              </div>
+
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/10">
                 <button
                   type="button"
@@ -539,6 +646,75 @@ export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({
                   className="px-4 py-1.5 rounded-lg font-semibold bg-teal-500 hover:bg-teal-400 text-slate-950 transition-all active:scale-95 disabled:opacity-50"
                 >
                   {isPending ? 'Mise à jour...' : 'Sauvegarder'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Réinitialisation Rapide Code PIN */}
+      {pinModalStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl slate-glass border border-white/15 p-6 space-y-4 shadow-2xl bg-[#070F1E]">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <h3 className="text-base font-semibold text-white font-['Lexend'] flex items-center gap-2">
+                <KeyRound className="w-4 h-4 text-amber-400" />
+                Code PIN • {pinModalStudent.prenom}
+              </h3>
+              <button
+                onClick={() => setPinModalStudent(null)}
+                className="p-1 text-slate-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300">
+              Code PIN d&apos;accès au passeport personnel de <strong>{pinModalStudent.prenom} {pinModalStudent.nom}</strong>.
+            </p>
+
+            <form onSubmit={handleUpdatePinSubmit} noValidate className="space-y-4 text-xs">
+              <div>
+                <label className="text-slate-300 block mb-1.5">Code PIN agent (4 à 6 chiffres)</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={6}
+                    required
+                    value={pinModalValue}
+                    onChange={(e) => setPinModalValue(e.target.value.replace(/\D/g, ''))}
+                    placeholder="Ex: 4812"
+                    className="w-full px-3 py-2 text-center text-lg font-mono tracking-widest rounded-lg bg-[#0A192F] border border-white/15 text-white focus:outline-none focus:border-amber-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={generateRandomPin}
+                    className="px-3 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 whitespace-nowrap flex items-center gap-1.5 transition-colors cursor-pointer"
+                    title="Générer un code à 4 chiffres aléatoire"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Aléatoire</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setPinModalStudent(null)}
+                  className="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPending || pinModalValue.length < 4}
+                  className="px-4 py-1.5 rounded-lg font-semibold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                >
+                  {isPending ? 'Enregistrement...' : 'Valider le PIN'}
                 </button>
               </div>
             </form>

@@ -92,6 +92,8 @@ export async function createStudentAction(data: {
   const avatarUrl = parsed.data.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`;
 
   try {
+    const initialPin = Math.floor(1000 + Math.random() * 9000).toString();
+
     const { data: newStudent, error } = await supabaseServer.from('sf_apprenants').insert({
       prenom: parsed.data.prenom,
       nom: parsed.data.nom,
@@ -100,6 +102,7 @@ export async function createStudentAction(data: {
       palier_actuel: parsed.data.palier_actuel || 'Palier 0',
       avatar_url: avatarUrl,
       points_total: 0,
+      pin_code: initialPin,
       is_admin: false,
     }).select().single();
 
@@ -122,6 +125,7 @@ const updateStudentSchema = z.object({
   email: z.string().email(),
   equipe: z.string().min(2).max(50).transform(sanitizeString),
   palier_actuel: z.string(),
+  pin_code: z.string().regex(/^\d{4,6}$/, 'Code PIN invalide (4 à 6 chiffres)').optional(),
 });
 
 export async function updateStudentAction(data: {
@@ -131,6 +135,7 @@ export async function updateStudentAction(data: {
   email: string;
   equipe: string;
   palier_actuel: string;
+  pin_code?: string;
 }) {
   const isAuth = await isAdminAuthenticated();
   if (!isAuth) return { success: false, error: 'Accès non autorisé.' };
@@ -141,15 +146,20 @@ export async function updateStudentAction(data: {
   }
 
   try {
+    const updatePayload: Record<string, any> = {
+      prenom: parsed.data.prenom,
+      nom: parsed.data.nom,
+      email: parsed.data.email,
+      equipe: parsed.data.equipe,
+      palier_actuel: parsed.data.palier_actuel,
+    };
+    if (parsed.data.pin_code) {
+      updatePayload.pin_code = parsed.data.pin_code;
+    }
+
     const { data: updatedStudent, error } = await supabaseServer
       .from('sf_apprenants')
-      .update({
-        prenom: parsed.data.prenom,
-        nom: parsed.data.nom,
-        email: parsed.data.email,
-        equipe: parsed.data.equipe,
-        palier_actuel: parsed.data.palier_actuel,
-      })
+      .update(updatePayload)
       .eq('id', parsed.data.id)
       .select()
       .single();
@@ -1094,5 +1104,36 @@ export async function generateQualiopiCsvStringAction(): Promise<{
   const filename = `${todayStr}_FORE-Alternance_Bilan-Qualiopi_TIP-C26031A.csv`;
 
   return { success: true, csvContent, filename };
+}
+
+/**
+ * 8. GESTION DU CODE PIN APPRENANT
+ * Permet au formateur de réinitialiser ou modifier immédiatement le code PIN d'un apprenant.
+ */
+export async function updateStudentPinAction(studentId: string, newPin: string) {
+  const isAuth = await isAdminAuthenticated();
+  if (!isAuth) return { success: false, error: 'Accès non autorisé.' };
+
+  const pinClean = newPin.trim();
+  if (!/^\d{4,6}$/.test(pinClean)) {
+    return { success: false, error: 'Le code PIN doit comporter entre 4 et 6 chiffres.' };
+  }
+
+  try {
+    const { error } = await supabaseServer
+      .from('sf_apprenants')
+      .update({ pin_code: pinClean })
+      .eq('id', studentId);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    revalidatePath('/admin');
+    revalidatePath(`/passport/${studentId}`);
+    return { success: true, pin: pinClean };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Erreur serveur.' };
+  }
 }
 

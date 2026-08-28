@@ -19,6 +19,7 @@ create table if not exists tip.sf_apprenants (
   palier_actuel text default 'Palier 0',
   equipe text default 'Support Jarry',
   is_admin boolean default false,
+  pin_code varchar(6) default '2026',
   consentement_rgpd boolean default true,
   created_at timestamptz default now()
 );

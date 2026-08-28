@@ -24,6 +24,7 @@ export interface Apprenant {
   equipe: string;
   is_admin: boolean;
   consentement_rgpd: boolean;
+  pin_code?: string;
   created_at?: string;
 }
 
