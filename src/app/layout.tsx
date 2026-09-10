@@ -17,7 +17,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'KLF Tech Passport & Leaderboard | Titre Pro TIP METAFORE',
+  title: 'KLF Tech Passport et classement promo | Titre Pro TIP METAFORE',
   description:
     'Plateforme d\'évaluation et de gamification des compétences pour la promotion Techniciens Informatiques de Proximité (Session C26031A) - Karukera Logistique & Fret (KLF).',
 };

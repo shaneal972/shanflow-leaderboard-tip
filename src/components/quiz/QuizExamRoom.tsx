@@ -340,7 +340,7 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
 
           <div className="space-y-3">
             <span className="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/40">
-              ⛔ Protocole KLF Sentinel Lock : Épreuve Interrompue
+              ⛔ Protocole KLF Sentinel Lock : épreuve interrompue
             </span>
             <h1 className="text-2xl font-bold text-white font-['Lexend'] tracking-tight">
               Copie clôturée pour infractions répétées
@@ -415,7 +415,7 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
 
           <div className="space-y-3">
             <span className="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-teal-500/10 text-teal-300 border border-teal-500/20">
-              Copie scellée & Horodatée
+              Copie scellée & horodatée
             </span>
             <h1 className="text-2xl font-bold text-white font-['Lexend'] tracking-tight">
               Copie enregistrée avec succès !
@@ -674,7 +674,7 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
 
           <div className="space-y-2">
             <span className="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-teal-500/10 text-teal-300 border border-teal-500/20">
-              Protocole d&apos;Examen Haute Sécurité : KLF Sentinel Lock
+              Protocole d&apos;examen haute sécurité : KLF Sentinel Lock
             </span>
             <h1 className="text-2xl font-bold text-white font-['Lexend']">
               {quiz.titre}
@@ -829,7 +829,7 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
             </p>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="text-[10px] text-teal-400 font-mono flex items-center gap-1">
-                <Shield className="w-3 h-3" /> Sentinel Lock Actif
+                <Shield className="w-3 h-3" /> Sentinel Lock actif
               </span>
               {infractionsCount > 0 && (
                 <span className="text-[10px] text-amber-400 font-mono font-bold">
