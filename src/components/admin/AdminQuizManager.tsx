@@ -196,7 +196,7 @@ export const AdminQuizManager: React.FC<AdminQuizManagerProps> = ({
       )}
 
       {/* Sélecteur de Quiz / Grille des Épreuves */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {initialQuizzes.map((q) => {
           const isSelected = q.id === activeQuiz?.id;
           const isOpen = q.statut === 'session_ouverte';

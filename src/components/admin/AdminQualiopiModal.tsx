@@ -92,10 +92,15 @@ export const AdminQualiopiModal: React.FC<AdminQualiopiModalProps> = ({ isOpen, 
       'Prenom',
       'Email',
       'Equipe',
-      'Date_Test_Positionnement',
-      'Score_Positionnement_Sur_20',
-      'Score_Positionnement_Pourcentage',
-      'Statut_Positionnement',
+      'Date_Dernier_Test',
+      'Note_RAN_Sur_20',
+      'Note_Word_Docs_Sur_20',
+      'Note_Excel_Sheets_Sur_20',
+      'Note_Outlook_Gmail_Sur_20',
+      'Moyenne_Bureautique_Sur_20',
+      'Statut_Bureautique',
+      'Note_Entree_Globale_Sur_20',
+      'Statut_Positionnement_Global',
       'Badges_Obtenus_Total',
       'Points_KLF_Total',
       'Palier_Actuel',
@@ -105,6 +110,7 @@ export const AdminQualiopiModal: React.FC<AdminQualiopiModalProps> = ({ isOpen, 
       'DP_Rubrique_4_Contexte',
       'DP_Rubrique_5_Info_Comp',
       'Statut_Dossier_Professionnel',
+      'Avis_Pédagogique_Formateur',
     ];
 
     const formatDPStatus = (status: string) => {
@@ -120,8 +126,13 @@ export const AdminQualiopiModal: React.FC<AdminQualiopiModalProps> = ({ isOpen, 
       escapeCell(s.email),
       escapeCell(s.equipe),
       escapeCell(s.date_test_positionnement),
-      escapeCell(s.score_positionnement_sur_20 !== null ? s.score_positionnement_sur_20 : 'Non effectué'),
-      escapeCell(s.score_positionnement_pourcentage !== null ? `${s.score_positionnement_pourcentage}%` : 'Non effectué'),
+      escapeCell(s.score_ran_sur_20 !== null && s.score_ran_sur_20 !== undefined ? s.score_ran_sur_20 : 'Non effectué'),
+      escapeCell(s.score_word_sur_20 !== null && s.score_word_sur_20 !== undefined ? s.score_word_sur_20 : 'Non effectué'),
+      escapeCell(s.score_excel_sur_20 !== null && s.score_excel_sur_20 !== undefined ? s.score_excel_sur_20 : 'Non effectué'),
+      escapeCell(s.score_outlook_sur_20 !== null && s.score_outlook_sur_20 !== undefined ? s.score_outlook_sur_20 : 'Non effectué'),
+      escapeCell(s.moyenne_bureautique_sur_20 !== null && s.moyenne_bureautique_sur_20 !== undefined ? `${s.moyenne_bureautique_sur_20}/20` : 'Non effectué'),
+      escapeCell(s.statut_bureautique || 'Non effectué'),
+      escapeCell(s.score_positionnement_sur_20 !== null ? `${s.score_positionnement_sur_20}/20` : 'Non effectué'),
       escapeCell(s.statut_positionnement),
       escapeCell(s.badges_obtenus_total),
       escapeCell(s.points_klf_total),
@@ -132,6 +143,7 @@ export const AdminQualiopiModal: React.FC<AdminQualiopiModalProps> = ({ isOpen, 
       escapeCell(s.dp_rubrique_4 ? 'Validé' : 'Non validé'),
       escapeCell(s.dp_rubrique_5 ? 'Validé' : 'Non validé'),
       escapeCell(formatDPStatus(s.statut_dossier_professionnel)),
+      escapeCell(s.avis_formateur),
     ]);
 
     // Encodage strict UTF-8 avec BOM (\uFEFF) pour compatibilité Excel Windows/Mac
@@ -536,7 +548,26 @@ export const AdminQualiopiModal: React.FC<AdminQualiopiModalProps> = ({ isOpen, 
                                           </span>
                                         </div>
 
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-2.5 rounded-xl bg-teal-500/5 border border-teal-500/20 text-xs font-mono">
+                                          <div className="flex flex-col">
+                                            <span className="text-[10px] text-slate-400">1. RAN Fondamentaux</span>
+                                            <span className="font-bold text-white text-sm">{s.score_ran_sur_20 !== null && s.score_ran_sur_20 !== undefined ? `${s.score_ran_sur_20}/20` : 'En attente'}</span>
+                                          </div>
+                                          <div className="flex flex-col">
+                                            <span className="text-[10px] text-slate-400">2. Word & Google Docs</span>
+                                            <span className="font-bold text-teal-300 text-sm">{s.score_word_sur_20 !== null && s.score_word_sur_20 !== undefined ? `${s.score_word_sur_20}/20` : 'En attente'}</span>
+                                          </div>
+                                          <div className="flex flex-col">
+                                            <span className="text-[10px] text-slate-400">3. Excel & Sheets</span>
+                                            <span className="font-bold text-amber-300 text-sm">{s.score_excel_sur_20 !== null && s.score_excel_sur_20 !== undefined ? `${s.score_excel_sur_20}/20` : 'En attente'}</span>
+                                          </div>
+                                          <div className="flex flex-col">
+                                            <span className="text-[10px] text-slate-400">4. Outlook & Gmail</span>
+                                            <span className="font-bold text-sky-300 text-sm">{s.score_outlook_sur_20 !== null && s.score_outlook_sur_20 !== undefined ? `${s.score_outlook_sur_20}/20` : 'En attente'}</span>
+                                          </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
                                           {s.domaines.map((dom) => (
                                             <div
                                               key={dom.domaine}

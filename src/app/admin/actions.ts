@@ -777,46 +777,56 @@ export async function getQualiopiReportDataAction(): Promise<{
       ? rawStudents
       : MOCK_APPRENANTS.filter((a) => !a.is_admin);
 
-    // 2. Paramètres du quiz de positionnement (Palier 0 - RAN)
-    const { data: quizData } = await supabaseServer
+    // 2. Paramètres des quiz (Palier 0 RAN + Trinité Bureautique Palier 1)
+    const quizIds = ['quiz-p0-ran', 'quiz-p1-word-docs', 'quiz-p1-excel-sheets', 'quiz-p1-outlook-gmail'];
+
+    const { data: allQuizzesData } = await supabaseServer
       .from('sf_quizzes')
       .select('*')
-      .eq('id', 'quiz-p0-ran')
-      .maybeSingle();
+      .in('id', quizIds);
 
-    const seuilValidation = quizData?.seuil_validation ?? 75;
+    const quizMap = new Map<string, any>();
+    (allQuizzesData || []).forEach((q: any) => quizMap.set(q.id, q));
+
+    const seuilValidation = 75;
 
     // 3. Récupération des questions & options pour cartographie par domaine (Indicateur 8)
     const { data: questionsData } = await supabaseServer
       .from('sf_quiz_questions')
-      .select('id, theme, points, sf_quiz_options(id, is_correct)')
-      .eq('quiz_id', 'quiz-p0-ran');
+      .select('id, quiz_id, theme, points, sf_quiz_options(id, is_correct)')
+      .in('quiz_id', quizIds);
 
-    const mapThemeToDomain = (theme: string): string => {
-      const lower = (theme || '').toLowerCase();
-      if (lower.includes('fichier') || lower.includes('nommage') || lower.includes('clavier') || lower.includes('raccourci')) {
-        return 'Hygiène Fichiers & Windows';
+    const mapThemeToDomain = (theme: string, quizId: string): string => {
+      if (quizId === 'quiz-p1-word-docs' || theme.toLowerCase().includes('texte') || theme.toLowerCase().includes('word') || theme.toLowerCase().includes('doc')) {
+        return 'Traitement de texte (Word & Docs)';
       }
-      if (lower.includes('texte') || lower.includes('norme') || lower.includes('word')) {
-        return 'Traitement de texte';
+      if (quizId === 'quiz-p1-excel-sheets' || theme.toLowerCase().includes('tableur') || theme.toLowerCase().includes('excel') || theme.toLowerCase().includes('sheet')) {
+        return 'Tableur & Analyse (Excel & Sheets)';
       }
-      if (lower.includes('tableur') || lower.includes('excel') || lower.includes('sheet') || lower.includes('formule')) {
-        return 'Tableur Sheets/Excel';
+      if (quizId === 'quiz-p1-outlook-gmail' || theme.toLowerCase().includes('messagerie') || theme.toLowerCase().includes('outlook') || theme.toLowerCase().includes('mail') || theme.toLowerCase().includes('agenda')) {
+        return 'Messagerie & Collaboration (Outlook & Gmail)';
       }
-      return 'Posture DSI';
+      if (theme.toLowerCase().includes('fichier') || theme.toLowerCase().includes('nommage') || theme.toLowerCase().includes('clavier') || theme.toLowerCase().includes('raccourci')) {
+        return 'Hygiène Système & Fichiers';
+      }
+      return 'Posture DSI & Sécurité RGPD';
     };
 
-    // 4. Récupération des soumissions de test de positionnement
+    // 4. Récupération des soumissions de tous les quiz
     const { data: rawSubmissions } = await supabaseServer
       .from('sf_quiz_submissions')
       .select('*')
-      .eq('quiz_id', 'quiz-p0-ran');
+      .in('quiz_id', quizIds);
 
-    const submissionMap = new Map<string, QuizSubmission>();
+    // Map: studentId -> Map<quizId, QuizSubmission>
+    const studentSubmissionsMap = new Map<string, Map<string, QuizSubmission>>();
     (rawSubmissions || []).forEach((sub: QuizSubmission) => {
-      const existing = submissionMap.get(sub.apprenant_id);
+      if (!studentSubmissionsMap.has(sub.apprenant_id)) {
+        studentSubmissionsMap.set(sub.apprenant_id, new Map());
+      }
+      const existing = studentSubmissionsMap.get(sub.apprenant_id)!.get(sub.quiz_id);
       if (!existing || new Date(sub.submitted_at) > new Date(existing.submitted_at)) {
-        submissionMap.set(sub.apprenant_id, sub);
+        studentSubmissionsMap.get(sub.apprenant_id)!.set(sub.quiz_id, sub);
       }
     });
 
@@ -854,7 +864,12 @@ export async function getQualiopiReportDataAction(): Promise<{
 
     // 7. Fusion et calcul par stagiaire
     const studentRows: QualiopiStudentRow[] = students.map((student) => {
-      const sub = submissionMap.get(student.id);
+      const subsForStudent = studentSubmissionsMap.get(student.id) || new Map();
+      const subRan = subsForStudent.get('quiz-p0-ran');
+      const subWord = subsForStudent.get('quiz-p1-word-docs');
+      const subExcel = subsForStudent.get('quiz-p1-excel-sheets');
+      const subOutlook = subsForStudent.get('quiz-p1-outlook-gmail');
+
       const dp = dpMap.get(student.id) || {
         apprenant_id: student.id,
         rubrique_1: false,
@@ -875,20 +890,61 @@ export async function getQualiopiReportDataAction(): Promise<{
 
       const badgesCount = badgesCountMap.get(student.id) || 0;
 
-      let hasSubmitted = false;
-      let dateFormatted = 'Non effectué';
-      let dateIso: string | undefined = undefined;
-      let scoreSur20: number | null = null;
-      let scorePercent: number | null = null;
-      let seuilAtteint = false;
-      let statutPos: 'Validé' | 'À consolider' | 'Non effectué' = 'Non effectué';
+      // Notes individuelles sur 20
+      const scoreRan = typeof subRan?.score_obtenu === 'number' ? subRan.score_obtenu : null;
+      const scoreWord = typeof subWord?.score_obtenu === 'number' ? subWord.score_obtenu : null;
+      const scoreExcel = typeof subExcel?.score_obtenu === 'number' ? subExcel.score_obtenu : null;
+      const scoreOutlook = typeof subOutlook?.score_obtenu === 'number' ? subOutlook.score_obtenu : null;
 
-      // Domaines Qualiopi Indicateur 8
+      // Moyenne bureautique (sur les quiz Palier 1 passés)
+      const officeScores = [scoreWord, scoreExcel, scoreOutlook].filter((s): s is number => s !== null);
+      const moyenneBureautique = officeScores.length > 0
+        ? Number((officeScores.reduce((a, b) => a + b, 0) / officeScores.length).toFixed(1))
+        : null;
+
+      const statutBureautique = moyenneBureautique !== null
+        ? (moyenneBureautique >= 15 ? 'Validé' : 'À consolider')
+        : 'Non effectué';
+
+      // Test de positionnement global / RAN
+      const allPassedSubs = [subRan, subWord, subExcel, subOutlook].filter(Boolean) as QuizSubmission[];
+      const hasSubmittedAny = allPassedSubs.length > 0;
+
+      let latestDateFormatted = 'Non effectué';
+      let latestDateIso: string | undefined = undefined;
+
+      if (hasSubmittedAny) {
+        const sortedSubs = [...allPassedSubs].sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime());
+        const latest = sortedSubs[0];
+        latestDateIso = latest.submitted_at;
+        const d = new Date(latest.submitted_at);
+        latestDateFormatted = d.toLocaleDateString('fr-FR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+      }
+
+      // Note d'entrée de référence (Score RAN ou Moyenne générale)
+      const allScores = [scoreRan, scoreWord, scoreExcel, scoreOutlook].filter((s): s is number => s !== null);
+      const scoreSur20 = allScores.length > 0
+        ? Number((allScores.reduce((a, b) => a + b, 0) / allScores.length).toFixed(1))
+        : null;
+      const scorePercent = scoreSur20 !== null ? Math.round((scoreSur20 / 20) * 100) : null;
+      const seuilAtteint = scorePercent !== null ? scorePercent >= seuilValidation : false;
+      const statutPos: 'Validé' | 'À consolider' | 'Non effectué' = hasSubmittedAny
+        ? (seuilAtteint ? 'Validé' : 'À consolider')
+        : 'Non effectué';
+
+      // Domaines Qualiopi Indicateur 8 (5 Domaines)
       const domainsList = [
-        'Hygiène Fichiers & Windows',
-        'Traitement de texte',
-        'Tableur Sheets/Excel',
-        'Posture DSI',
+        'Hygiène Système & Fichiers',
+        'Traitement de texte (Word & Docs)',
+        'Tableur & Analyse (Excel & Sheets)',
+        'Messagerie & Collaboration (Outlook & Gmail)',
+        'Posture DSI & Sécurité RGPD',
       ];
 
       const domainStatsMap: Record<string, { total: number; correct: number }> = {};
@@ -898,14 +954,15 @@ export async function getQualiopiReportDataAction(): Promise<{
 
       if (questionsData && questionsData.length > 0) {
         questionsData.forEach((q: any) => {
-          const dom = mapThemeToDomain(q.theme || '');
+          const dom = mapThemeToDomain(q.theme || '', q.quiz_id);
           if (!domainStatsMap[dom]) {
             domainStatsMap[dom] = { total: 0, correct: 0 };
           }
           domainStatsMap[dom].total += 1;
 
-          if (sub && sub.reponses_choisies) {
-            const chosenOptionId = sub.reponses_choisies[q.id];
+          const relatedSub = subsForStudent.get(q.quiz_id);
+          if (relatedSub && relatedSub.reponses_choisies) {
+            const chosenOptionId = relatedSub.reponses_choisies[q.id];
             const correctOpt = (q.sf_quiz_options || []).find((opt: any) => opt.is_correct);
             if (correctOpt && chosenOptionId === correctOpt.id) {
               domainStatsMap[dom].correct += 1;
@@ -926,32 +983,17 @@ export async function getQualiopiReportDataAction(): Promise<{
         };
       });
 
-      if (sub) {
-        hasSubmitted = true;
-        dateIso = sub.submitted_at;
-        const d = new Date(sub.submitted_at);
-        dateFormatted = d.toLocaleDateString('fr-FR', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        });
-        scoreSur20 = typeof sub.score_obtenu === 'number' ? sub.score_obtenu : null;
-        scorePercent = typeof sub.score_pourcentage === 'number' ? sub.score_pourcentage : null;
-        seuilAtteint = scorePercent !== null ? scorePercent >= seuilValidation : false;
-        statutPos = seuilAtteint ? 'Validé' : 'À consolider';
-      }
-
-      // Appréciation pédagogique du formateur
+      // Appréciation pédagogique
       let avis = 'Progression conforme aux attendus REAC';
       if (dp.statut_dp === 'valide_jury') {
         avis = 'Dossier professionnel validé pour le jury';
       } else if (dpRubriquesCount >= 4) {
         avis = 'Dossier professionnel bien avancé';
-      } else if (!hasSubmitted) {
-        avis = 'Test de positionnement initial à compléter';
-      } else if (!seuilAtteint) {
+      } else if (!hasSubmittedAny) {
+        avis = 'Tests d\'entrée à compléter';
+      } else if (moyenneBureautique !== null && moyenneBureautique >= 16) {
+        avis = 'Excellente maîtrise opérationnelle des outils bureautiques';
+      } else if (scoreSur20 !== null && scoreSur20 < 12) {
         avis = 'Remédiation recommandée sur les fondamentaux';
       }
 
@@ -964,14 +1006,21 @@ export async function getQualiopiReportDataAction(): Promise<{
         avatar_url: student.avatar_url,
         points_klf_total: student.points_total || 0,
         palier_actuel: student.palier_actuel || 'Palier 0',
-        has_submitted_positionnement: hasSubmitted,
-        date_test_positionnement: dateFormatted,
-        date_test_iso: dateIso,
+        has_submitted_positionnement: hasSubmittedAny,
+        date_test_positionnement: latestDateFormatted,
+        date_test_iso: latestDateIso,
         score_positionnement_sur_20: scoreSur20,
         score_positionnement_pourcentage: scorePercent,
         seuil_atteint: seuilAtteint,
         statut_positionnement: statutPos,
         domaines: domainesDetail,
+        // Grille détaillée multi-épreuves
+        score_ran_sur_20: scoreRan,
+        score_word_sur_20: scoreWord,
+        score_excel_sur_20: scoreExcel,
+        score_outlook_sur_20: scoreOutlook,
+        moyenne_bureautique_sur_20: moyenneBureautique,
+        statut_bureautique: statutBureautique,
         badges_obtenus_total: badgesCount,
         dp_rubriques_validees_count: dpRubriquesCount,
         dp_rubrique_1: dp.rubrique_1 || false,
@@ -993,6 +1042,18 @@ export async function getQualiopiReportDataAction(): Promise<{
     const sumScores = submittedRows.reduce((acc, s) => acc + (s.score_positionnement_sur_20 || 0), 0);
     const moyenneGenerale = countPassage > 0 ? Number((sumScores / countPassage).toFixed(1)) : 0;
 
+    // Moyennes par épreuve pour la promo
+    const calcAvg = (getter: (s: QualiopiStudentRow) => number | null | undefined) => {
+      const vals = studentRows.map(getter).filter((v): v is number => typeof v === 'number');
+      return vals.length > 0 ? Number((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)) : undefined;
+    };
+
+    const avgRan = calcAvg(s => s.score_ran_sur_20);
+    const avgWord = calcAvg(s => s.score_word_sur_20);
+    const avgExcel = calcAvg(s => s.score_excel_sur_20);
+    const avgOutlook = calcAvg(s => s.score_outlook_sur_20);
+    const avgOffice = calcAvg(s => s.moyenne_bureautique_sur_20);
+
     const totalRubriquesValidees = studentRows.reduce((acc, s) => acc + s.dp_rubriques_validees_count, 0);
     const maxRubriques = totalStagiaires * 5;
     const tauxAvancementDp = maxRubriques > 0 ? Math.round((totalRubriquesValidees / maxRubriques) * 100) : 0;
@@ -1006,6 +1067,11 @@ export async function getQualiopiReportDataAction(): Promise<{
         count_passage_test: countPassage,
         taux_passage_test: tauxPassage,
         moyenne_generale_positionnement: moyenneGenerale,
+        moyenne_ran: avgRan,
+        moyenne_word: avgWord,
+        moyenne_excel: avgExcel,
+        moyenne_outlook: avgOutlook,
+        moyenne_bureautique_promo: avgOffice,
         taux_avancement_moyen_dp: tauxAvancementDp,
         total_badges_distribues: totalBadges,
         promotion_nom: 'Technicien Informatique de Proximité (TIP)',
@@ -1022,6 +1088,7 @@ export async function getQualiopiReportDataAction(): Promise<{
     return { success: false, error: err.message || 'Erreur lors de la génération du bilan Qualiopi.' };
   }
 }
+
 
 /**
  * Génère le contenu CSV formaté conforme aux normes régionales françaises & Excel (UTF-8 BOM).
@@ -1054,10 +1121,15 @@ export async function generateQualiopiCsvStringAction(): Promise<{
     'Prenom',
     'Email',
     'Equipe',
-    'Date_Test_Positionnement',
-    'Score_Positionnement_Sur_20',
-    'Score_Positionnement_Pourcentage',
-    'Statut_Positionnement',
+    'Date_Dernier_Test',
+    'Note_RAN_Sur_20',
+    'Note_Word_Docs_Sur_20',
+    'Note_Excel_Sheets_Sur_20',
+    'Note_Outlook_Gmail_Sur_20',
+    'Moyenne_Bureautique_Sur_20',
+    'Statut_Bureautique',
+    'Note_Entree_Globale_Sur_20',
+    'Statut_Positionnement_Global',
     'Badges_Obtenus_Total',
     'Points_KLF_Total',
     'Palier_Actuel',
@@ -1067,6 +1139,7 @@ export async function generateQualiopiCsvStringAction(): Promise<{
     'DP_Rubrique_4_Contexte',
     'DP_Rubrique_5_Info_Comp',
     'Statut_Dossier_Professionnel',
+    'Avis_Pédagogique_Formateur',
   ];
 
   const formatDPStatus = (status: string) => {
@@ -1082,8 +1155,13 @@ export async function generateQualiopiCsvStringAction(): Promise<{
     escapeCell(s.email),
     escapeCell(s.equipe),
     escapeCell(s.date_test_positionnement),
-    escapeCell(s.score_positionnement_sur_20 !== null ? s.score_positionnement_sur_20 : 'Non effectué'),
-    escapeCell(s.score_positionnement_pourcentage !== null ? `${s.score_positionnement_pourcentage}%` : 'Non effectué'),
+    escapeCell(s.score_ran_sur_20 !== null && s.score_ran_sur_20 !== undefined ? s.score_ran_sur_20 : 'Non effectué'),
+    escapeCell(s.score_word_sur_20 !== null && s.score_word_sur_20 !== undefined ? s.score_word_sur_20 : 'Non effectué'),
+    escapeCell(s.score_excel_sur_20 !== null && s.score_excel_sur_20 !== undefined ? s.score_excel_sur_20 : 'Non effectué'),
+    escapeCell(s.score_outlook_sur_20 !== null && s.score_outlook_sur_20 !== undefined ? s.score_outlook_sur_20 : 'Non effectué'),
+    escapeCell(s.moyenne_bureautique_sur_20 !== null && s.moyenne_bureautique_sur_20 !== undefined ? `${s.moyenne_bureautique_sur_20}/20` : 'Non effectué'),
+    escapeCell(s.statut_bureautique || 'Non effectué'),
+    escapeCell(s.score_positionnement_sur_20 !== null ? `${s.score_positionnement_sur_20}/20` : 'Non effectué'),
     escapeCell(s.statut_positionnement),
     escapeCell(s.badges_obtenus_total),
     escapeCell(s.points_klf_total),
@@ -1094,6 +1172,7 @@ export async function generateQualiopiCsvStringAction(): Promise<{
     escapeCell(s.dp_rubrique_4 ? 'Validé' : 'Non validé'),
     escapeCell(s.dp_rubrique_5 ? 'Validé' : 'Non validé'),
     escapeCell(formatDPStatus(s.statut_dossier_professionnel)),
+    escapeCell(s.avis_formateur),
   ]);
 
   const bom = '\uFEFF';

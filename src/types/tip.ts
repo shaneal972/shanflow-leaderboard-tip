@@ -175,6 +175,13 @@ export interface QualiopiStudentRow {
   seuil_atteint: boolean;
   statut_positionnement: 'Validé' | 'À consolider' | 'Non effectué';
   domaines: QualiopiDomainDetail[];
+  // Grille détaillée multi-épreuves TIP2 (Bureautique & RAN)
+  score_ran_sur_20?: number | null;
+  score_word_sur_20?: number | null;
+  score_excel_sur_20?: number | null;
+  score_outlook_sur_20?: number | null;
+  moyenne_bureautique_sur_20?: number | null;
+  statut_bureautique?: 'Validé' | 'À consolider' | 'Non effectué';
   // Indicateur 11 : Progression continue & DP
   badges_obtenus_total: number;
   dp_rubriques_validees_count: number;
@@ -192,6 +199,11 @@ export interface QualiopiKPIs {
   count_passage_test: number;
   taux_passage_test: number;
   moyenne_generale_positionnement: number;
+  moyenne_ran?: number;
+  moyenne_word?: number;
+  moyenne_excel?: number;
+  moyenne_outlook?: number;
+  moyenne_bureautique_promo?: number;
   taux_avancement_moyen_dp: number;
   total_badges_distribues: number;
   promotion_nom: string;

@@ -4,7 +4,7 @@ import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Lock, ShieldAlert, ArrowLeft, KeyRound, Loader2 } from 'lucide-react';
+import { Lock, ShieldAlert, ArrowLeft, KeyRound, Loader2, Sparkles } from 'lucide-react';
 import { unlockPassportAction } from '@/app/passport/actions';
 
 interface PassportLockScreenProps {
@@ -98,12 +98,50 @@ export const PassportLockScreen: React.FC<PassportLockScreenProps> = ({
             )}
           </div>
 
-          <p className="text-xs text-slate-400 mt-4 leading-relaxed">
-            Bonjour <strong>{firstName}</strong>, veuillez saisir votre <strong>code PIN agent (4 chiffres)</strong> pour déverrouiller votre passeport de compétences et accéder à votre dossier professionnel.
+          {/* Bannière d'accueil & Code de rentrée officiel TIP2 */}
+          <div className="mt-4 p-3.5 rounded-2xl bg-teal-500/10 border border-teal-500/25 text-left relative overflow-hidden">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-xl bg-teal-500/20 border border-teal-500/40 flex items-center justify-center shrink-0 text-teal-400 mt-0.5">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div className="space-y-1.5 flex-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-teal-200 text-xs font-['Lexend']">
+                    Rentrée officielle TIP2
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-teal-400/20 text-teal-300 border border-teal-400/30">
+                    Session 2026
+                  </span>
+                </div>
+                <p className="text-slate-300 text-[11px] leading-relaxed">
+                  Bonjour <strong>{firstName}</strong> ! Pour votre première connexion et les évaluations de rentrée, votre code PIN d&apos;accès temporaire est :
+                </p>
+                <div className="flex items-center gap-2 pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPin('2026');
+                      if (error) setError(null);
+                    }}
+                    title="Cliquer pour pré-remplir 2026"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-teal-400/20 hover:bg-teal-400/30 border border-teal-400/40 text-teal-200 font-mono font-bold text-sm tracking-widest transition-all cursor-pointer group"
+                  >
+                    <span>2026</span>
+                    <span className="text-[10px] font-normal tracking-normal text-teal-300/80 group-hover:text-teal-200 ml-1">
+                      (cliquer pour insérer)
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-400 mt-3 leading-relaxed">
+            Saisissez votre code PIN ci-dessous pour déverrouiller votre passeport et accéder à vos épreuves.
           </p>
 
           {/* Formulaire PIN avec noValidate obligatoire */}
-          <form onSubmit={handleSubmit} noValidate className="mt-6 space-y-4">
+          <form onSubmit={handleSubmit} noValidate className="mt-5 space-y-4">
             <div>
               <label htmlFor="pin-input" className="sr-only">
                 Code PIN à 4 chiffres

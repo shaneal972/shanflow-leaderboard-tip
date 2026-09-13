@@ -34,15 +34,22 @@ export function generateQualiopiPdfHtml(data: QualiopiReportData): string {
       badgeHtml = '<span class="status-pill status-neutral">○ Non passé</span>';
     }
 
-    // Domaines Qualiopi synthétiques (Fichiers, Word, Sheets, Posture)
-    const domFichiers = s.domaines.find((d) => d.domaine.includes('Fichiers'))?.pourcentage ?? '-';
-    const domWord = s.domaines.find((d) => d.domaine.includes('texte'))?.pourcentage ?? '-';
-    const domSheets = s.domaines.find((d) => d.domaine.includes('Tableur'))?.pourcentage ?? '-';
-    const domDsi = s.domaines.find((d) => d.domaine.includes('Posture'))?.pourcentage ?? '-';
+    // Domaines Qualiopi synthétiques (5 domaines du référentiel TIP)
+    const domFic = s.domaines.find((d) => d.domaine.includes('Fichiers') || d.domaine.includes('Système'))?.pourcentage ?? '-';
+    const domWord = s.domaines.find((d) => d.domaine.includes('texte') || d.domaine.includes('Word'))?.pourcentage ?? '-';
+    const domSheets = s.domaines.find((d) => d.domaine.includes('Tableur') || d.domaine.includes('Excel'))?.pourcentage ?? '-';
+    const domMail = s.domaines.find((d) => d.domaine.includes('Messagerie') || d.domaine.includes('Outlook') || d.domaine.includes('Collaboration'))?.pourcentage ?? '-';
+    const domDsi = s.domaines.find((d) => d.domaine.includes('Posture') || d.domaine.includes('RGPD'))?.pourcentage ?? '-';
 
     const noteDisplay = s.score_positionnement_sur_20 !== null
-      ? `<strong>${s.score_positionnement_sur_20}</strong>/20 <span class="text-muted">(${s.score_positionnement_pourcentage}%)</span>`
+      ? `<strong>${s.score_positionnement_sur_20}</strong>/20`
       : '<span class="text-muted">-</span>';
+
+    const detailOffice = `
+      <div class="text-muted text-xs" style="font-size: 5.5pt; margin-top: 1px; white-space: nowrap;">
+        RAN:${s.score_ran_sur_20 ?? '-'} | W:${s.score_word_sur_20 ?? '-'} | X:${s.score_excel_sur_20 ?? '-'} | O:${s.score_outlook_sur_20 ?? '-'}
+      </div>
+    `;
 
     return `
       <tr style="background-color: ${bgRow};">
@@ -52,13 +59,17 @@ export function generateQualiopiPdfHtml(data: QualiopiReportData): string {
         </td>
         <td class="col-team">${s.equipe}</td>
         <td class="col-center text-mono">${s.date_test_positionnement}</td>
-        <td class="col-center">${noteDisplay}</td>
+        <td class="col-center">
+          ${noteDisplay}
+          ${detailOffice}
+        </td>
         <td class="col-center">${badgeHtml}</td>
         <td class="col-domains">
-          <span class="dom-tag" title="Hygiène Fichiers">Fic: ${domFichiers}%</span>
+          <span class="dom-tag" title="Hygiène Système & Fichiers">Fic: ${domFic}%</span>
           <span class="dom-tag" title="Traitement de texte">Wrd: ${domWord}%</span>
-          <span class="dom-tag" title="Tableur Sheets">Xls: ${domSheets}%</span>
-          <span class="dom-tag" title="Posture DSI">DSI: ${domDsi}%</span>
+          <span class="dom-tag" title="Tableur & Calculs">Xls: ${domSheets}%</span>
+          <span class="dom-tag" title="Messagerie & Agendas">Mail: ${domMail}%</span>
+          <span class="dom-tag" title="Posture DSI & RGPD">DSI: ${domDsi}%</span>
         </td>
         <td class="col-center">
           <strong>${s.badges_obtenus_total}</strong>/10
@@ -443,7 +454,8 @@ export function generateQualiopiPdfHtml(data: QualiopiReportData): string {
     </div>
 
     <div class="header-meta">
-      <div>Session : <strong>${kpis.session_code}</strong></div>
+      <div>Promotion : <strong>${kpis.session_code} (TIP2)</strong></div>
+      <div>Responsable formation : <strong>M. ALTIDOR</strong></div>
       <div>Formateur référent : <strong>${kpis.formateur_nom}</strong></div>
       <div>Édité le : <strong>${todayFormatted}</strong></div>
       <span class="qualiopi-tag">Conforme Qualiopi (Ind. 8 &amp; 11)</span>
@@ -453,21 +465,21 @@ export function generateQualiopiPdfHtml(data: QualiopiReportData): string {
   <!-- Cartouches KPI synthétiques -->
   <section class="kpi-container">
     <div class="kpi-card">
-      <div class="kpi-label">Indicateur 8 • Test d&apos;entrée</div>
+      <div class="kpi-label">Indicateur 8 • Tests passés</div>
       <div class="kpi-value">${kpis.count_passage_test} / ${kpis.total_stagiaires} stagiaires</div>
       <div class="kpi-subtext">Taux de passation diagnostique : <strong>${kpis.taux_passage_test}%</strong></div>
     </div>
 
     <div class="kpi-card kpi-amber">
-      <div class="kpi-label">Moyenne générale promo</div>
+      <div class="kpi-label">Moyennes de promotion</div>
       <div class="kpi-value">${kpis.moyenne_generale_positionnement} / 20</div>
-      <div class="kpi-subtext">Diagnostic Palier 0 (Standards RAN DSI)</div>
+      <div class="kpi-subtext">RAN: <strong>${kpis.moyenne_ran ?? '-'}</strong> | Bureautique: <strong>${kpis.moyenne_bureautique_promo ?? '-'}</strong></div>
     </div>
 
     <div class="kpi-card kpi-emerald">
       <div class="kpi-label">Taux de réussite au seuil</div>
       <div class="kpi-value">${tauxReussite}%</div>
-      <div class="kpi-subtext">Seuil de conformité : <strong>15 / 20 (75%)</strong></div>
+      <div class="kpi-subtext">Seuil d'acquisition : <strong>15 / 20 (75%)</strong></div>
     </div>
 
     <div class="kpi-card kpi-indigo">
@@ -484,9 +496,9 @@ export function generateQualiopiPdfHtml(data: QualiopiReportData): string {
         <th class="col-student">Stagiaire (Identité)</th>
         <th class="col-team">Équipe KLF</th>
         <th class="col-center" style="width: 10%;">Date test</th>
-        <th class="col-center" style="width: 10%;">Note entrée</th>
+        <th class="col-center" style="width: 12%;">Note d'entrée</th>
         <th class="col-center" style="width: 9%;">Positionnement</th>
-        <th class="col-domains">Ventilation domaines</th>
+        <th class="col-domains">Ventilation des 5 domaines</th>
         <th class="col-center" style="width: 8%;">Badges KLF</th>
         <th class="col-center" style="width: 7%;">DP (CCP 1)</th>
         <th class="col-avis">Avis et appréciation du formateur</th>
@@ -500,15 +512,15 @@ export function generateQualiopiPdfHtml(data: QualiopiReportData): string {
   <!-- Bandeau légende & référentiel des compétences -->
   <div class="legend-container">
     <div class="legend-title">
-      <span>📌 Référentiel des domaines &amp; repères d&apos;évaluation :</span>
+      <span>📌 Référentiel des compétences évaluées (Titre Pro TIP / CCP 1) :</span>
     </div>
     <div class="legend-items">
-      <div class="legend-item"><span class="legend-code">Fic</span> Hygiène fichiers &amp; Windows</div>
-      <div class="legend-item"><span class="legend-code">Wrd</span> Traitement de texte &amp; publipostage (Word)</div>
-      <div class="legend-item"><span class="legend-code">Xls</span> Tableur &amp; formules de calcul (Sheets / Excel)</div>
-      <div class="legend-item"><span class="legend-code">DSI</span> Posture &amp; règles informatiques DSI</div>
-      <div class="legend-item"><span class="legend-code">DP</span> Rubriques Cerfa validées (/5 REAC CCP 1)</div>
-      <div class="legend-item"><strong>Seuil de validation :</strong> ≥ 15/20 (75%)</div>
+      <div class="legend-item"><span class="legend-code">Fic</span> Hygiène système &amp; fichiers Windows</div>
+      <div class="legend-item"><span class="legend-code">Wrd</span> Traitement de texte &amp; publipostage (Word &amp; Docs)</div>
+      <div class="legend-item"><span class="legend-code">Xls</span> Tableur, calculs &amp; TCD (Excel &amp; Sheets)</div>
+      <div class="legend-item"><span class="legend-code">Mail</span> Messagerie &amp; collaboration (Outlook &amp; Gmail)</div>
+      <div class="legend-item"><span class="legend-code">DSI</span> Posture DSI &amp; sécurité des données (RGPD)</div>
+      <div class="legend-item"><strong>Seuil de conformité :</strong> ≥ 15/20 (75%)</div>
     </div>
   </div>
 
@@ -516,20 +528,30 @@ export function generateQualiopiPdfHtml(data: QualiopiReportData): string {
   <footer class="footer-container">
     <div class="footer-legal">
       <p style="margin: 0 0 3px 0;">
-        <strong>Cadre réglementaire :</strong> Le présent état récapitulatif est établi en application des critères 3 du <strong>Référentiel National Qualité (Qualiopi)</strong> pour les organismes de formation professionnelle (CFA).
+        <strong>Cadre réglementaire :</strong> Le présent état récapitulatif est établi en application des critères 3 du <strong>Référentiel National Qualité (Qualiopi)</strong> pour les organismes de formation professionnelle (CFA FORE Alternance).
       </p>
       <p style="margin: 0;">
-        • <strong>Indicateur 8 :</strong> Traçabilité de l'évaluation diagnostique préalable et identification des besoins d'adaptation.<br>
+        • <strong>Indicateur 8 :</strong> Traçabilité de l'évaluation diagnostique préalable (Trinité Bureautique &amp; RAN).<br>
         • <strong>Indicateur 11 :</strong> Constat formalisé de l'acquisition des compétences REAC et préparation au titre professionnel.
       </p>
     </div>
 
-    <div class="footer-signature">
-      <div class="signature-title">Visa et signature du formateur référent</div>
-      <div class="signature-location">Fait à Baie-Mahault (Guadeloupe), le ${todayFormatted}</div>
-      <div class="signature-line">
-        <span class="signature-name">${kpis.formateur_nom}</span>
-        <span>Signature &amp; Cachet</span>
+    <div class="footer-signature" style="display: flex; gap: 8px; width: 44%;">
+      <div style="flex: 1; border-right: 1px dashed #CBD5E1; padding-right: 6px;">
+        <div class="signature-title" style="font-size: 6.5pt;">Formateur Référent</div>
+        <div class="signature-location" style="font-size: 6pt;">Fait à Jarry, le ${todayFormatted}</div>
+        <div class="signature-line" style="margin-top: 14px;">
+          <span class="signature-name" style="font-size: 7pt;">${kpis.formateur_nom}</span>
+          <span style="font-size: 6pt;">Visa</span>
+        </div>
+      </div>
+      <div style="flex: 1; padding-left: 6px;">
+        <div class="signature-title" style="font-size: 6.5pt;">Resp. Formation</div>
+        <div class="signature-location" style="font-size: 6pt;">FORE Alternance</div>
+        <div class="signature-line" style="margin-top: 14px;">
+          <span class="signature-name" style="font-size: 7pt;">M. ALTIDOR</span>
+          <span style="font-size: 6pt;">Cachet &amp; Visa</span>
+        </div>
       </div>
     </div>
   </footer>
