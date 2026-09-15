@@ -728,9 +728,8 @@ export async function importQuizJsonAction(jsonString: string) {
 
       if (questErr || !qRow) continue;
 
-      const opts = (q.options || []).map((optText: string, oIdx: number) => ({
-        question_id: qRow.id,
-        lettre: letters[oIdx] || 'A',
+      // Verrou 3 (Distribution Guard & Auto-Shuffle) : Mélange obligatoire des options à l'insertion
+      const rawOptions = (q.options || []).map((optText: string, oIdx: number) => ({
         texte: optText,
         is_correct: oIdx === q.correct,
         dsi_explanation: oIdx === q.correct
@@ -738,11 +737,30 @@ export async function importQuizJsonAction(jsonString: string) {
           : `Incorrect. ${q.feedback || ''}`
       }));
 
+      // Mélange Fisher-Yates pour casser tout biais de positionnement
+      for (let j = rawOptions.length - 1; j > 0; j--) {
+        const k = Math.floor(Math.random() * (j + 1));
+        [rawOptions[j], rawOptions[k]] = [rawOptions[k], rawOptions[j]];
+      }
+
+      const opts = rawOptions.map((opt: any, oIdx: number) => ({
+        question_id: qRow.id,
+        lettre: letters[oIdx] || 'A',
+        texte: opt.texte,
+        is_correct: opt.is_correct,
+        dsi_explanation: opt.dsi_explanation
+      }));
+
       await supabaseServer.from('sf_quiz_options').insert(opts);
     }
 
     revalidatePath('/admin');
-    return { success: true, quizId, count: parsed.questions.length };
+    return { 
+      success: true, 
+      quizId, 
+      count: parsed.questions.length,
+      message: `✅ Quiz importé avec succès (${parsed.questions.length} questions). Verrou anti-pattern actif : options re-brassées équitablement.` 
+    };
   } catch (err: any) {
     return { success: false, error: 'JSON non parsable : ' + (err.message || String(err)) };
   }

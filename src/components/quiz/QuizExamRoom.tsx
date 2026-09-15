@@ -44,6 +44,29 @@ interface QuizExamRoomProps {
   initialSubmission?: QuizSubmission | null;
 }
 
+// Générateur pseudo-aléatoire déterministe basé sur un seed string (MurmurHash/Mulberry32)
+function createSeededRandom(seedStr: string) {
+  let h = 1779033703 ^ seedStr.length;
+  for (let i = 0; i < seedStr.length; i++) {
+    h = Math.imul(h ^ seedStr.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  return function () {
+    h = Math.imul(h ^ (h >>> 16), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    return ((h ^= h >>> 16) >>> 0) / 4294967296;
+  };
+}
+
+function seededShuffle<T>(array: T[], rng: () => number): T[] {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
   quiz,
   questions,
@@ -322,10 +345,30 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
     });
   };
 
+  // Verrou 1 & 2 : Mélange pseudo-aléatoire déterministe par apprenant
+  const displayQuestions = React.useMemo(() => {
+    if (!studentId) return questions;
+    const rngQuestions = createSeededRandom(`q_${studentId}_${quiz.id}`);
+    const shuffledQ = seededShuffle(questions, rngQuestions);
+
+    return shuffledQ.map((q) => {
+      const rngOptions = createSeededRandom(`opt_${studentId}_${quiz.id}_${q.id}`);
+      const shuffledOptions = seededShuffle(q.options || [], rngOptions);
+      const lettres = ['A', 'B', 'C', 'D', 'E'];
+      return {
+        ...q,
+        options: shuffledOptions.map((opt, idx) => ({
+          ...opt,
+          lettre: lettres[idx] || opt.lettre,
+        })),
+      };
+    });
+  }, [questions, studentId, quiz.id]);
+
   const answeredCount = Object.keys(answers).length;
-  const totalQuestions = questions.length;
+  const totalQuestions = displayQuestions.length;
   const progressPercent = totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0;
-  const currentQuestion = questions[currentIndex];
+  const currentQuestion = displayQuestions[currentIndex];
 
   /* --------------------------------------------------------------------------
      CAS 0 : COPIE CLÔTURÉE POUR TRICHE (3 infractions constatées)
@@ -525,7 +568,7 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
                   {quiz.titre} • Seuil de validation : {quiz.seuil_validation}%
                 </p>
                 <p className="text-xs font-mono text-teal-400">
-                  Score final : {scorePourcentage}% ({initialSubmission.score_obtenu} questions réussies sur {questions.length})
+                  Score final : {scorePourcentage}% ({initialSubmission.score_obtenu} questions réussies sur {displayQuestions.length})
                 </p>
               </div>
             </div>
@@ -549,12 +592,12 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
               Revue didactique & Corrigé question par question
             </h2>
             <span className="text-xs font-mono text-slate-400">
-              {questions.length} questions analysées
+              {displayQuestions.length} questions analysées
             </span>
           </div>
 
           <div className="space-y-6">
-            {questions.map((q) => {
+            {displayQuestions.map((q) => {
               const chosenOptionId = initialSubmission.reponses_choisies?.[q.id];
               const correctOption = q.options.find((o) => o.is_correct);
               const isQuestionSuccess = chosenOptionId === correctOption?.id;
@@ -875,7 +918,7 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
 
         {/* Puces de questions cliquables */}
         <div className="flex flex-wrap gap-1.5 pt-2">
-          {questions.map((q, idx) => {
+          {displayQuestions.map((q, idx) => {
             const isAnswered = !!answers[q.id];
             const isCurrent = idx === currentIndex;
 
