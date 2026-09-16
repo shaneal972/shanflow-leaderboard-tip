@@ -16,7 +16,8 @@ import {
   Network,
   AlertCircle,
   ShieldAlert,
-  Printer
+  Printer,
+  FileText
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { submitTicketResolutionAction } from '@/app/admin/actions';
@@ -348,14 +349,25 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
                 </div>
 
                 {isResolved ? (
-                  <button
-                    type="button"
-                    onClick={() => setActiveTicket(ticket)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition-all"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Consulter ma fiche</span>
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <a
+                      href={`/api/tickets/export-dp-pdf?ticketId=${ticket.id}&studentId=${selectedStudentId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Télécharger ma fiche d'activité DP (PDF 1-page A4)"
+                      className="p-1.5 rounded-lg text-indigo-300 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 transition-all cursor-pointer"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTicket(ticket)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition-all"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Consulter</span>
+                    </button>
+                  </div>
                 ) : (
                   <button
                     type="button"
@@ -440,16 +452,27 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
 
               {/* Si validé : affichage de la validation */}
               {currentResolution?.statut === 'valide' && (
-                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-200 space-y-1">
+                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-200 space-y-2.5">
                   <div className="flex items-center gap-2 font-bold font-['Lexend'] text-emerald-400">
                     <CheckCircle2 className="w-4 h-4" />
                     Intervention validée par le formateur (+{currentResolution.points_attribues} PTS)
                   </div>
                   {currentResolution.feedback_formateur && (
                     <p className="leading-relaxed pl-6">
-                      Appréciation : "{currentResolution.feedback_formateur}"
+                      Appréciation : &quot;{currentResolution.feedback_formateur}&quot;
                     </p>
                   )}
+                  <div className="pt-1 pl-6">
+                    <a
+                      href={`/api/tickets/export-dp-pdf?ticketId=${activeTicket.id}&studentId=${selectedStudentId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-200 text-xs font-semibold transition-all cursor-pointer shadow-sm"
+                    >
+                      <FileText className="w-4 h-4 text-indigo-400" />
+                      <span>Télécharger ma fiche d&apos;activité DP (PDF 1-page A4)</span>
+                    </a>
+                  </div>
                 </div>
               )}
 

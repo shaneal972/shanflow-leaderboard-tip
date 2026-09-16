@@ -427,7 +427,18 @@ export const AdminTicketManager: React.FC<AdminTicketManagerProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 self-end md:self-center shrink-0">
+                    <div className="flex items-center gap-2 self-end md:self-center shrink-0">
+                      <a
+                        href={`/api/tickets/export-dp-pdf?ticketId=${res.ticket_id}&studentId=${res.apprenant_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Télécharger la fiche d'activité DP pour ce stagiaire"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 transition-all cursor-pointer"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-indigo-400" />
+                        <span>Fiche DP</span>
+                      </a>
+
                       {res.statut === 'valide' && (
                         <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
                           +{res.points_attribues} PTS
@@ -549,9 +560,20 @@ export const AdminTicketManager: React.FC<AdminTicketManagerProps> = ({
                   </span>
                   {getStatutBadge(evaluatingResolution.statut)}
                 </div>
-                <h3 className="text-lg font-bold text-white font-['Lexend'] mt-1">
-                  Évaluation de l&apos;intervention • {evaluatingResolution.apprenant?.prenom || 'Stagiaire'} {evaluatingResolution.apprenant?.nom || ''}
-                </h3>
+                <div className="flex flex-wrap items-center gap-3 mt-1">
+                  <h3 className="text-lg font-bold text-white font-['Lexend']">
+                    Évaluation de l&apos;intervention • {evaluatingResolution.apprenant?.prenom || 'Stagiaire'} {evaluatingResolution.apprenant?.nom || ''}
+                  </h3>
+                  <a
+                    href={`/api/tickets/export-dp-pdf?ticketId=${evaluatingResolution.ticket_id}&studentId=${evaluatingResolution.apprenant_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono text-indigo-300 bg-indigo-500/20 border border-indigo-500/30 hover:bg-indigo-500/30 transition-all cursor-pointer"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>Aperçu PDF DP</span>
+                  </a>
+                </div>
               </div>
               <button
                 onClick={() => setEvaluatingResolution(null)}
