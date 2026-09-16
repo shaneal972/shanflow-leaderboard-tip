@@ -70,6 +70,28 @@ export interface TicketKLF {
   statut: TicketStatus;
 }
 
+export type TicketResolutionStatus = 'en_attente_validation' | 'valide' | 'a_corriger';
+export type TicketResolutionCategory = 'materiel' | 'systeme' | 'reseau' | 'applicatif';
+
+export interface TicketResolution {
+  id: string;
+  ticket_id: string;
+  apprenant_id: string;
+  diagnostic_categorie: TicketResolutionCategory;
+  diagnostic_urgence: TicketUrgency;
+  demarche_technique: string;
+  message_usager: string;
+  statut: TicketResolutionStatus;
+  feedback_formateur?: string | null;
+  points_attribues: number;
+  soumis_le: string;
+  evalue_le?: string | null;
+  evalue_par?: string | null;
+  apprenant?: Apprenant;
+  ticket?: TicketKLF;
+}
+
+
 export interface DPSuivi {
   apprenant_id: string;
   rubrique_1: boolean;

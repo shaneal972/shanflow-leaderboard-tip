@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Apprenant, TicketKLF, Badge, DPSuivi, QuizWithStats } from '@/types/tip';
+import { Apprenant, TicketKLF, Badge, DPSuivi, QuizWithStats, TicketResolution } from '@/types/tip';
 import { Users, Ticket, Trophy, FileCheck2, BookOpen, FileSpreadsheet, FileText } from 'lucide-react';
 import { AdminStudentTable } from './AdminStudentTable';
 import { AdminTicketManager } from './AdminTicketManager';
@@ -18,6 +18,7 @@ interface AdminDashboardTabsProps {
   achievements: { apprenant_id: string; badge_id: string }[];
   dpRecords: DPSuivi[];
   quizzes?: QuizWithStats[];
+  resolutions?: TicketResolution[];
 }
 
 export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
@@ -27,10 +28,12 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
   achievements,
   dpRecords,
   quizzes = [],
+  resolutions = [],
 }) => {
   const router = useRouter();
   const [studentsList, setStudentsList] = useState<Apprenant[]>(students);
   const [ticketsList, setTicketsList] = useState<TicketKLF[]>(tickets);
+  const [resolutionsList, setResolutionsList] = useState<TicketResolution[]>(resolutions);
   const [activeTab, setActiveTab] = useState<'apprenants' | 'tickets' | 'badges' | 'dp' | 'quiz'>('apprenants');
   const [isQualiopiOpen, setIsQualiopiOpen] = useState<boolean>(false);
 
@@ -42,6 +45,10 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
   useEffect(() => {
     setTicketsList(tickets);
   }, [tickets]);
+
+  useEffect(() => {
+    setResolutionsList(resolutions);
+  }, [resolutions]);
 
   // Callbacks de mise à jour instantanée (Optimistic UI 0ms)
   const handleStudentCreated = (newStudent: Apprenant) => {
@@ -82,6 +89,8 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
     router.refresh();
   };
 
+  const pendingTicketsCount = resolutionsList.filter((r) => r.statut === 'en_attente_validation').length;
+
   const tabs = [
     {
       id: 'apprenants',
@@ -102,7 +111,7 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
     {
       id: 'tickets',
       label: 'Tickets KLF',
-      count: ticketsList.length,
+      count: pendingTicketsCount > 0 ? `${ticketsList.length} (${pendingTicketsCount} ⏳)` : ticketsList.length,
       icon: Ticket,
       color: 'text-amber-400',
       activeBg: 'bg-amber-500/15 border-amber-500/40 text-amber-200',
@@ -217,6 +226,7 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
           <AdminTicketManager 
             tickets={ticketsList} 
             students={studentsList} 
+            resolutions={resolutionsList}
             onTicketCreated={handleTicketCreated}
             onTicketStatusChanged={handleTicketStatusChanged}
             onPointsAdjusted={handlePointsAdjusted}

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { TicketKLF } from '@/types/tip';
+import React, { useState, useEffect, useTransition } from 'react';
+import { TicketKLF, Apprenant, TicketResolution, TicketResolutionCategory, TicketUrgency } from '@/types/tip';
 import { 
   Ticket, 
   AlertTriangle, 
@@ -13,30 +13,90 @@ import {
   Mail, 
   Send,
   Sparkles,
-  ExternalLink
+  Network,
+  AlertCircle
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { submitTicketResolutionAction } from '@/app/admin/actions';
 
 interface TicketDeskProps {
   initialTickets: TicketKLF[];
+  students: Apprenant[];
+  initialResolutions?: TicketResolution[];
 }
 
-export const TicketDesk: React.FC<TicketDeskProps> = ({ initialTickets }) => {
-  const [tickets, setTickets] = useState<TicketKLF[]>(initialTickets);
+export const TicketDesk: React.FC<TicketDeskProps> = ({ 
+  initialTickets, 
+  students,
+  initialResolutions = []
+}) => {
+  const [tickets] = useState<TicketKLF[]>(initialTickets);
+  const [resolutions, setResolutions] = useState<TicketResolution[]>(initialResolutions);
   const [activeTicket, setActiveTicket] = useState<TicketKLF | null>(null);
   
+  // Apprenant actif synchronisé avec localStorage
+  const [selectedStudentId, setSelectedStudentId] = useState<string>('');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('klf_active_student_id');
+    if (saved && students.some((s) => s.id === saved)) {
+      setSelectedStudentId(saved);
+    } else if (students.length > 0) {
+      setSelectedStudentId(students[0].id);
+    }
+  }, [students]);
+
+  const activeStudent = students.find((s) => s.id === selectedStudentId);
+
+  const handleStudentChange = (id: string) => {
+    setSelectedStudentId(id);
+    localStorage.setItem('klf_active_student_id', id);
+  };
+
+  // Résolution pour le ticket actif et l'apprenant sélectionné
+  const currentResolution = activeTicket && selectedStudentId
+    ? resolutions.find((r) => r.ticket_id === activeTicket.id && r.apprenant_id === selectedStudentId)
+    : null;
+
+  // Champs du formulaire ITIL en 3 étapes
+  const [categorie, setCategorie] = useState<TicketResolutionCategory>('applicatif');
+  const [urgence, setUrgence] = useState<TicketUrgency>('P2');
+  const [demarche, setDemarche] = useState<string>('');
+  const [messageUsager, setMessageUsager] = useState<string>('');
+
+  // Initialisation lors de l'ouverture du ticket
+  useEffect(() => {
+    if (activeTicket) {
+      if (currentResolution) {
+        setCategorie(currentResolution.diagnostic_categorie);
+        setUrgence(currentResolution.diagnostic_urgence);
+        setDemarche(currentResolution.demarche_technique);
+        setMessageUsager(currentResolution.message_usager);
+      } else {
+        // Pré-remplissage contextuel
+        if (activeTicket.id === 'TCK-101') setCategorie('applicatif');
+        else if (activeTicket.id === 'TCK-102') setCategorie('materiel');
+        else if (activeTicket.id === 'TCK-103') setCategorie('applicatif');
+        else setCategorie('systeme');
+
+        setUrgence(activeTicket.urgence);
+        setDemarche('');
+        setMessageUsager('');
+      }
+    }
+  }, [activeTicket, currentResolution]);
+
   // Calculateur simulateur pour Ticket #101 (Corinne Facturation)
   const [montantHT, setMontantHT] = useState<number>(1000);
   const [tauxOctroi, setTauxOctroi] = useState<number>(8.5);
   const [tauxTVA, setTauxTVA] = useState<number>(8.5);
 
-  // État de soumission de ticket
-  const [resolutionNote, setResolutionNote] = useState<string>('');
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isPending, startTransition] = useTransition();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const getUrgencyBadge = (urgency: string) => {
-    switch (urgency) {
+  const getUrgencyBadge = (urg: string) => {
+    switch (urg) {
       case 'P1':
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 animate-pulse">
@@ -54,37 +114,109 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({ initialTickets }) => {
       default:
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-slate-500/20 text-slate-300 border border-slate-500/30">
-            P3 MINEUR
+            P3 BASSE
           </span>
         );
     }
   };
 
-  const handleResolveTicket = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!activeTicket) return;
-
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setTickets((prev) =>
-        prev.map((t) =>
-          t.id === activeTicket.id ? { ...t, statut: 'resolu' } : t
-        )
+  const getResolutionStatusBadge = (res?: TicketResolution | null) => {
+    if (!res) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-slate-800 text-slate-300 border border-white/10">
+          À traiter
+        </span>
       );
-      setIsSubmitting(false);
-      setSuccessMessage(`Ticket ${activeTicket.id} validé avec succès ! +${activeTicket.points_valeur} pts`);
-      confetti({
-        particleCount: 70,
-        spread: 60,
-        origin: { y: 0.6 },
-        colors: ['#00B4D8', '#F59E0B', '#10B981'],
+    }
+    if (res.statut === 'valide') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm shadow-emerald-950">
+          <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+          Validé (+{res.points_attribues} pts)
+        </span>
+      );
+    }
+    if (res.statut === 'a_corriger') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse">
+          <AlertCircle className="w-3 h-3 text-amber-400" />
+          À corriger (Feedback formateur)
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+        <Clock className="w-3 h-3 text-cyan-400" />
+        En attente validation formateur
+      </span>
+    );
+  };
+
+  const getNetworkDPSuggestion = (ticketId: string) => {
+    switch (ticketId) {
+      case 'TCK-101':
+        return {
+          titre: 'Partage réseau sécurisé & politique de sauvegarde NAS (CCP 1)',
+          description: "Pour votre DP, ne décrivez pas seulement la formule Excel, mais la sécurisation du classeur sur le réseau : création d'un partage SMB sur le NAS local, gestion des droits NTFS par groupes d'utilisateurs (Compta vs Commercial) et mise en place d'une tâche de sauvegarde automatique sur le serveur de stockage."
+        };
+      case 'TCK-102':
+        return {
+          titre: 'Déploiement et segmentation Wi-Fi industriel (CCP 1)',
+          description: "Valorisez devant le jury la couverture sans-fil de l'entrepôt : configuration d'un SSID dédié pour les tablettes Zebra, segmentation réseau via un VLAN Quai isolé, plage DHCP réservée et analyse du signal radio (roaming entre bornes AP pour éviter les coupures)."
+        };
+      case 'TCK-103':
+        return {
+          titre: 'Mise en service d\'une imprimante réseau départementale (CCP 1)',
+          description: "Raccrochez ce publipostage à une épreuve d'infrastructure : raccordement RJ45 d'une imprimante multifonction, attribution d'une IP statique hors DHCP, configuration du pilote sur le serveur d'impression et déploiement automatisé par stratégie de groupe (GPO)."
+        };
+      default:
+        return {
+          titre: 'Diagnostic de connectivité et configuration réseau (CCP 1)',
+          description: "Mettez en avant le plan d'adressage IP statique, le paramétrage de la passerelle par défaut et les tests de connectivité (Ping, Traceroute, DNS) pour prouver au jury votre maîtrise des flux réseau."
+        };
+    }
+  };
+
+  const handleSubmitResolution = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeTicket || !selectedStudentId) return;
+
+    setErrorMessage(null);
+
+    startTransition(async () => {
+      const res = await submitTicketResolutionAction({
+        ticketId: activeTicket.id,
+        studentId: selectedStudentId,
+        diagnosticCategorie: categorie,
+        diagnosticUrgence: urgence,
+        demarcheTechnique: demarche,
+        messageUsager: messageUsager,
       });
-      setTimeout(() => {
-        setActiveTicket(null);
-        setSuccessMessage(null);
-        setResolutionNote('');
-      }, 2000);
-    }, 800);
+
+      if (res.success && res.resolution) {
+        setResolutions((prev) => {
+          const filtered = prev.filter(
+            (r) => !(r.ticket_id === activeTicket.id && r.apprenant_id === selectedStudentId)
+          );
+          return [res.resolution, ...filtered];
+        });
+
+        setSuccessMessage('Intervention soumise avec succès ! En attente de validation par David JACQUA.');
+        confetti({
+          particleCount: 60,
+          spread: 50,
+          origin: { y: 0.6 },
+          colors: ['#00B4D8', '#F59E0B', '#10B981'],
+        });
+
+        setTimeout(() => {
+          setActiveTicket(null);
+          setSuccessMessage(null);
+        }, 2200);
+      } else {
+        setErrorMessage(res.error || 'Erreur lors de la soumission.');
+      }
+    });
   };
 
   // Calculs fiscaux Antilles pour Corinne
@@ -95,9 +227,9 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({ initialTickets }) => {
   return (
     <div className="w-full space-y-6">
       
-      {/* En-tête du Ticket Desk */}
+      {/* En-tête du Ticket Desk avec sélecteur d'apprenant */}
       <div className="p-6 rounded-2xl slate-glass relative overflow-hidden">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2">
               <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase bg-teal-500/10 text-teal-400 border border-teal-500/20">
@@ -110,17 +242,33 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({ initialTickets }) => {
             </h1>
             <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
               Résolvez les incidents réels des collaborateurs de Karukera Logistique & Fret (Jarry).
-              Chaque ticket résolu débloque des points au classement et valide les compétences du <strong>CCP 1 (Support Utilisateur)</strong>.
+              Chaque ticket résolu et validé par le formateur crédite des points sur le leaderboard et alimente votre réflexion pour le <strong>Dossier Professionnel (CCP 1 - Support & Réseau)</strong>.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="text-center p-3 rounded-xl bg-white/5 border border-white/5">
-              <div className="text-xl font-bold text-amber-400 font-mono">
-                {tickets.filter((t) => t.statut === 'resolu').length} / {tickets.length}
+          {/* Profil apprenant actif */}
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 shrink-0">
+            <div className="text-right">
+              <div className="text-[10px] text-slate-400 font-mono uppercase">Technicien connecté</div>
+              <div className="text-sm font-bold text-white font-['Lexend']">
+                {activeStudent ? `${activeStudent.prenom} ${activeStudent.nom}` : 'Sélectionner...'}
               </div>
-              <div className="text-[10px] text-slate-400 font-mono uppercase">Résolus</div>
+              <div className="text-xs text-amber-400 font-mono font-semibold">
+                {activeStudent?.points_total || 0} PTS
+              </div>
             </div>
+
+            <select
+              value={selectedStudentId}
+              onChange={(e) => handleStudentChange(e.target.value)}
+              className="px-2.5 py-1.5 rounded-lg bg-[#070F1E] border border-white/20 text-xs text-slate-200 focus:outline-none focus:border-teal-400 cursor-pointer"
+            >
+              {students.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.prenom} {s.nom} ({s.points_total} pts)
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       </div>
@@ -128,24 +276,39 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({ initialTickets }) => {
       {/* Grille des Tickets d'incidents */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {tickets.map((ticket) => {
-          const isResolved = ticket.statut === 'resolu';
+          const userRes = resolutions.find(
+            (r) => r.ticket_id === ticket.id && r.apprenant_id === selectedStudentId
+          );
+          const isResolved = userRes?.statut === 'valide';
+          const isPendingReview = userRes?.statut === 'en_attente_validation';
+          const needsCorrection = userRes?.statut === 'a_corriger';
 
           return (
             <div
               key={ticket.id}
               className={`flex flex-col justify-between p-5 rounded-2xl border transition-all duration-200 ${
                 isResolved
-                  ? 'bg-white/[0.02] border-emerald-500/30'
+                  ? 'bg-emerald-500/5 border-emerald-500/30'
+                  : needsCorrection
+                  ? 'bg-amber-500/5 border-amber-500/40'
+                  : isPendingReview
+                  ? 'bg-cyan-500/5 border-cyan-500/30'
                   : 'slate-glass border-white/10 hover:border-teal-400/40'
               }`}
             >
               <div>
-                {/* ID & Urgence */}
+                {/* ID & Urgence & Statut Personnel */}
                 <div className="flex items-center justify-between mb-3">
                   <span className="font-mono text-xs font-bold text-teal-400">
                     {ticket.id}
                   </span>
-                  {getUrgencyBadge(ticket.urgence)}
+                  <div className="flex items-center gap-1.5">
+                    {getUrgencyBadge(ticket.urgence)}
+                  </div>
+                </div>
+
+                <div className="mb-2">
+                  {getResolutionStatusBadge(userRes)}
                 </div>
 
                 {/* Service & Demandeur */}
@@ -171,18 +334,30 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({ initialTickets }) => {
                 </div>
 
                 {isResolved ? (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-mono text-emerald-400 font-semibold">
-                    <CheckCircle2 className="w-4 h-4" />
-                    Résolu
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTicket(ticket)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition-all"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Consulter ma fiche</span>
+                  </button>
                 ) : (
                   <button
                     type="button"
                     onClick={() => setActiveTicket(ticket)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-teal-300 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 transition-all hover:scale-105 active:scale-95"
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 ${
+                      needsCorrection
+                        ? 'text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40'
+                        : isPendingReview
+                        ? 'text-cyan-300 bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30'
+                        : 'text-teal-300 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30'
+                    }`}
                   >
-                    <span>Prendre en charge</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-teal-400" />
+                    <span>
+                      {needsCorrection ? 'Corriger ma réponse' : isPendingReview ? 'Modifier ma saisie' : 'Prendre en charge'}
+                    </span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
@@ -191,12 +366,12 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({ initialTickets }) => {
         })}
       </div>
 
-      {/* Modale de Résolution Interactive du Ticket */}
+      {/* Modale de Résolution Interactive du Ticket (Protocole ITIL en 3 étapes) */}
       {activeTicket && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="relative w-full max-w-2xl rounded-2xl border border-white/10 bg-[#0A192F] p-6 shadow-2xl text-slate-200">
+          <div className="relative w-full max-w-3xl rounded-2xl border border-white/10 bg-[#0A192F] p-6 shadow-2xl text-slate-200">
             
-            {/* Header */}
+            {/* Header Modale */}
             <div className="flex items-center justify-between pb-4 border-b border-white/10">
               <div>
                 <div className="flex items-center gap-2">
@@ -204,6 +379,7 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({ initialTickets }) => {
                     {activeTicket.id}
                   </span>
                   {getUrgencyBadge(activeTicket.urgence)}
+                  {getResolutionStatusBadge(currentResolution)}
                 </div>
                 <h3 className="text-lg font-bold text-white font-['Lexend'] mt-1">
                   {activeTicket.titre}
@@ -215,22 +391,55 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({ initialTickets }) => {
 
               <button
                 type="button"
-                onClick={() => setActiveTicket(null)}
-                className="text-slate-400 hover:text-white text-lg p-1"
+                onClick={() => {
+                  setActiveTicket(null);
+                  setErrorMessage(null);
+                  setSuccessMessage(null);
+                }}
+                className="text-slate-400 hover:text-white text-lg p-1.5 rounded-lg hover:bg-white/5"
               >
                 ✕
               </button>
             </div>
 
-            {/* Description détaillée */}
-            <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+            {/* Corps de la modale défilable */}
+            <div className="py-4 space-y-4 max-h-[70vh] overflow-y-auto pr-2">
               
+              {/* Message initial usager */}
               <div className="p-3.5 rounded-xl bg-white/5 border border-white/5 text-xs leading-relaxed text-slate-300">
-                <strong className="text-white block mb-1">Message de l&apos;utilisateur :</strong>
+                <strong className="text-white block mb-1">Message de l'utilisateur :</strong>
                 {activeTicket.description}
               </div>
 
-              {/* Module Métier Spécifique : Simulateur Fiscal pour Corinne (Ticket #101) */}
+              {/* Feedback formateur si statut a_corriger */}
+              {currentResolution?.statut === 'a_corriger' && currentResolution.feedback_formateur && (
+                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 space-y-1">
+                  <div className="flex items-center gap-2 font-bold font-['Lexend'] text-amber-400">
+                    <AlertCircle className="w-4 h-4" />
+                    Retour du formateur (David JACQUA) :
+                  </div>
+                  <p className="leading-relaxed pl-6">
+                    {currentResolution.feedback_formateur}
+                  </p>
+                </div>
+              )}
+
+              {/* Si validé : affichage de la validation */}
+              {currentResolution?.statut === 'valide' && (
+                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-200 space-y-1">
+                  <div className="flex items-center gap-2 font-bold font-['Lexend'] text-emerald-400">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Intervention validée par le formateur (+{currentResolution.points_attribues} PTS)
+                  </div>
+                  {currentResolution.feedback_formateur && (
+                    <p className="leading-relaxed pl-6">
+                      Appréciation : "{currentResolution.feedback_formateur}"
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Aides techniques spécifiques par scénario */}
               {activeTicket.id === 'TCK-101' && (
                 <div className="p-4 rounded-xl bg-teal-500/5 border border-teal-500/20 space-y-3">
                   <div className="flex items-center gap-2 text-xs font-semibold text-teal-300 font-['Lexend']">
@@ -283,21 +492,19 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({ initialTickets }) => {
                 </div>
               )}
 
-              {/* Conseils pour Ticket #102 (Zebra Quai REAC) */}
               {activeTicket.id === 'TCK-102' && (
                 <div className="p-3.5 rounded-xl bg-purple-500/5 border border-purple-500/20 text-xs text-slate-300 space-y-1">
                   <div className="flex items-center gap-1.5 text-purple-300 font-semibold font-['Lexend']">
                     <BookOpen className="w-4 h-4 text-purple-400" />
-                    Critères d&apos;évaluation REAC (fiche réflexe 1-page A4)
+                    Consignes pour la fiche réflexe 1-page A4
                   </div>
                   <p>
-                    Le tutoriel doit comporter des captures nettes de l&apos;application Zebra, la procédure de redémarrage forcé,
-                    et le numéro d&apos;urgence du support IT KLF (Poste 404).
+                    Le tutoriel doit comporter des captures nettes de l'application Zebra, la procédure de redémarrage forcé,
+                    et le numéro d'urgence du support IT KLF (Poste 404).
                   </p>
                 </div>
               )}
 
-              {/* Conseils pour Ticket #103 (RH Publipostage) */}
               {activeTicket.id === 'TCK-103' && (
                 <div className="p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-slate-300 space-y-1">
                   <div className="flex items-center gap-1.5 text-amber-300 font-semibold font-['Lexend']">
@@ -305,49 +512,156 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({ initialTickets }) => {
                     Diagnostic de fusion Word
                   </div>
                   <p>
-                    Le décalage provient d&apos;un saut de paragraphe involontaire dans le bloc d&apos;adresses ou d&apos;un format de date non verrouillé <code>\@ &quot;dd/MM/yyyy&quot;</code>.
+                    Le décalage provient d'un saut de paragraphe involontaire dans le bloc d'adresses ou d'un format de date non verrouillé <code>\@ &quot;dd/MM/yyyy&quot;</code>.
                   </p>
                 </div>
               )}
 
-              {/* Formulaire de résolution */}
-              <form noValidate onSubmit={handleResolveTicket} className="space-y-3 pt-2">
-                <label className="block text-xs font-semibold text-slate-200">
-                  Rapport de résolution & Procédure appliquée :
-                </label>
-                <textarea
-                  required
-                  rows={3}
-                  value={resolutionNote}
-                  onChange={(e) => setResolutionNote(e.target.value)}
-                  placeholder="Décrivez l'intervention technique menée (ex: formule corrigée, fiche rédigée, publipostage testé)..."
-                  className="w-full p-3 rounded-xl bg-[#070F1E] border border-white/10 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-400 transition-colors"
-                />
+              {/* 💡 ENCART PÉDAGOGIQUE : SUGGESTION D'EXTENSION RÉSEAU POUR LE DP */}
+              {(() => {
+                const suggestion = getNetworkDPSuggestion(activeTicket.id);
+                return (
+                  <div className="p-4 rounded-xl bg-gradient-to-r from-blue-950/40 to-indigo-950/30 border border-indigo-500/30 space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-bold text-indigo-300 font-['Lexend']">
+                      <Network className="w-4 h-4 text-indigo-400" />
+                      💡 Suggestion d'extension réseau pour votre Dossier Professionnel (DP REAC)
+                    </div>
+                    <div className="text-xs text-slate-200 font-semibold">
+                      {suggestion.titre}
+                    </div>
+                    <p className="text-[11px] text-slate-300 leading-relaxed">
+                      {suggestion.description}
+                    </p>
+                  </div>
+                );
+              })()}
 
-                {successMessage && (
-                  <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-semibold flex items-center gap-2">
-                    <Sparkles className="w-4 h-4" />
-                    {successMessage}
+              {/* Formulaire de résolution ITIL en 3 étapes */}
+              <form noValidate onSubmit={handleSubmitResolution} className="space-y-4 pt-2">
+                
+                {/* Étape 1 : Qualification ITIL */}
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-white font-['Lexend'] flex items-center gap-1.5">
+                      <span className="w-5 h-5 rounded-full bg-teal-500/20 text-teal-400 text-[11px] flex items-center justify-center font-mono font-bold">1</span>
+                      Étape 1 • Qualification & Catégorisation de l'incident
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <label className="block text-[11px] text-slate-400 mb-1">Catégorie technique</label>
+                      <select
+                        disabled={currentResolution?.statut === 'valide'}
+                        value={categorie}
+                        onChange={(e) => setCategorie(e.target.value as TicketResolutionCategory)}
+                        className="w-full px-3 py-1.5 rounded-lg bg-[#070F1E] border border-white/15 text-slate-200 text-xs focus:outline-none focus:border-teal-400"
+                      >
+                        <option value="materiel">Matériel & Périphériques (Zebra, Écrans, PC)</option>
+                        <option value="systeme">Système d'exploitation (Windows 11, Pilotes, Boot)</option>
+                        <option value="reseau">Réseau & Infrastructure (IP, Wi-Fi, Switch, Câble)</option>
+                        <option value="applicatif">Applicatif & Bureautique (Excel, Word, Outlook, M365)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] text-slate-400 mb-1">Urgence estimée</label>
+                      <select
+                        disabled={currentResolution?.statut === 'valide'}
+                        value={urgence}
+                        onChange={(e) => setUrgence(e.target.value as TicketUrgency)}
+                        className="w-full px-3 py-1.5 rounded-lg bg-[#070F1E] border border-white/15 text-slate-200 text-xs focus:outline-none focus:border-teal-400"
+                      >
+                        <option value="P1">P1 • Critique (Bloque la production / délai douane)</option>
+                        <option value="P2">P2 • Normal (Gêne importante avec contournement)</option>
+                        <option value="P3">P3 • Basse (Amélioration ou incident mineur)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Étape 2 : Démarche technique */}
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-2">
+                  <label className="text-xs font-bold text-white font-['Lexend'] flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-full bg-teal-500/20 text-teal-400 text-[11px] flex items-center justify-center font-mono font-bold">2</span>
+                    Étape 2 • Démarche technique & Procédure d'intervention appliquée
+                  </label>
+                  <p className="text-[11px] text-slate-400">
+                    Décrivez pas à pas les manipulations réalisées (ex : formule tableur corrigée, manipulations de paramètres, vérifications effectuées).
+                  </p>
+                  <textarea
+                    disabled={currentResolution?.statut === 'valide'}
+                    required
+                    rows={3}
+                    value={demarche}
+                    onChange={(e) => setDemarche(e.target.value)}
+                    placeholder="Exemple : 1. Analyse de la formule d'origine qui provoquait #N/A. 2. Remplacement par la formule SIERREUR(RECHERCHEX(...)). 3. Test avec 3 références conteneurs..."
+                    className="w-full p-3 rounded-xl bg-[#070F1E] border border-white/15 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-400 transition-colors disabled:opacity-60"
+                  />
+                </div>
+
+                {/* Étape 3 : Message usager */}
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-2">
+                  <label className="text-xs font-bold text-white font-['Lexend'] flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-full bg-teal-500/20 text-teal-400 text-[11px] flex items-center justify-center font-mono font-bold">3</span>
+                    Étape 3 • Communication usager (Message de clôture bienveillant)
+                  </label>
+                  <p className="text-[11px] text-slate-400">
+                    Rédigez le message professionnel que vous envoyez à l'utilisateur pour lui annoncer la résolution avec courtoisie et clarté.
+                  </p>
+                  <textarea
+                    disabled={currentResolution?.statut === 'valide'}
+                    required
+                    rows={2}
+                    value={messageUsager}
+                    onChange={(e) => setMessageUsager(e.target.value)}
+                    placeholder="Exemple : Bonjour Corinne, votre tableau a été corrigé et recalculé. Le fichier est disponible sur le dossier partagé..."
+                    className="w-full p-3 rounded-xl bg-[#070F1E] border border-white/15 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-400 transition-colors disabled:opacity-60"
+                  />
+                </div>
+
+                {/* Alertes d'état */}
+                {errorMessage && (
+                  <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-mono flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                    <span>{errorMessage}</span>
                   </div>
                 )}
 
+                {successMessage && (
+                  <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-mono font-semibold flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 shrink-0 text-emerald-400" />
+                    <span>{successMessage}</span>
+                  </div>
+                )}
+
+                {/* Boutons d'action */}
                 <div className="flex items-center justify-end gap-3 pt-2">
                   <button
                     type="button"
-                    onClick={() => setActiveTicket(null)}
+                    onClick={() => {
+                      setActiveTicket(null);
+                      setErrorMessage(null);
+                    }}
                     className="px-4 py-2 rounded-lg text-xs font-mono text-slate-400 hover:text-white transition-colors"
                   >
-                    Annuler
+                    Fermer
                   </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold text-xs transition-all active:scale-95 disabled:opacity-50"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>{isSubmitting ? 'Validation...' : 'Valider la résolution'}</span>
-                  </button>
+
+                  {currentResolution?.statut !== 'valide' && (
+                    <button
+                      type="submit"
+                      disabled={isPending}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold text-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>
+                        {isPending ? 'Transmission en cours...' : currentResolution ? 'Mettre à jour ma soumission' : 'Soumettre mon intervention'}
+                      </span>
+                    </button>
+                  )}
                 </div>
+
               </form>
 
             </div>

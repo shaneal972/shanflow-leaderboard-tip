@@ -90,11 +90,30 @@ create table if not exists tip.sf_idempotency (
   traite_le timestamptz default now()
 );
 
--- 9. ROW LEVEL SECURITY (RLS)
+-- 9. RÉSOLUTIONS DES TICKETS PAR LES APPRENANTS (ITIL EN 3 ÉTAPES)
+create table if not exists tip.sf_ticket_resolutions (
+  id uuid primary key default gen_random_uuid(),
+  ticket_id text not null references tip.sf_tickets_klf(id) on delete cascade,
+  apprenant_id uuid not null references tip.sf_apprenants(id) on delete cascade,
+  diagnostic_categorie text not null check (diagnostic_categorie in ('materiel', 'systeme', 'reseau', 'applicatif')),
+  diagnostic_urgence text not null check (diagnostic_urgence in ('P1', 'P2', 'P3')),
+  demarche_technique text not null,
+  message_usager text not null,
+  statut text not null default 'en_attente_validation' check (statut in ('en_attente_validation', 'valide', 'a_corriger')),
+  feedback_formateur text,
+  points_attribues integer default 0,
+  soumis_le timestamptz default now(),
+  evalue_le timestamptz,
+  evalue_par text,
+  unique(ticket_id, apprenant_id)
+);
+
+-- 10. ROW LEVEL SECURITY (RLS)
 alter table tip.sf_apprenants enable row level security;
 alter table tip.sf_badges enable row level security;
 alter table tip.sf_achievements enable row level security;
 alter table tip.sf_tickets_klf enable row level security;
+alter table tip.sf_ticket_resolutions enable row level security;
 alter table tip.sf_dp_suivi enable row level security;
 alter table tip.sf_idempotency enable row level security;
 
@@ -110,6 +129,12 @@ create policy "Lecture publique achievements" on tip.sf_achievements for select 
 
 drop policy if exists "Lecture publique tickets" on tip.sf_tickets_klf;
 create policy "Lecture publique tickets" on tip.sf_tickets_klf for select using (true);
+
+drop policy if exists "Lecture publique résolutions" on tip.sf_ticket_resolutions;
+create policy "Lecture publique résolutions" on tip.sf_ticket_resolutions for select using (true);
+
+drop policy if exists "Gestion résolutions" on tip.sf_ticket_resolutions;
+create policy "Gestion résolutions" on tip.sf_ticket_resolutions for all using (true);
 
 drop policy if exists "Lecture publique dp" on tip.sf_dp_suivi;
 create policy "Lecture publique dp" on tip.sf_dp_suivi for select using (true);

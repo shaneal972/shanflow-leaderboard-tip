@@ -10,7 +10,8 @@ import {
   QuizQuestion,
   QuizOption,
   QuizSubmission,
-  QuizWithStats
+  QuizWithStats,
+  TicketResolution
 } from '@/types/tip';
 import { 
   MOCK_APPRENANTS, 
@@ -147,6 +148,46 @@ export async function getTicketsData(): Promise<TicketKLF[]> {
     return MOCK_TICKETS;
   }
 }
+
+/**
+ * Récupère toutes les résolutions de tickets pour un apprenant donné.
+ */
+export async function getTicketResolutionsForStudent(studentId: string): Promise<TicketResolution[]> {
+  try {
+    const { data, error } = await supabase
+      .from('sf_ticket_resolutions')
+      .select('*')
+      .eq('apprenant_id', studentId)
+      .order('soumis_le', { ascending: false });
+
+    if (error || !data) return [];
+    return data as TicketResolution[];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Récupère l'ensemble des résolutions de tickets avec jointures pour le cockpit formateur (/admin).
+ */
+export async function getAllTicketResolutionsAdmin(): Promise<TicketResolution[]> {
+  try {
+    const { data, error } = await supabaseServer
+      .from('sf_ticket_resolutions')
+      .select(`
+        *,
+        apprenant:sf_apprenants(id, nom, prenom, equipe, points_total),
+        ticket:sf_tickets_klf(id, titre, service, demandeur, points_valeur, urgence)
+      `)
+      .order('soumis_le', { ascending: false });
+
+    if (error || !data) return [];
+    return data as unknown as TicketResolution[];
+  } catch {
+    return [];
+  }
+}
+
 
 /**
  * Récupère le suivi DP REAC d'un apprenant.

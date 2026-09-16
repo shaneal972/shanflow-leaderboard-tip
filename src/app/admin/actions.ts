@@ -373,6 +373,141 @@ export async function awardTicketToStudentAction(ticketId: string, studentId: st
 }
 
 /* ==========================================================================
+   RÉSOLUTIONS DE TICKETS HELPDESK KLF (CYCLE ITIL EN 3 ÉTAPES)
+   ========================================================================== */
+
+const SubmitTicketResolutionSchema = z.object({
+  ticketId: z.string().min(1, 'Identifiant ticket requis'),
+  studentId: z.string().uuid('Identifiant apprenant invalide'),
+  diagnosticCategorie: z.enum(['materiel', 'systeme', 'reseau', 'applicatif']),
+  diagnosticUrgence: z.enum(['P1', 'P2', 'P3']),
+  demarcheTechnique: z.string().min(10, 'La démarche technique doit être détaillée (au moins 10 caractères)'),
+  messageUsager: z.string().min(10, 'Le message à l\'usager doit être formulé avec soin (au moins 10 caractères)'),
+});
+
+export async function submitTicketResolutionAction(formData: {
+  ticketId: string;
+  studentId: string;
+  diagnosticCategorie: string;
+  diagnosticUrgence: string;
+  demarcheTechnique: string;
+  messageUsager: string;
+}) {
+  try {
+    const parsed = SubmitTicketResolutionSchema.safeParse(formData);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message || 'Données de formulaire invalides.' };
+    }
+
+    const { ticketId, studentId, diagnosticCategorie, diagnosticUrgence, demarcheTechnique, messageUsager } = parsed.data;
+
+    const payload = {
+      ticket_id: ticketId,
+      apprenant_id: studentId,
+      diagnostic_categorie: diagnosticCategorie,
+      diagnostic_urgence: diagnosticUrgence,
+      demarche_technique: demarcheTechnique.trim(),
+      message_usager: messageUsager.trim(),
+      statut: 'en_attente_validation',
+      soumis_le: new Date().toISOString()
+    };
+
+    const { data, error } = await supabaseServer
+      .from('sf_ticket_resolutions')
+      .upsert(payload, { onConflict: 'ticket_id,apprenant_id' })
+      .select()
+      .single();
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    revalidatePath('/tickets');
+    revalidatePath('/admin');
+    return { success: true, resolution: data };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Erreur serveur.' };
+  }
+}
+
+const ReviewResolutionSchema = z.object({
+  resolutionId: z.string().uuid('ID de résolution invalide'),
+  statut: z.enum(['valide', 'a_corriger']),
+  feedback: z.string().optional(),
+  pointsAAttribuer: z.number().int().min(0).optional(),
+});
+
+export async function reviewTicketResolutionAction(input: {
+  resolutionId: string;
+  statut: 'valide' | 'a_corriger';
+  feedback?: string;
+  pointsAAttribuer?: number;
+}) {
+  const isAuth = await isAdminAuthenticated();
+  if (!isAuth) return { success: false, error: 'Accès non autorisé.' };
+
+  try {
+    const parsed = ReviewResolutionSchema.safeParse(input);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message || 'Données invalides.' };
+    }
+
+    const { resolutionId, statut, feedback, pointsAAttribuer } = parsed.data;
+
+    // 1. Récupérer la résolution actuelle
+    const { data: resData, error: fetchErr } = await supabaseServer
+      .from('sf_ticket_resolutions')
+      .select('*, ticket:sf_tickets_klf(points_valeur)')
+      .eq('id', resolutionId)
+      .single();
+
+    if (fetchErr || !resData) {
+      return { success: false, error: 'Résolution introuvable.' };
+    }
+
+    const pointsFinal = pointsAAttribuer !== undefined ? pointsAAttribuer : (resData.ticket?.points_valeur || 0);
+
+    // 2. Mettre à jour la résolution
+    const updatePayload: any = {
+      statut,
+      feedback_formateur: feedback?.trim() || null,
+      evalue_le: new Date().toISOString(),
+      evalue_par: 'David JACQUA',
+    };
+
+    if (statut === 'valide') {
+      updatePayload.points_attribues = pointsFinal;
+    }
+
+    const { error: upErr } = await supabaseServer
+      .from('sf_ticket_resolutions')
+      .update(updatePayload)
+      .eq('id', resolutionId);
+
+    if (upErr) {
+      return { success: false, error: upErr.message };
+    }
+
+    // 3. Si validé et pas encore crédité
+    if (statut === 'valide' && resData.statut !== 'valide' && pointsFinal > 0) {
+      await adjustPointsAction({
+        studentId: resData.apprenant_id,
+        deltaPoints: pointsFinal,
+        reason: `Résolution validée ticket ${resData.ticket_id}`,
+      });
+    }
+
+    revalidatePath('/admin');
+    revalidatePath('/tickets');
+    revalidatePath('/');
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Erreur serveur.' };
+  }
+}
+
+
+/* ==========================================================================
    4. MATRICE D'ATTRIBUTION DES BADGES
    ========================================================================== */
 
