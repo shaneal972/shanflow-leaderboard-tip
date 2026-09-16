@@ -10,6 +10,7 @@ import { AdminBadgeMatrix } from './AdminBadgeMatrix';
 import { AdminDPOverview } from './AdminDPOverview';
 import { AdminQuizManager } from './AdminQuizManager';
 import { AdminQualiopiModal } from './AdminQualiopiModal';
+import { AdminFicheJournaliereManager } from './AdminFicheJournaliereManager';
 
 interface AdminDashboardTabsProps {
   students: Apprenant[];
@@ -34,7 +35,7 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
   const [studentsList, setStudentsList] = useState<Apprenant[]>(students);
   const [ticketsList, setTicketsList] = useState<TicketKLF[]>(tickets);
   const [resolutionsList, setResolutionsList] = useState<TicketResolution[]>(resolutions);
-  const [activeTab, setActiveTab] = useState<'apprenants' | 'tickets' | 'badges' | 'dp' | 'quiz'>('apprenants');
+  const [activeTab, setActiveTab] = useState<'apprenants' | 'tickets' | 'badges' | 'dp' | 'quiz' | 'fiches'>('apprenants');
   const [isQualiopiOpen, setIsQualiopiOpen] = useState<boolean>(false);
 
   // Synchronisation avec les props serveur reçues
@@ -132,6 +133,14 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
       color: 'text-emerald-400',
       activeBg: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200',
     },
+    {
+      id: 'fiches',
+      label: 'Fiches journalières',
+      count: '30',
+      icon: FileText,
+      color: 'text-cyan-400',
+      activeBg: 'bg-cyan-500/15 border-cyan-500/40 text-cyan-200',
+    },
   ] as const;
 
   return (
@@ -140,7 +149,7 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
       {/* Contrôle principal : Onglets en grille 100% visible (zéro scroll) + Actions Qualiopi */}
       <div className="space-y-3">
         {/* Navigation par onglets en grille fluide */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 p-1.5 rounded-2xl slate-glass border border-white/10">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 p-1.5 rounded-2xl slate-glass border border-white/10">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -246,6 +255,10 @@ export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
             students={studentsList} 
             dpRecords={dpRecords} 
           />
+        )}
+
+        {activeTab === 'fiches' && (
+          <AdminFicheJournaliereManager />
         )}
       </div>
 
