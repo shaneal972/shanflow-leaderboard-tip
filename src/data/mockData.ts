@@ -142,6 +142,26 @@ export const MOCK_TICKETS: TicketKLF[] = [
     points_valeur: 150,
     statut: 'ouvert',
   },
+  {
+    id: 'TCK-104',
+    service: 'Direction & Finance',
+    demandeur: 'Marc VINCENOT (DSI)',
+    titre: 'Alerte phishing : faux virement maritime et analyse en-têtes SPF/DKIM',
+    description: 'Bonjour l\'équipe support. Notre comptable a reçu un e-mail prétendant venir de la compagnie maritime CMA-CGM réclamant un virement urgent de 24 500 € sur un nouveau compte bancaire en Lituanie suite à un "changement de banque". L\'adresse d\'expédition affichée est "compta@cma-cgm-caraibes.com". Analysez les en-têtes de l\'e-mail, vérifiez l\'authenticité du domaine (SPF/DKIM) et rédigez la consigne de sécurité immédiate pour l\'ensemble des services.',
+    urgence: 'P1',
+    points_valeur: 150,
+    statut: 'ouvert',
+  },
+  {
+    id: 'TCK-105',
+    service: 'Expéditions & Logistique',
+    demandeur: 'Sébastien LEBLANC',
+    titre: 'Imprimante thermique Zebra réseau injoignable suite à coupure EDF',
+    description: 'Salut le support IT. Suite à la micro-coupure EDF de 11h à Jarry, l\'imprimante thermique d\'étiquettes Zebra ZT410 du quai d\'expédition ne répond plus (IP 192.168.10.45). Les préparateurs de commandes ne peuvent plus éditer les étiquettes code-barres de colisage. Le voyant réseau clignote en orange. Diagnostiquez la perte de connectivité, attribuez une configuration IP statique pérenne et validez la passerelle par des tests de connectivité.',
+    urgence: 'P2',
+    points_valeur: 200,
+    statut: 'ouvert',
+  },
 ];
 
 export const MOCK_APPRENANTS: Apprenant[] = [

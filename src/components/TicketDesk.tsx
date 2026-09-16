@@ -14,7 +14,9 @@ import {
   Send,
   Sparkles,
   Network,
-  AlertCircle
+  AlertCircle,
+  ShieldAlert,
+  Printer
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { submitTicketResolutionAction } from '@/app/admin/actions';
@@ -77,6 +79,8 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
         if (activeTicket.id === 'TCK-101') setCategorie('applicatif');
         else if (activeTicket.id === 'TCK-102') setCategorie('materiel');
         else if (activeTicket.id === 'TCK-103') setCategorie('applicatif');
+        else if (activeTicket.id === 'TCK-104') setCategorie('systeme');
+        else if (activeTicket.id === 'TCK-105') setCategorie('reseau');
         else setCategorie('systeme');
 
         setUrgence(activeTicket.urgence);
@@ -168,6 +172,16 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
         return {
           titre: 'Mise en service d\'une imprimante réseau départementale (CCP 1)',
           description: "Raccrochez ce publipostage à une épreuve d'infrastructure : raccordement RJ45 d'une imprimante multifonction, attribution d'une IP statique hors DHCP, configuration du pilote sur le serveur d'impression et déploiement automatisé par stratégie de groupe (GPO)."
+        };
+      case 'TCK-104':
+        return {
+          titre: 'Sécurisation des flux de messagerie & filtrage DNS/SMTP (CCP 1)',
+          description: "Pour valoriser la cyber en CCP 1 : diagnostic des protocoles de messagerie (relais SMTP, MX), inspection des enregistrements DNS (TXT SPF, clé publique DKIM, politique DMARC), analyse des en-têtes MIME bruts et paramétrage du filtrage antispam sur la passerelle de sécurité (UTM)."
+        };
+      case 'TCK-105':
+        return {
+          titre: "Plan d'adressage IP statique & diagnostic de connectivité réseau (CCP 1)",
+          description: "L'activité réseau par excellence pour votre DP : analyse du plan d'adressage IP local, exclusion de plage DHCP et réservation par adresse MAC, configuration statique de l'imprimante (IP, masque /24, passerelle par défaut), tests de connectivité (Ping, résolution ARP) et validation du port sur le switch (VLAN Quai)."
         };
       default:
         return {
@@ -513,6 +527,73 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
                   </div>
                   <p>
                     Le décalage provient d'un saut de paragraphe involontaire dans le bloc d'adresses ou d'un format de date non verrouillé <code>\@ &quot;dd/MM/yyyy&quot;</code>.
+                  </p>
+                </div>
+              )}
+
+              {activeTicket.id === 'TCK-104' && (
+                <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/25 text-xs text-slate-300 space-y-2.5">
+                  <div className="flex items-center gap-1.5 text-rose-300 font-semibold font-['Lexend']">
+                    <ShieldAlert className="w-4 h-4 text-rose-400" />
+                    Analyseur d&apos;en-têtes et authenticité e-mail (Simulation DSI)
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-[#070F1E] border border-white/5 space-y-1.5 font-mono text-[11px]">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Expéditeur affiché :</span>
+                      <span className="text-white">compta@cma-cgm-caraibes.com</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Return-Path réel :</span>
+                      <span className="text-rose-400 font-bold">billing-relay-proxy@malicious-node.xyz</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">IP d&apos;émission :</span>
+                      <span className="text-amber-300">185.220.101.4 (Lituanie / Tor Exit Node)</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1 pt-1 text-[10px]">
+                      <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 text-center font-bold">
+                        SPF : FAIL
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 text-center font-bold">
+                        DKIM : INVALID
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-center font-bold">
+                        DMARC : QUARANTINE
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Conclusion technique : Usurpation avérée d&apos;identité (Domain Spoofing). Consigne : Aucun virement, blocage IP du relais sur le pare-feu et alerte générale de sensibilisation.
+                  </p>
+                </div>
+              )}
+
+              {activeTicket.id === 'TCK-105' && (
+                <div className="p-3.5 rounded-xl bg-cyan-500/10 border border-cyan-500/25 text-xs text-slate-300 space-y-2.5">
+                  <div className="flex items-center gap-1.5 text-cyan-300 font-semibold font-['Lexend']">
+                    <Printer className="w-4 h-4 text-cyan-400" />
+                    Diagnostic réseau de l&apos;imprimante Zebra ZT410 (Quai Jarry)
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-[#070F1E] border border-white/5 space-y-1.5 font-mono text-[11px]">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">État initial après reboot EDF :</span>
+                      <span className="text-amber-400 font-semibold">IP APIPA 169.254.12.88 (Bail DHCP expiré)</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Configuration IP statique requise :</span>
+                      <span className="text-emerald-400 font-bold">192.168.10.45 / 255.255.255.0 (/24)</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Passerelle par défaut :</span>
+                      <span className="text-white">192.168.10.1 (Routeur coeur Jarry)</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Test connectivité terminal :</span>
+                      <span className="text-teal-300 font-mono font-bold">ping 192.168.10.45 -n 4 → 0% de perte</span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Démarche : Passer l&apos;imprimante en IP statique via le panneau tactile Zebra ou l&apos;interface web interne pour éviter qu&apos;elle ne perde son adresse lors des micro-coupures électriques.
                   </p>
                 </div>
               )}
