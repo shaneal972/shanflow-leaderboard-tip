@@ -17,48 +17,105 @@ import {
   AlertCircle,
   ShieldAlert,
   Printer,
-  FileText
+  FileText,
+  LogOut,
+  ShieldCheck,
+  Headphones
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { submitTicketResolutionAction } from '@/app/admin/actions';
+import { TechnicianLoginScreen } from '@/components/tickets/TechnicianLoginScreen';
+import { logoutTechnicianAction, getTechnicianResolutionsAction } from '@/app/tickets/actions';
 
 interface TicketDeskProps {
   initialTickets: TicketKLF[];
-  students: Apprenant[];
+  currentStudent?: Apprenant | null;
   initialResolutions?: TicketResolution[];
+  isFormateur?: boolean;
+  adminStudents?: Apprenant[];
 }
 
 export const TicketDesk: React.FC<TicketDeskProps> = ({ 
   initialTickets, 
-  students,
-  initialResolutions = []
+  currentStudent = null,
+  initialResolutions = [],
+  isFormateur = false,
+  adminStudents = [],
 }) => {
   const [tickets] = useState<TicketKLF[]>(initialTickets);
+  const [student, setStudent] = useState<Apprenant | null>(currentStudent);
   const [resolutions, setResolutions] = useState<TicketResolution[]>(initialResolutions);
   const [activeTicket, setActiveTicket] = useState<TicketKLF | null>(null);
   
-  // Apprenant actif synchronisé avec localStorage
-  const [selectedStudentId, setSelectedStudentId] = useState<string>('');
+  // Apprenant actif ou apprenant supervisé
+  const [selectedStudentId, setSelectedStudentId] = useState<string>(() => {
+    if (currentStudent) return currentStudent.id;
+    if (isFormateur && adminStudents.length > 0) return adminStudents[0].id;
+    return '';
+  });
 
   useEffect(() => {
-    const saved = localStorage.getItem('klf_active_student_id');
-    if (saved && students.some((s) => s.id === saved)) {
-      setSelectedStudentId(saved);
-    } else if (students.length > 0) {
-      setSelectedStudentId(students[0].id);
+    if (currentStudent) {
+      setStudent(currentStudent);
+      setSelectedStudentId(currentStudent.id);
     }
-  }, [students]);
+  }, [currentStudent]);
 
-  const activeStudent = students.find((s) => s.id === selectedStudentId);
+  useEffect(() => {
+    setResolutions(initialResolutions);
+  }, [initialResolutions]);
 
-  const handleStudentChange = (id: string) => {
+  const activeStudent = isFormateur
+    ? (adminStudents.find((s) => s.id === selectedStudentId) || student)
+    : student;
+
+  const handleFormateurStudentChange = (id: string) => {
     setSelectedStudentId(id);
-    localStorage.setItem('klf_active_student_id', id);
+    localStorage.setItem('klf_admin_inspect_student_id', id);
+  };
+
+  const handleLoginSuccess = async (newStudent: {
+    id: string;
+    prenom: string;
+    nom: string;
+    points_total: number;
+    palier_actuel: string;
+    equipe: string;
+  }) => {
+    const fullStudent: Apprenant = {
+      id: newStudent.id,
+      prenom: newStudent.prenom,
+      nom: newStudent.nom,
+      email: '',
+      avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${newStudent.prenom.toLowerCase()}`,
+      points_total: newStudent.points_total,
+      palier_actuel: newStudent.palier_actuel as any,
+      equipe: newStudent.equipe,
+      is_admin: false,
+      consentement_rgpd: true,
+    };
+    setStudent(fullStudent);
+    setSelectedStudentId(newStudent.id);
+
+    // Chargement immédiat des résolutions de l'apprenant connecté
+    const res = await getTechnicianResolutionsAction(newStudent.id);
+    if (res.success && res.resolutions) {
+      setResolutions(res.resolutions);
+    }
+  };
+
+  const handleLogout = async () => {
+    await logoutTechnicianAction();
+    localStorage.removeItem('klf_active_student_id');
+    setStudent(null);
+    setSelectedStudentId('');
+    setResolutions([]);
+    setActiveTicket(null);
   };
 
   // Résolution pour le ticket actif et l'apprenant sélectionné
-  const currentResolution = activeTicket && selectedStudentId
-    ? resolutions.find((r) => r.ticket_id === activeTicket.id && r.apprenant_id === selectedStudentId)
+  const currentResolution = activeTicket && activeStudent
+    ? resolutions.find((r) => r.ticket_id === activeTicket.id && r.apprenant_id === activeStudent.id)
     : null;
 
   // Champs du formulaire ITIL en 3 étapes
@@ -194,14 +251,15 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
 
   const handleSubmitResolution = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeTicket || !selectedStudentId) return;
+    const effectiveStudentId = activeStudent ? activeStudent.id : selectedStudentId;
+    if (!activeTicket || !effectiveStudentId) return;
 
     setErrorMessage(null);
 
     startTransition(async () => {
       const res = await submitTicketResolutionAction({
         ticketId: activeTicket.id,
-        studentId: selectedStudentId,
+        studentId: effectiveStudentId,
         diagnosticCategorie: categorie,
         diagnosticUrgence: urgence,
         demarcheTechnique: demarche,
@@ -211,7 +269,7 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
       if (res.success && res.resolution) {
         setResolutions((prev) => {
           const filtered = prev.filter(
-            (r) => !(r.ticket_id === activeTicket.id && r.apprenant_id === selectedStudentId)
+            (r) => !(r.ticket_id === activeTicket.id && r.apprenant_id === effectiveStudentId)
           );
           return [res.resolution, ...filtered];
         });
@@ -239,10 +297,35 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
   const montantTVA = ((montantHT + montantOctroi) * tauxTVA) / 100;
   const totalTTC = montantHT + montantOctroi + montantTVA;
 
+  // Si aucun apprenant n'est identifié et qu'on n'est pas formateur -> Affichage du sas PIN
+  if (!activeStudent && !isFormateur) {
+    return (
+      <div className="w-full space-y-6">
+        <div className="p-6 rounded-2xl slate-glass relative overflow-hidden">
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase bg-teal-500/10 text-teal-400 border border-teal-500/20">
+              Simulation helpdesk DSI
+            </span>
+            <span className="text-xs text-slate-400 font-mono">GLPI / KLF Support Desk</span>
+          </div>
+          <h1 className="text-2xl font-bold text-white font-['Lexend'] mt-1">
+            KLF ticket desk • Incidents usagers
+          </h1>
+          <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+            Résolvez les incidents réels des collaborateurs de Karukera Logistique & Fret (Jarry).
+            Chaque ticket résolu et validé par le formateur crédite des points sur le leaderboard et alimente votre réflexion pour le <strong>Dossier Professionnel (CCP 1 - Support & Réseau)</strong>.
+          </p>
+        </div>
+
+        <TechnicianLoginScreen onSuccess={handleLoginSuccess} />
+      </div>
+    );
+  }
+
   return (
     <div className="w-full space-y-6">
       
-      {/* En-tête du Ticket Desk avec sélecteur d'apprenant */}
+      {/* En-tête du Ticket Desk avec profil individuel sécurisé */}
       <div className="p-6 rounded-2xl slate-glass relative overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
@@ -261,30 +344,59 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
             </p>
           </div>
 
-          {/* Profil apprenant actif */}
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 shrink-0">
-            <div className="text-right">
-              <div className="text-[10px] text-slate-400 font-mono uppercase">Technicien connecté</div>
-              <div className="text-sm font-bold text-white font-['Lexend']">
-                {activeStudent ? `${activeStudent.prenom} ${activeStudent.nom}` : 'Sélectionner...'}
+          {/* Profil technicien actif / Superviseur Formateur */}
+          {isFormateur ? (
+            <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 shrink-0">
+              <div className="text-right">
+                <div className="text-[10px] text-amber-300 font-mono uppercase font-bold">
+                  🛡️ Supervision formateur (David)
+                </div>
+                <div className="text-xs text-slate-300 font-mono">
+                  Inspecter un technicien :
+                </div>
               </div>
-              <div className="text-xs text-amber-400 font-mono font-semibold">
-                {activeStudent?.points_total || 0} PTS
-              </div>
-            </div>
 
-            <select
-              value={selectedStudentId}
-              onChange={(e) => handleStudentChange(e.target.value)}
-              className="px-2.5 py-1.5 rounded-lg bg-[#070F1E] border border-white/20 text-xs text-slate-200 focus:outline-none focus:border-teal-400 cursor-pointer"
-            >
-              {students.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.prenom} {s.nom} ({s.points_total} pts)
-                </option>
-              ))}
-            </select>
-          </div>
+              <select
+                value={selectedStudentId}
+                onChange={(e) => handleFormateurStudentChange(e.target.value)}
+                className="px-2.5 py-1.5 rounded-lg bg-[#070F1E] border border-amber-500/40 text-xs text-amber-200 focus:outline-none focus:border-amber-400 cursor-pointer"
+              >
+                {adminStudents.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.prenom} {s.nom} ({s.points_total} pts)
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-teal-400 font-bold text-sm">
+                {activeStudent?.prenom ? activeStudent.prenom[0] : 'T'}
+              </div>
+              <div className="text-left">
+                <div className="text-[10px] text-teal-400 font-mono uppercase font-semibold flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  Technicien en poste
+                </div>
+                <div className="text-sm font-bold text-white font-['Lexend']">
+                  {activeStudent ? `${activeStudent.prenom} ${activeStudent.nom}` : 'Agent DSI'}
+                </div>
+                <div className="text-xs text-slate-400 font-mono">
+                  <span className="text-amber-400 font-semibold">{activeStudent?.points_total || 0} PTS</span>
+                  {activeStudent?.equipe && <span> • {activeStudent.equipe}</span>}
+                </div>
+              </div>
+
+              <button
+                onClick={handleLogout}
+                className="ml-2 px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-mono transition-colors flex items-center gap-1.5 cursor-pointer"
+                title="Clôturer ma session sur ce poste"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Fin de poste</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -292,7 +404,7 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {tickets.map((ticket) => {
           const userRes = resolutions.find(
-            (r) => r.ticket_id === ticket.id && r.apprenant_id === selectedStudentId
+            (r) => r.ticket_id === ticket.id && r.apprenant_id === (activeStudent?.id || selectedStudentId)
           );
           const isResolved = userRes?.statut === 'valide';
           const isPendingReview = userRes?.statut === 'en_attente_validation';
@@ -351,7 +463,7 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
                 {isResolved ? (
                   <div className="flex items-center gap-1.5">
                     <a
-                      href={`/api/tickets/export-dp-pdf?ticketId=${ticket.id}&studentId=${selectedStudentId}`}
+                      href={`/api/tickets/export-dp-pdf?ticketId=${ticket.id}&studentId=${activeStudent?.id || selectedStudentId}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       title="Télécharger ma fiche d'activité DP (PDF 1-page A4)"

@@ -99,3 +99,83 @@ export async function clearStudentSession(studentId: string): Promise<void> {
   const cookieName = getStudentCookieName(studentId);
   cookieStore.delete(cookieName);
 }
+
+const TECHNICIAN_COOKIE_NAME = 'tip_technician_session';
+
+export function getTechnicianCookieName(): string {
+  return TECHNICIAN_COOKIE_NAME;
+}
+
+/**
+ * Dépose le cookie de session du technicien connecté sur le poste (30 jours).
+ * Active également la session passeport associée pour une UX fluide.
+ */
+export async function setTechnicianSession(studentId: string): Promise<void> {
+  const cookieStore = await cookies();
+  const timestamp = Date.now().toString();
+  const secret = getStudentSessionSecret();
+  const signature = crypto
+    .createHmac('sha256', secret)
+    .update(`${studentId}:${timestamp}`)
+    .digest('hex');
+
+  const token = `${studentId}.${timestamp}.${signature}`;
+
+  cookieStore.set(TECHNICIAN_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 30 * 24 * 60 * 60, // 30 jours
+  });
+
+  // Déposer également le cookie de passeport individuel
+  await setStudentSession(studentId);
+}
+
+/**
+ * Récupère l'ID de l'apprenant/technicien actuellement connecté sur la machine.
+ * Retourne null si aucune session valide n'est active.
+ */
+export async function getActiveTechnicianId(): Promise<string | null> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(TECHNICIAN_COOKIE_NAME)?.value;
+    if (!token) return null;
+
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+
+    const [studentId, timestampStr, signature] = parts;
+    const timestamp = parseInt(timestampStr, 10);
+    if (isNaN(timestamp)) return null;
+
+    const now = Date.now();
+    if (now - timestamp > SESSION_DURATION_MS || timestamp > now + 60000) {
+      return null;
+    }
+
+    const secret = getStudentSessionSecret();
+    const expectedSignature = crypto
+      .createHmac('sha256', secret)
+      .update(`${studentId}:${timestampStr}`)
+      .digest('hex');
+
+    if (signature.length !== expectedSignature.length) {
+      return null;
+    }
+
+    const isValid = crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
+    return isValid ? studentId : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Clôture la prise de poste du technicien et supprime le cookie.
+ */
+export async function clearTechnicianSession(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete(TECHNICIAN_COOKIE_NAME);
+}

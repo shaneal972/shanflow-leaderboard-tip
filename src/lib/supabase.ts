@@ -65,7 +65,7 @@ export async function getLeaderboardData(): Promise<LeaderboardApprenant[]> {
  */
 export async function getApprenantById(id: string): Promise<Apprenant | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseServer
       .from('sf_apprenants')
       .select('*')
       .eq('id', id)
@@ -154,7 +154,7 @@ export async function getTicketsData(): Promise<TicketKLF[]> {
  */
 export async function getTicketResolutionsForStudent(studentId: string): Promise<TicketResolution[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseServer
       .from('sf_ticket_resolutions')
       .select('*')
       .eq('apprenant_id', studentId)
@@ -187,7 +187,6 @@ export async function getAllTicketResolutionsAdmin(): Promise<TicketResolution[]
     return [];
   }
 }
-
 
 /**
  * Récupère le suivi DP REAC d'un apprenant.
