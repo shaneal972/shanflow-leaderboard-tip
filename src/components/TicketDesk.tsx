@@ -811,7 +811,7 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
                     rows={3}
                     value={demarche}
                     onChange={(e) => setDemarche(e.target.value)}
-                    placeholder="Exemple : 1. Analyse de la formule d'origine qui provoquait #N/A. 2. Remplacement par la formule SIERREUR(RECHERCHEX(...)). 3. Test avec 3 références conteneurs..."
+                    placeholder="Exemple : 1. Constat du décalage de la cellule de taux lors de l'étirement. 2. Verrouillage absolu de la cellule avec le symbole $ ($E$1 via F4). 3. Figeage des volets de la ligne 1 via le menu Affichage..."
                     className="w-full p-3 rounded-xl bg-[#070F1E] border border-white/15 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-400 transition-colors disabled:opacity-60"
                   />
                 </div>
