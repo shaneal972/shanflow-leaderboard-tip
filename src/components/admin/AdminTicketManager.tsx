@@ -49,7 +49,10 @@ export const AdminTicketManager: React.FC<AdminTicketManagerProps> = ({
   const router = useRouter();
   const [ticketsList, setTicketsList] = useState<TicketKLF[]>(tickets);
   const [resolutionsList, setResolutionsList] = useState<TicketResolution[]>(resolutions);
-  const [activeSection, setActiveSection] = useState<'submissions' | 'scenarios'>('submissions');
+  // Par défaut, afficher les scénarios de tickets si aucune soumission n'attend de validation
+  const [activeSection, setActiveSection] = useState<'submissions' | 'scenarios'>(() => {
+    return resolutions.some((r) => r.statut === 'en_attente_validation') ? 'submissions' : 'scenarios';
+  });
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -299,33 +302,33 @@ export const AdminTicketManager: React.FC<AdminTicketManagerProps> = ({
         <div className="flex items-center gap-2 bg-[#070F1E] p-1 rounded-xl border border-white/10">
           <button
             type="button"
-            onClick={() => setActiveSection('submissions')}
-            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              activeSection === 'submissions'
-                ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40 shadow-sm'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Inbox className="w-3.5 h-3.5" />
-            <span>Soumissions des stagiaires</span>
-            {pendingCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-amber-500 text-slate-950 animate-pulse">
-                {pendingCount}
-              </span>
-            )}
-          </button>
-
-          <button
-            type="button"
             onClick={() => setActiveSection('scenarios')}
-            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               activeSection === 'scenarios'
                 ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40 shadow-sm'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
-            <span>Scénarios ({ticketsList.length})</span>
+            <span>Catalogue des tickets ({ticketsList.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSection('submissions')}
+            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              activeSection === 'submissions'
+                ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40 shadow-sm'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Inbox className="w-3.5 h-3.5" />
+            <span>Soumissions ({resolutionsList.length})</span>
+            {pendingCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-amber-500 text-slate-950 animate-pulse">
+                {pendingCount} ⏳
+              </span>
+            )}
           </button>
         </div>
       </div>

@@ -134,7 +134,7 @@ export async function getBadgesWithStatus(apprenantId: string): Promise<Badge[]>
  */
 export async function getTicketsData(): Promise<TicketKLF[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseServer
       .from('sf_tickets_klf')
       .select('*')
       .order('urgence', { ascending: true });
