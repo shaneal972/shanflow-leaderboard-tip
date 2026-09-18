@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { StatusDot } from './ui/StatusDot';
-import { ShieldCheck, Trophy, Ticket, BookOpen, Anchor, Lock } from 'lucide-react';
+import { ShieldCheck, Trophy, Ticket, BookOpen, Anchor, Lock, Library } from 'lucide-react';
 
 interface NavbarProps {
   onOpenRgpd?: () => void;
@@ -56,6 +56,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenRgpd }) => {
               <BookOpen className="w-4 h-4 text-emerald-400" />
               Suivi dossier pro
             </Link>
+            <Link
+              href="/ressources"
+              className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-slate-200 hover:text-white hover:bg-white/5 transition-colors"
+            >
+              <Library className="w-4 h-4 text-cyan-400" />
+              Ressources
+            </Link>
           </nav>
 
           {/* Statut & Session Promo */}
@@ -103,6 +110,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenRgpd }) => {
         <Link href="/dp" className="flex items-center gap-1 text-xs text-slate-300 hover:text-teal-400">
           <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
           Dossier pro
+        </Link>
+        <Link href="/ressources" className="flex items-center gap-1 text-xs text-slate-300 hover:text-teal-400">
+          <Library className="w-3.5 h-3.5 text-cyan-400" />
+          Ressources
         </Link>
       </div>
     </header>
