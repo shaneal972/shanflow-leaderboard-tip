@@ -11,7 +11,7 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
     tempsLecture: '8-10 min',
     resume: 'Maîtriser la navigation dans les classeurs volumineux sans perdre les en-têtes et sécuriser les calculs de pourcentages avec figeage absolu ($).',
     ticketAssocieId: 'TCK-101',
-    badgeAssocieId: 'excel_data_cleaner',
+    badgeAssocieId: 'corinne_savior',
     objectifsPeda: [
       'Garder les lignes et colonnes d\'en-têtes visibles lors du défilement dans les classeurs volumineux.',
       'Comprendre la mécanique mathématique des pourcentages sans doubler la multiplication par 100.',
@@ -244,11 +244,10 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
     titre: 'Les 5 formules réflexes du technicien support (Sheets & Excel)',
     outil: 'sheets',
     categorie: 'Support applicatif & Traitement de données',
-    palier: 'Palier 1',
+    palier: 'Palier 2',
     tempsLecture: '8-10 min',
     resume: 'Maîtriser les 5 fonctions indispensables pour dépanner un utilisateur, auditer des fichiers de données et réparer les erreurs #N/A : SOMME, SI, RECHERCHEV, SUPPRESPACE et NB.SI.',
-    ticketAssocieId: 'TCK-101',
-    badgeAssocieId: 'corinne_savior',
+    badgeAssocieId: 'excel_data_cleaner',
     objectifsPeda: [
       'Comprendre et appliquer sans hésitation la syntaxe exacte de la formule RECHERCHEV avec l\'argument FAUX.',
       'Éradiquer les erreurs invisibles #N/A causées par des espaces résiduels grâce à la fonction SUPPRESPACE.',
