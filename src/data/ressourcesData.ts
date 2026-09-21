@@ -193,7 +193,7 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
       'Oublier de convertir le livrable final en PDF avant de le transmettre à un usager ou à la hiérarchie.'
     ],
     exerciceApplication: {
-      enonce: 'À partir du texte brut "Rapport_Incident_Quai_Zebra_Brut.txt", mettez en page la fiche d\'intervention officielle KLF en appliquant les règles DSI : 1) En-tête avec titre en Titre 1 ; 2) Saut de page forcé avant la section 2 ; 3) Tableau de diagnostic 3 colonnes centré sans bordures brisées ; 4) Cartouche de signature en tableau invisible 1x2 ; 5) Export au format "AAAA-MM-JJ_FicheInterv_Zebra_Prenom_NOM.pdf" (en remplaçant par la date du jour, votre prénom et votre NOM en majuscules).',
+      enonce: 'À partir du texte brut "Rapport_Incident_Quai_Zebra_Brut.txt", mettez en page la fiche d\'intervention officielle KLF en appliquant les règles DSI : 1) En-tête avec titre en Titre 1 ; 2) Saut de page forcé avant la section 2 ; 3) Tableau de diagnostic 3 colonnes centré sans bordures brisées ; 4) Cartouche de signature en tableau invisible 1x2 ; 5) Export au format "AAAA-MM-JJ_FicheInterv_Zebra_Prenom_NOM.pdf" (exemple fictif : 2026-09-22_FicheInterv_Zebra_Martin_RICHELIEU.pdf, à remplacer par votre propre prénom et NOM).',
       criteresReussite: [
         'Zéro saut de ligne parasite consécutif (vérifié via caractères masqués).',
         'Le document comporte un saut de page propre (Ctrl + Entrée).',
