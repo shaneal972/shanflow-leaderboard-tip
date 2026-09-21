@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     // Précompilation HTML
     const compiledHtml = generateRessourcePdfHtml(ressource);
-    const filename = `FICHE_MEMO_DSI_${slug.toUpperCase()}_David_JACQUA.pdf`;
+    const filename = `FICHE_MEMO_DSI_${slug.toUpperCase()}_KLF.pdf`;
 
     // Appel Gotenberg via webhook n8n
     const webhookUrl =

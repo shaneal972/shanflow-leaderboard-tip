@@ -72,7 +72,7 @@ export default function RessourceDetailPage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `FICHE_MEMO_DSI_${slug.toUpperCase()}_David_JACQUA.pdf`;
+      a.download = `FICHE_MEMO_DSI_${slug.toUpperCase()}_KLF.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();

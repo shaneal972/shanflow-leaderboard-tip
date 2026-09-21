@@ -192,7 +192,8 @@ export const AdminFicheJournaliereManager: React.FC = () => {
       // Réception du blob binaire et téléchargement automatique
       const blob = await response.blob();
       const cleanDate = (date || 'session').replace(/[\/\\]/g, '-').trim();
-      const filename = `FICHE_JOURNALIERE_ACTIVITE_FORMATEUR_${cleanDate}_David_JACQUA.pdf`;
+      const cleanNom = (nomFormateur || 'FORMATEUR').trim().replace(/\s+/g, '_');
+      const filename = `FICHE_JOURNALIERE_ACTIVITE_FORMATEUR_${cleanDate}_${cleanNom}.pdf`;
 
       const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');

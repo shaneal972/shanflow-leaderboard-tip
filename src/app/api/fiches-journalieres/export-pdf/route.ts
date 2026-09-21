@@ -34,7 +34,8 @@ export async function POST(request: NextRequest) {
 
     // Formatage du nom de fichier propre
     const cleanDate = (ficheData.date || 'session').replace(/[\/\\]/g, '-').trim();
-    const filename = `FICHE_JOURNALIERE_ACTIVITE_FORMATEUR_${cleanDate}_David_JACQUA.pdf`;
+    const cleanNom = (ficheData.nomFormateur || 'FORMATEUR').trim().replace(/\s+/g, '_');
+    const filename = `FICHE_JOURNALIERE_ACTIVITE_FORMATEUR_${cleanDate}_${cleanNom}.pdf`;
 
     // 3. Appel du webhook n8n / Gotenberg sécurisé
     const webhookUrl =

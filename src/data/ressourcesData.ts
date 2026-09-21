@@ -193,14 +193,15 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
       'Oublier de convertir le livrable final en PDF avant de le transmettre à un usager ou à la hiérarchie.'
     ],
     exerciceApplication: {
-      enonce: 'À partir du texte brut "Rapport_Incident_Quai_Zebra_Brut.txt", mettez en page la fiche d\'intervention officielle KLF en appliquant les règles DSI : 1) En-tête avec titre en Titre 1 ; 2) Saut de page forcé avant la section 2 ; 3) Tableau de diagnostic 3 colonnes centré sans bordures brisées ; 4) Cartouche de signature en tableau invisible 1x2 ; 5) Export au format "2026-09-18_FicheInterv_Zebra_David_JACQUA.pdf".',
+      enonce: 'À partir du texte brut "Rapport_Incident_Quai_Zebra_Brut.txt", mettez en page la fiche d\'intervention officielle KLF en appliquant les règles DSI : 1) En-tête avec titre en Titre 1 ; 2) Saut de page forcé avant la section 2 ; 3) Tableau de diagnostic 3 colonnes centré sans bordures brisées ; 4) Cartouche de signature en tableau invisible 1x2 ; 5) Export au format "AAAA-MM-JJ_FicheInterv_Zebra_Prenom_NOM.pdf" (en remplaçant par la date du jour, votre prénom et votre NOM en majuscules).',
       criteresReussite: [
         'Zéro saut de ligne parasite consécutif (vérifié via caractères masqués).',
         'Le document comporte un saut de page propre (Ctrl + Entrée).',
         'Les styles Titre 1 et Titre 2 sont appliqués.',
-        'La zone d\'émargement finale est parfaitement alignée via tableau invisible.'
+        'La zone d\'émargement finale est parfaitement alignée via tableau invisible.',
+        'Nom de fichier strictement normalisé : AAAA-MM-JJ_FicheInterv_Zebra_Prenom_NOM.pdf.'
       ],
-      solutionAttendue: 'Document normalisé 2 pages strictes, exporté en PDF haute qualité prêt pour le Dossier Professionnel (DP).'
+      solutionAttendue: 'Document normalisé 2 pages strictes au format AAAA-MM-JJ_FicheInterv_Zebra_Prenom_NOM.pdf, exporté en PDF haute qualité prêt pour le Dossier Professionnel (DP).'
     },
     miniQuiz: [
       {
