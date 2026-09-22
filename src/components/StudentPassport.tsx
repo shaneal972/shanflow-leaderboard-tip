@@ -17,7 +17,8 @@ import {
   Lock,
   Clock,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  Download
 } from 'lucide-react';
 
 interface StudentPassportProps {
@@ -353,7 +354,7 @@ export const StudentPassport: React.FC<StudentPassportProps> = ({
         </div>
       </div>
 
-      {/* Résumé du dossier professionnel (DP REAC) */}
+      {/* Résumé du dossier professionnel (DP REAC) & Générateur Gotenberg */}
       <div className="p-5 rounded-2xl slate-glass flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
@@ -361,20 +362,32 @@ export const StudentPassport: React.FC<StudentPassportProps> = ({
           </div>
           <div>
             <h3 className="text-sm font-semibold text-white font-['Lexend']">
-              Statut du dossier professionnel (fiche CCP 1)
+              Dossier professionnel (Fiche CCP 1)
             </h3>
             <p className="text-xs text-slate-400">
-              {dpValidCount} sur 5 rubriques officielles Cerfa validées
+              {dpValidCount} sur 5 rubriques officielles Cerfa validées • 5 fiches techniques disponibles
             </p>
           </div>
         </div>
 
-        <Link
-          href="/dp"
-          className="px-4 py-2 rounded-lg text-xs font-semibold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition-colors"
-        >
-          Ouvrir l&apos;auditeur DP
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <a
+            href={`/api/tickets/export-dp-pdf?ticketId=TCK-105&studentId=${apprenant.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-mono font-bold text-slate-950 bg-gradient-to-r from-teal-400 to-cyan-400 hover:from-teal-300 hover:to-cyan-300 shadow-md shadow-teal-500/10 transition-all active:scale-95"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Fiche Réseau A4 (Gotenberg)</span>
+          </a>
+
+          <Link
+            href="/dp"
+            className="px-3.5 py-2 rounded-lg text-xs font-semibold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition-colors"
+          >
+            Générateur & Auditeur DP
+          </Link>
+        </div>
       </div>
 
       {/* Grille des badges KLF */}

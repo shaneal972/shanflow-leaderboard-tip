@@ -1,6 +1,6 @@
 import { TicketKLF, TicketResolution, Apprenant } from '@/types/tip';
 
-interface DpTemplateData {
+export interface DpTemplateData {
   titreDp: string;
   contexteDp: string;
   outilsMobilises: string;
@@ -9,53 +9,53 @@ interface DpTemplateData {
   enseignementReflexive: string;
 }
 
-function getDpDetailsForTicket(ticketId: string): DpTemplateData {
+export function getDpDetailsForTicket(ticketId: string): DpTemplateData {
   switch (ticketId) {
     case 'TCK-101':
       return {
-        titreDp: 'Partage réseau sécurisé & politique de sauvegarde de fichiers comptables (CCP 1)',
-        contexteDp: "Entreprise KLF Logistique Caraïbes (Jarry). Blocage critique de la facturation douanière suite à l'altération de liaisons de fichiers et à des droits d'accès réseau non harmonisés sur le classeur de suivi des manifestes conteneurs.",
-        outilsMobilises: 'NAS d’entreprise, partage SMB, autorisations NTFS, tableur Microsoft Excel / Microsoft 365, calculatrice fiscale locale (Octroi de mer 8.5% & TVA).',
-        reussiteReflexive: "Identification rapide de l'anomalie de formule et préconisation d'un hébergement centralisé sécurisé prévenant toute désynchronisation entre les postes de travail.",
-        difficulteReflexive: "Distinguer clairement le dysfonctionnement applicatif (erreur #N/A) des contraintes d'accès réseau pour vulgariser la solution auprès de la responsable comptable.",
-        enseignementReflexive: "Les classeurs partagés multi-utilisateurs doivent impérativement reposer sur un stockage réseau dédié avec sauvegardes journalières automatisées."
+        titreDp: 'Partage réseau sécurisé SMBv3, droits NTFS & politique de sauvegarde NAS (CCP 1)',
+        contexteDp: "Entreprise Karukera Logistique & Fret (Jarry). Sécurisation et fiabilisation des flux de données comptables et douaniers suite à des corruptions d'accès concurrents et des risques de pertes de données sur le réseau local.",
+        outilsMobilises: 'NAS Synology d’entreprise (RAID 5), protocole SMBv3 crypté, autorisations NTFS (ACL avancées), console Active Directory (groupes de sécurité), script de synchronisation automatisé.',
+        reussiteReflexive: "Mise en œuvre d'une arborescence réseau partitionnée avec droits stricts en lecture/écriture empêchant tout écrasement accidentel et automatisation des sauvegardes journalières.",
+        difficulteReflexive: "Analyser les verrous de fichiers (file locking) sous SMBv3 sans interrompre l'activité de facturation des déclarants en douane.",
+        enseignementReflexive: "La gestion des droits d'accès au niveau NTFS et le cloisonnement par groupes de sécurité AD sont les fondations indispensables de l'intégrité des données en entreprise."
       };
     case 'TCK-102':
       return {
-        titreDp: 'Déploiement, segmentation Wi-Fi industriel & support utilisateurs de quai (CCP 1)',
-        contexteDp: "Site logistique KLF Quai n°3 (Zone de Jarry). Renouvellement du parc de terminaux mobiles durcis Zebra TC57 pour les 8 caristes et nécessité d'un protocole d'assistance et de maintien en conditions opérationnelles.",
-        outilsMobilises: 'Tablettes durcies Zebra Android, réseau sans-fil Wi-Fi industriel (SSID isolé / VLAN Quai), console MDM, procédure documentaire 1-page plastifiée.',
-        reussiteReflexive: "Conception d'une fiche réflexe synthétique et visuelle immédiatement adoptée par les caristes, réduisant les appels d'urgence au support de plus de 60%.",
-        difficulteReflexive: "Adapter le vocabulaire technique (cache applicatif, roaming Wi-Fi, redémarrage à chaud) à des opérateurs de quai en situation de manutention intensive.",
-        enseignementReflexive: "La qualité de service d'un technicien support se mesure autant à son aisance relationnelle et rédactionnelle qu'à sa maîtrise technique du matériel."
+        titreDp: 'Déploiement, segmentation Wi-Fi industriel VLAN & maintien en condition opérationnelle (MCO) de terminaux mobiles (CCP 1)',
+        contexteDp: "Plateforme logistique KLF Quai n°3 (Zone industrielle de Jarry). Renouvellement et mise en service du parc de terminaux durcis Zebra TC57 pour les caristes et opérateurs de transit maritime.",
+        outilsMobilises: 'Terminaux durcis Zebra Android Enterprise, console MDM (Mobile Device Management), infrastructure Wi-Fi industrielle (SSID dédié, VLAN 30 Quai, roaming 802.11r), procédure d\'exploitation standardisée.',
+        reussiteReflexive: "Configuration automatisée des profils réseau par MDM et rédaction d'une procédure visuelle de MCO réduisant de 65% les arrêts d'activité sur le quai d'expédition.",
+        difficulteReflexive: "Diagnostiquer les pertes de connexion ponctuelles lors des transitions entre bornes Wi-Fi (roaming) dans les zones d'ombres causées par les structures métalliques des conteneurs.",
+        enseignementReflexive: "En environnement industriel sévère, la configuration technique doit impérativement s'accompagner d'une procédure d'assistance claire et assimilable par les équipes de terrain."
       };
     case 'TCK-103':
       return {
-        titreDp: 'Mise en service d\'une imprimante réseau départementale & traitement de flux RH (CCP 1)',
-        contexteDp: "Service Ressources Humaines KLF (Site de Jarry). Préparation et édition en masse de 60 convocations médicales confidentielles avec contrainte de distribution sur plusieurs sites (Guadeloupe et Martinique).",
-        outilsMobilises: 'Traitement de texte Word, source de données tabulaire normalisée, imprimante multifonction réseau, file d’impression sécurisée par code PIN.',
-        reussiteReflexive: "Correction intégrale des décalages de fusion et verrouillage des formats de champs d'adresses assurant une édition sans aucune altération de mise en page.",
-        difficulteReflexive: "Manipuler des données RH confidentielles tout en testant l'impression sur un bac partagé sans risquer d'exposer des informations privées.",
-        enseignementReflexive: "L'automatisation bureautique nécessite une rigueur absolue sur la propreté de la base de données source et le respect du RGPD."
+        titreDp: 'Mise en service d\'une imprimante réseau multifonction, serveur d\'impression & sécurisation des flux (CCP 1)',
+        contexteDp: "Service Ressources Humaines & Direction KLF (Jarry). Intégration d'un copieur multifonction réseau départemental haute cadence avec contrainte d'isolation réseau et d'impression sécurisée de documents confidentiels.",
+        outilsMobilises: 'Copieur multifonction réseau, serveur d\'impression Windows Server 2022, pilote universel PCL6, réservation DHCP statique par adresse MAC, GPO Active Directory, file d’impression sécurisée par code PIN usager.',
+        reussiteReflexive: "Déploiement centralisé de la file d'impression par stratégie de groupe (GPO) et verrouillage de la libération des travaux d'impression confidentiels par code PIN individuel.",
+        difficulteReflexive: "Résoudre un conflit de protocole SNMP entre le serveur d'impression et l'équipement qui bloquait les remontées d'état des bacs papier.",
+        enseignementReflexive: "La centralisation de la gestion des périphériques via un serveur d'impression simplifie la maintenance préventive et garantit la conformité RGPD sur les flux sensibles."
       };
     case 'TCK-104':
       return {
-        titreDp: 'Sécurisation des flux de messagerie & filtrage DNS/SMTP contre le phishing (CCP 1)',
-        contexteDp: "Direction Générale & Pôle Finance KLF. Tentative d'escroquerie au faux virement maritime (24 500 €) usurpant l'identité d'un armateur partenaire (CMA-CGM) par usurpation de nom de domaine.",
-        outilsMobilises: 'Analyseur d’en-têtes MIME (RFC 5322), enregistrements DNS (TXT SPF, clé publique DKIM, politique DMARC), pare-feu d’entreprise UTM, relais SMTP sécurisé.',
-        reussiteReflexive: "Preuve formelle de la falsification par l'analyse du Return-Path réel et neutralisation immédiate de la menace avant tout transfert financier.",
-        difficulteReflexive: "Gérer l'urgence et le stress des interlocuteurs financiers tout en menant un audit technique posé et méthodique des en-têtes e-mail.",
-        enseignementReflexive: "Le facteur humain reste la première vulnérabilité de sécurité : un technicien doit savoir alerter et former les utilisateurs avec calme et pédagogie."
+        titreDp: 'Sécurisation des flux de messagerie, filtrage DNS/SMTP (SPF, DKIM, DMARC) & neutralisation d\'usurpation (CCP 1)',
+        contexteDp: "Pôle Finance & Direction Générale KLF. Détection et neutralisation d'une tentative d'escroquerie au faux ordre de virement maritime (24 500 €) usurpant l'identité d'un armateur international (CMA-CGM).",
+        outilsMobilises: 'Analyseur d’en-têtes MIME RFC 5322, requêtes DNS avancées (TXT SPF, clé publique DKIM, alignement DMARC), pare-feu UTM d’entreprise, console Microsoft 365 Defender.',
+        reussiteReflexive: "Mise en évidence technique de l'usurpation de domaine par discordance entre le champ From et le Return-Path réel, suivie du blocage immédiat de l'adresse IP émettrice sur le pare-feu.",
+        difficulteReflexive: "Traduire l'analyse technique des en-têtes DNS/SMTP en consignes de sécurité compréhensibles et applicables immédiatement par le personnel non technique.",
+        enseignementReflexive: "La sécurité de proximité repose sur le couplage d'un filtrage réseau rigoureux (protocoles d'authentification e-mail) et de la sensibilisation continue des collaborateurs."
       };
     case 'TCK-105':
     default:
       return {
-        titreDp: 'Plan d\'adressage IP statique, passerelle et tests de connectivité réseau (CCP 1)',
-        contexteDp: "Quai d'expédition KLF Logistique (Jarry). Perte totale de communication avec l'imprimante réseau d'étiquettes code-barres Zebra suite à une coupure électrique EDF, bloquant les expéditions maritimes.",
-        outilsMobilises: 'Imprimante thermique Zebra ZT410, plan d’adressage IPv4 local, bail DHCP réservé / IP statique, invites de commandes (Ping, ARP, Tracert), switch manageable.',
-        reussiteReflexive: "Diagnostic express de l'adresse APIPA (169.254.x.x) et reparamétrage d'un bail statique pérenne validé par 0% de perte sur les tests de connectivité.",
-        difficulteReflexive: "Effectuer le diagnostic réseau dans l'environnement bruyant du quai et interagir avec l'interface compacte de l'imprimante sans écran complet.",
-        enseignementReflexive: "Tout équipement périphérique névralgique en production logistique doit être documenté avec une adresse IP fixe hors de la plage DHCP dynamique."
+        titreDp: 'Plan d\'adressage IPv4 statique, passerelle par défaut & diagnostic de connectivité réseau (CCP 1)',
+        contexteDp: "Quai d'expédition KLF Logistique (Jarry). Arrêt critique de la chaîne logistique suite à la perte de connectivité de l'imprimante réseau d'étiquettes Zebra ZT410 consécutive à une coupure électrique générale.",
+        outilsMobilises: 'Imprimante thermique Zebra ZT410, plan d’adressage IPv4 d\'entreprise, console DHCP (réservation de bail statique), console switch manageable (VLAN Quai), outils CLI (Ping, ARP, Tracert, IPConfig).',
+        reussiteReflexive: "Identification immédiate de la bascule en adresse APIPA non routable (169.254.x.x), réattribution d'une IP fixe hors plage dynamique et validation complète de la route réseau (0% de perte de paquets).",
+        difficulteReflexive: "Intervenir sous forte pression temporelle face aux camions en attente tout en appliquant une méthode d'investigation rigoureuse par couches du modèle OSI.",
+        enseignementReflexive: "Tout équipement de production névralgique doit impérativement faire l'objet d'un adressage statique documenté dans le plan de câblage et hors de la portée des baux DHCP volatils."
       };
   }
 }
