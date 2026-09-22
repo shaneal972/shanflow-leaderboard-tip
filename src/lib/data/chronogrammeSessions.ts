@@ -136,30 +136,30 @@ export const CHRONOGRAMME_SESSIONS: ChronogrammeSession[] = [
     isoDate: '2026-09-22',
     horaire: '13h30 - 15h30',
     duree: '2h',
-    titre: 'Palier 1 : La Charte Graphique DSI (Styles Word/Docs)',
-    module: 'Palier 1 - Standardisation documentaire DSI',
+    titre: 'Palier 1 : Épreuve Messagerie (Outlook & Gmail) & Charte Graphique DSI',
+    module: 'Palier 1 - Messagerie collaborative & Standardisation DSI',
     filiere: 'TECHNICIEN INFORMATIQUE DE PROXIMITE',
     nomFormateur: 'JACQUA David',
     objectifs: [
+      { bold: 'Évaluer les compétences de messagerie d\'entreprise ', text: '(IMAP/Exchange, fichiers .ost/.pst, conformité RGPD Cci, sécurité phishing).' },
       { bold: 'Appliquer une charte graphique d\'entreprise ', text: 'sur un document technique officiel (polices, marges, couleurs corporate).' },
       { bold: 'Maîtriser la hiérarchie des styles ', text: '(Titre 1, Titre 2, Corps de texte) et la génération automatique de sommaire dynamique.' },
-      { bold: 'Éliminer les pollutions de mise en page ', text: '(multiples retours à la ligne, espaces manuels, tabulations approximatives).' },
-      { bold: 'Gérer les sauts de page et sauts de section ', text: 'pour la numérotation différenciée (romain/arabe).' }
+      { bold: 'Verrouiller les mises en page techniques ', text: 'via le saut de page forcé (Ctrl + Entrée) et les tableaux invisibles d\'émargement.' }
     ],
     contenu: [
-      { bold: 'Démonstration interactive des anti-patterns : ', text: 'Analyse d\'un document poubelle typique (texte décalé, polices multiples) et impact sur la crédibilité d\'une DSI.' },
-      { bold: 'TP Guidé KLF Doc Standard : ', text: 'Configuration pas-à-pas du modèle officiel de rapport d\'intervention KLF Logistique sur Word/Docs.' },
-      { bold: 'Exercice pratique individuel : ', text: 'Refonte d\'une notice de dépannage brute de 4 pages : application des styles normalisés, insertion d\'un sommaire cliquable et export PDF conforme.' },
+      { bold: 'Épreuve KLF Quiz Engine Messagerie : ', text: 'Passation chronométrée sous Sentinel Lock du Quiz Palier 1 Outlook & Gmail (20 QCM). Clôture synchronisée et publication des résultats.' },
+      { bold: 'Démonstration interactive des anti-patterns : ', text: 'Analyse d\'un document poubelle typique (texte décalé, multiples retours à la ligne) et impact sur la crédibilité d\'une DSI.' },
+      { bold: 'TP Pratique Ticket TCK-102 (Zebra) : ', text: 'Refonte normalisée d\'une notice d\'utilisation de terminaux mobiles selon la charte DSI KLF et export PDF conforme.' },
       { bold: 'Point flash conventions : ', text: 'Recueil des dernières conventions signées et relance des contacts en cours.' }
     ],
     supports: [
-      { bold: 'Document brut à corriger ', text: '(Notice_Depannage_Reseau_v1_Brute.docx).' },
-      { bold: 'Guide de style officiel ', text: 'DSI Karukera Logistique & Fret (KLF).' },
+      { bold: 'Plateforme KLF Leaderboard & Quiz Engine ', text: '(Quiz quiz-p1-outlook-gmail sous Sentinel Lock).' },
+      { bold: 'Document brut à corriger ', text: '(Exercice_Brut_Notice_Zebra_TCK102.txt) et guide Diataxis GUD-02.' },
       { bold: 'Postes informatiques de la salle ', text: 'avec Microsoft Word / Google Docs.' }
     ],
     remarques: [
-      { bold: 'Bonne appropriation des styles : ', text: 'la majorité des apprenants a rapidement compris l\'intérêt du sommaire automatique par rapport à une saisie manuelle.' },
-      { bold: 'Point de vigilance : ', text: 'la manipulation des sauts de section pour isoler la page de garde nécessite encore un entraînement guidé pour 3 apprenants.' }
+      { bold: 'Épreuve messagerie finalisée : ', text: 'l\'ensemble de la promotion a validé le test Outlook/Gmail, consolidant la cartographie Qualiopi des compétences initiales.' },
+      { bold: 'Bonne appropriation de la charte : ', text: 'éradication des retours à la ligne multiples au profit du saut de page Ctrl + Entrée et des styles de titres.' }
     ]
   },
   {
