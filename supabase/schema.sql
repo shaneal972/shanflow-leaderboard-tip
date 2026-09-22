@@ -169,7 +169,51 @@ create index if not exists idx_sf_quiz_options_question_id on tip.sf_quiz_option
 create index if not exists idx_sf_quiz_submissions_quiz_apprenant on tip.sf_quiz_submissions(quiz_id, apprenant_id);
 
 -- ==============================================================================
--- 14. POLITIQUES DE SÉCURITÉ ROW LEVEL SECURITY (RLS)
+-- MODULE KLF TECH LAB (TRAVAUX PRATIQUES & AUTO-AUDIT IN-APP)
+-- ==============================================================================
+
+-- 14. TABLE DES ATELIERS PRATIQUES (KLF TECH LAB)
+create table if not exists tip.sf_labs (
+  id text primary key,
+  titre text not null,
+  description text not null,
+  domaine text not null check (domaine in ('bureautique', 'reseau', 'systeme', 'cyber')),
+  palier text not null default 'Palier 1',
+  points_total integer not null default 200,
+  points_auto_validation integer not null default 100,
+  badge_id text references tip.sf_badges(id) on delete set null,
+  ticket_id text references tip.sf_tickets_klf(id) on delete set null,
+  fichier_modele_nom text not null,
+  fichier_modele_url text not null,
+  duree_estimee text default '1h30',
+  statut text not null default 'ouvert' check (statut in ('ouvert', 'a_venir', 'archive')),
+  created_at timestamptz default now()
+);
+
+-- 15. TABLE DES SOUMISSIONS D'ATELIERS TP & CARNETS DE LABORATOIRE
+create table if not exists tip.sf_lab_submissions (
+  id uuid primary key default gen_random_uuid(),
+  lab_id text not null references tip.sf_labs(id) on delete cascade,
+  apprenant_id uuid not null references tip.sf_apprenants(id) on delete cascade,
+  audit_results jsonb,
+  jalons_valides integer default 0,
+  score_technique_pct integer default 0,
+  reponse_demarche text,
+  reponse_difficultes text,
+  reponse_enseignements text,
+  statut text not null default 'brouillon' check (statut in ('brouillon', 'en_cours', 'soumis_en_revue', 'homologue_dsi', 'a_corriger')),
+  points_attribues integer default 0,
+  feedback_formateur text,
+  soumis_le timestamptz default now(),
+  evalue_le timestamptz,
+  evalue_par text,
+  unique(lab_id, apprenant_id)
+);
+
+create index if not exists idx_sf_lab_submissions_lab_apprenant on tip.sf_lab_submissions(lab_id, apprenant_id);
+
+-- ==============================================================================
+-- 16. POLITIQUES DE SÉCURITÉ ROW LEVEL SECURITY (RLS)
 -- ==============================================================================
 
 alter table tip.sf_apprenants enable row level security;
@@ -231,6 +275,19 @@ create policy "Lecture publique submissions" on tip.sf_quiz_submissions for sele
 drop policy if exists "Gestion submissions" on tip.sf_quiz_submissions;
 create policy "Gestion submissions" on tip.sf_quiz_submissions for all using (true);
 
+-- Politiques Labs
+drop policy if exists "Lecture publique labs" on tip.sf_labs;
+create policy "Lecture publique labs" on tip.sf_labs for select using (true);
+
+drop policy if exists "Gestion labs" on tip.sf_labs;
+create policy "Gestion labs" on tip.sf_labs for all using (true);
+
+drop policy if exists "Lecture publique lab submissions" on tip.sf_lab_submissions;
+create policy "Lecture publique lab submissions" on tip.sf_lab_submissions for select using (true);
+
+drop policy if exists "Gestion lab submissions" on tip.sf_lab_submissions;
+create policy "Gestion lab submissions" on tip.sf_lab_submissions for all using (true);
+
 -- ==============================================================================
 -- SEED DATA : BADGES, TICKETS ET APPRENANTS DE DÉMONSTRATION
 -- ==============================================================================
@@ -272,6 +329,15 @@ on conflict (id) do update set
   description = excluded.description,
   urgence = excluded.urgence,
   points_valeur = excluded.points_valeur;
+
+-- Insertion des Ateliers KLF Tech Lab
+insert into tip.sf_labs (id, titre, description, domaine, palier, points_total, points_auto_validation, badge_id, ticket_id, fichier_modele_nom, fichier_modele_url, duree_estimee, statut) values
+('tp-bur-01-corinne', 'Sauvetage du manifeste d''arrivages maritimes de Corinne & Fiscalité Antilles', 'Dépannage critique du classeur Excel de suivi des conteneurs portuaires de Corinne (Facturation & Douane). Rétablissement des codes postaux sur 5 chiffres, élimination des erreurs #N/A via SUPPRESPACE/SIERREUR, calcul automatisé de l''Octroi de mer (8.5%) et de la TVA Guadeloupe (8.5%) avec références semi-absolues ($), et figeage des volets.', 'bureautique', 'Palier 1', 200, 100, 'corinne_savior', 'TCK-101', 'KLF_Manifeste_Arrivages_Corinne_BRUT.xlsx', '/api/lab/download-sample?labId=tp-bur-01-corinne', '1h30', 'ouvert')
+on conflict (id) do update set
+  titre = excluded.titre,
+  description = excluded.description,
+  points_total = excluded.points_total,
+  points_auto_validation = excluded.points_auto_validation;
 
 -- Insertion des Apprenants Promotion C26031A (Promotion Réelle METAFORE Jarry)
 insert into tip.sf_apprenants (id, prenom, nom, email, avatar_url, points_total, palier_actuel, equipe, is_admin, pin_code, consentement_rgpd) values

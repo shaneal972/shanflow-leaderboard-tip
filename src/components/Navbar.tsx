@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { StatusDot } from './ui/StatusDot';
-import { ShieldCheck, Trophy, Ticket, BookOpen, Anchor, Lock, Library } from 'lucide-react';
+import { ShieldCheck, Trophy, Ticket, BookOpen, Anchor, Lock, Library, FlaskConical } from 'lucide-react';
 import { Apprenant } from '@/types/tip';
 import { TechnicianSessionNav } from './TechnicianSessionNav';
 
@@ -49,6 +49,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Trophy className="w-4 h-4 text-amber-400" />
               Leaderboard
+            </Link>
+            <Link
+              href="/lab"
+              className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-teal-300 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/20 transition-colors"
+            >
+              <FlaskConical className="w-4 h-4 text-teal-400" />
+              Tech Lab
             </Link>
             <Link
               href="/tickets"
@@ -116,20 +123,24 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Barre de navigation mobile */}
-      <div className="md:hidden flex items-center justify-around border-t border-white/5 bg-[#0A192F] py-2 px-4">
-        <Link href="/" className="flex items-center gap-1 text-xs text-slate-300 hover:text-teal-400">
+      <div className="md:hidden flex items-center justify-around border-t border-white/5 bg-[#0A192F] py-2 px-2 overflow-x-auto">
+        <Link href="/" className="flex items-center gap-1 text-xs text-slate-300 hover:text-teal-400 shrink-0">
           <Trophy className="w-3.5 h-3.5 text-amber-400" />
           Leaderboard
         </Link>
-        <Link href="/tickets" className="flex items-center gap-1 text-xs text-slate-300 hover:text-teal-400">
+        <Link href="/lab" className="flex items-center gap-1 text-xs text-teal-300 font-bold hover:text-teal-400 shrink-0">
+          <FlaskConical className="w-3.5 h-3.5 text-teal-400" />
+          Tech Lab
+        </Link>
+        <Link href="/tickets" className="flex items-center gap-1 text-xs text-slate-300 hover:text-teal-400 shrink-0">
           <Ticket className="w-3.5 h-3.5 text-teal-400" />
           Tickets
         </Link>
-        <Link href="/dp" className="flex items-center gap-1 text-xs text-slate-300 hover:text-teal-400">
+        <Link href="/dp" className="flex items-center gap-1 text-xs text-slate-300 hover:text-teal-400 shrink-0">
           <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
           Dossier pro
         </Link>
-        <Link href="/ressources" className="flex items-center gap-1 text-xs text-slate-300 hover:text-teal-400">
+        <Link href="/ressources" className="flex items-center gap-1 text-xs text-slate-300 hover:text-teal-400 shrink-0">
           <Library className="w-3.5 h-3.5 text-cyan-400" />
           Ressources
         </Link>

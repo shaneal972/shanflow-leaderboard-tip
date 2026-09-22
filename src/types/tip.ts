@@ -239,3 +239,79 @@ export interface QualiopiReportData {
   students: QualiopiStudentRow[];
   kpis: QualiopiKPIs;
 }
+
+// =========================================================================
+// MODULE KLF TECH LAB (TRAVAUX PRATIQUES IN-APP)
+// =========================================================================
+
+export type LabDomain = 'bureautique' | 'reseau' | 'systeme' | 'cyber';
+
+export interface LabMilestone {
+  id: string;
+  ordre: number;
+  titre: string;
+  description: string;
+  points: number;
+  critereAudit: string;
+}
+
+export interface Lab {
+  id: string;
+  titre: string;
+  description: string;
+  domaine: LabDomain;
+  palier: PalierType;
+  points_total: number;
+  points_auto_validation: number;
+  badge_id?: string;
+  ticket_id?: string;
+  fichier_modele_nom: string;
+  fichier_modele_url: string;
+  duree_estimee: string;
+  objectifs: string[];
+  consignes_etapes: string[];
+  jalons: LabMilestone[];
+  statut?: 'ouvert' | 'a_venir';
+}
+
+export type LabMilestoneStatus = 'non_evalue' | 'valide' | 'non_conforme';
+
+export interface LabAuditDetail {
+  milestoneId: string;
+  status: LabMilestoneStatus;
+  message: string;
+  details?: string;
+}
+
+export interface LabAuditSummary {
+  timestamp: string;
+  fileName: string;
+  fileSize: number;
+  milestonesCount: number;
+  validCount: number;
+  scorePct: number;
+  isFullyValid: boolean;
+  details: LabAuditDetail[];
+}
+
+export type LabSubmissionStatus = 'brouillon' | 'soumis_en_revue' | 'homologue_dsi' | 'a_corriger';
+
+export interface LabSubmission {
+  id: string;
+  lab_id: string;
+  apprenant_id: string;
+  audit_results: LabAuditSummary | null;
+  jalons_valides: number;
+  score_technique_pct: number;
+  reponse_demarche: string;
+  reponse_difficultes: string;
+  reponse_enseignements: string;
+  statut: LabSubmissionStatus;
+  points_attribues: number;
+  feedback_formateur?: string | null;
+  soumis_le?: string;
+  evalue_le?: string | null;
+  evalue_par?: string | null;
+  apprenant?: Apprenant;
+  lab?: Lab;
+}

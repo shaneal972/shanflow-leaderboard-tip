@@ -11,7 +11,9 @@ import {
   QuizOption,
   QuizSubmission,
   QuizWithStats,
-  TicketResolution
+  TicketResolution,
+  Lab,
+  LabSubmission
 } from '@/types/tip';
 import { 
   MOCK_APPRENANTS, 
@@ -631,5 +633,70 @@ export async function getApprenantQuizzesStatus(apprenantId: string): Promise<{
     return { quizzes: enriched };
   } catch {
     return { quizzes: [] };
+  }
+}
+
+// =========================================================================
+// MODULE KLF TECH LAB (REQUÊTES & SOUMISSIONS ATELIERS)
+// =========================================================================
+
+import { ALL_LABS, getLabById } from '@/lib/lab/labData';
+
+/**
+ * Récupère tous les ateliers KLF Tech Lab.
+ */
+export async function getLabsData(): Promise<Lab[]> {
+  try {
+    const { data, error } = await supabaseServer
+      .from('sf_labs')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (error || !data || data.length === 0) {
+      return ALL_LABS;
+    }
+    return data as Lab[];
+  } catch {
+    return ALL_LABS;
+  }
+}
+
+/**
+ * Récupère la soumission d'un atelier TP pour un apprenant donné.
+ */
+export async function getLabSubmissionByApprenant(labId: string, apprenantId: string): Promise<LabSubmission | null> {
+  try {
+    const { data, error } = await supabaseServer
+      .from('sf_lab_submissions')
+      .select('*')
+      .eq('lab_id', labId)
+      .eq('apprenant_id', apprenantId)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return data as LabSubmission;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Récupère toutes les soumissions d'ateliers pour la supervision formateur dans /admin.
+ */
+export async function getAllLabSubmissionsAdmin(): Promise<LabSubmission[]> {
+  try {
+    const { data, error } = await supabaseServer
+      .from('sf_lab_submissions')
+      .select(`
+        *,
+        apprenant:sf_apprenants(id, nom, prenom, equipe, points_total),
+        lab:sf_labs(id, titre, domaine, points_total, points_auto_validation, badge_id)
+      `)
+      .order('soumis_le', { ascending: false });
+
+    if (error || !data) return [];
+    return data as unknown as LabSubmission[];
+  } catch {
+    return [];
   }
 }
