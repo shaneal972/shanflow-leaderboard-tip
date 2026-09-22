@@ -105,8 +105,11 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Durée officielle dynamique de l'épreuve (lue depuis la base sf_quizzes)
+  const actualDurationMinutes = Number(quiz.duree_minutes) > 0 ? Number(quiz.duree_minutes) : 20;
+
   // Chronomètre dégressif & Horodatage persistant
-  const [timeLeft, setTimeLeft] = useState<number>((quiz.duree_minutes || 35) * 60);
+  const [timeLeft, setTimeLeft] = useState<number>(actualDurationMinutes * 60);
   const [isTimeExpired, setIsTimeExpired] = useState<boolean>(false);
   const isAutoSubmittingRef = useRef<boolean>(false);
   const answersRef = useRef<Record<string, string>>(answers);
@@ -326,7 +329,7 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
     if (!studentId) return;
 
     const storageKey = `klf_quiz_endtime_${quiz.id}_${studentId}`;
-    const durationSeconds = (quiz.duree_minutes || 35) * 60;
+    const durationSeconds = actualDurationMinutes * 60;
     let targetEndTime: number;
 
     const saved = typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null;
@@ -360,7 +363,7 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [quiz.statut, hasSubmitted, isClosedForCheating, studentId, quiz.id, quiz.duree_minutes, handleAutoSubmit]);
+  }, [quiz.statut, hasSubmitted, isClosedForCheating, studentId, quiz.id, actualDurationMinutes, handleAutoSubmit]);
 
   // Polling automatique si en attente
   useEffect(() => {
@@ -1157,7 +1160,7 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
                 Temps réglementaire écoulé !
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Le chronomètre officiel de <strong className="text-amber-400">{quiz.duree_minutes || 35} minutes</strong> est arrivé à son terme.
+                Le chronomètre officiel de <strong className="text-amber-400">{actualDurationMinutes} minute{actualDurationMinutes > 1 ? 's' : ''}</strong> est arrivé à son terme.
                 Votre copie a été scellée et transmise automatiquement avec vos réponses actuelles.
               </p>
             </div>
