@@ -105,8 +105,15 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Chronomètre dégressif
+  // Chronomètre dégressif & Horodatage persistant
   const [timeLeft, setTimeLeft] = useState<number>((quiz.duree_minutes || 35) * 60);
+  const [isTimeExpired, setIsTimeExpired] = useState<boolean>(false);
+  const isAutoSubmittingRef = useRef<boolean>(false);
+  const answersRef = useRef<Record<string, string>>(answers);
+
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
 
   // Déterminer la phase
   // 'exam' | 'waiting' | 'revealed' | 'closed'
@@ -282,20 +289,78 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
     router.replace(`/quiz/${quiz.id}?apprenantId=${id}`);
   };
 
-  // Timer
+  // Auto-soumission immédiate à l'expiration du temps
+  const handleAutoSubmit = React.useCallback(async () => {
+    if (isAutoSubmittingRef.current || hasSubmitted || isClosedForCheating) return;
+    isAutoSubmittingRef.current = true;
+    setIsTimeExpired(true);
+    setShowConfirmModal(false);
+
+    if (!studentId) {
+      router.refresh();
+      return;
+    }
+
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(`klf_quiz_endtime_${quiz.id}_${studentId}`);
+    }
+
+    startTransition(async () => {
+      try {
+        await submitQuizAnswersAction({
+          apprenantId: studentId,
+          quizId: quiz.id,
+          answers: answersRef.current,
+        });
+      } catch (err) {
+        console.error("Erreur lors de l'auto-soumission du quiz:", err);
+      } finally {
+        router.refresh();
+      }
+    });
+  }, [studentId, quiz.id, hasSubmitted, isClosedForCheating, router]);
+
+  // Timer avec horodatage persistant (anti-triche au rechargement F5) & auto-soumission
   useEffect(() => {
     if (quiz.statut !== 'session_ouverte' || hasSubmitted || isClosedForCheating) return;
+    if (!studentId) return;
+
+    const storageKey = `klf_quiz_endtime_${quiz.id}_${studentId}`;
+    const durationSeconds = (quiz.duree_minutes || 35) * 60;
+    let targetEndTime: number;
+
+    const saved = typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null;
+    if (saved) {
+      targetEndTime = parseInt(saved, 10);
+    } else {
+      targetEndTime = Date.now() + durationSeconds * 1000;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(storageKey, targetEndTime.toString());
+      }
+    }
+
+    // Calcul initial immédiat
+    const initialRemaining = Math.max(0, Math.floor((targetEndTime - Date.now()) / 1000));
+    setTimeLeft(initialRemaining);
+
+    if (initialRemaining <= 0) {
+      handleAutoSubmit();
+      return;
+    }
+
     const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
+      const now = Date.now();
+      const remaining = Math.max(0, Math.floor((targetEndTime - now) / 1000));
+      setTimeLeft(remaining);
+
+      if (remaining <= 0) {
+        clearInterval(interval);
+        handleAutoSubmit();
+      }
     }, 1000);
+
     return () => clearInterval(interval);
-  }, [quiz.statut, hasSubmitted, isClosedForCheating]);
+  }, [quiz.statut, hasSubmitted, isClosedForCheating, studentId, quiz.id, quiz.duree_minutes, handleAutoSubmit]);
 
   // Polling automatique si en attente
   useEffect(() => {
@@ -314,7 +379,7 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
   };
 
   const handleSelectOption = (questionId: string, optionId: string) => {
-    if (hasSubmitted || quiz.statut !== 'session_ouverte' || isClosedForCheating) return;
+    if (hasSubmitted || quiz.statut !== 'session_ouverte' || isClosedForCheating || isTimeExpired) return;
     setAnswers((prev) => ({
       ...prev,
       [questionId]: optionId,
@@ -325,6 +390,10 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
     if (!studentId) {
       setErrorMessage("Veuillez sélectionner votre nom d'apprenant avant de soumettre.");
       return;
+    }
+
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(`klf_quiz_endtime_${quiz.id}_${studentId}`);
     }
 
     setErrorMessage(null);
@@ -1070,6 +1139,32 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
               >
                 {isPending ? 'Enregistrement...' : 'Confirmer & Sceller ma copie'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modale bloquante d'expiration du temps réglementaire */}
+      {isTimeExpired && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-in fade-in">
+          <div className="w-full max-w-md p-6 rounded-3xl slate-glass border border-amber-500/40 space-y-5 text-center shadow-2xl bg-slate-900/90">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+              <Clock className="w-8 h-8 animate-pulse" />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold text-white font-['Lexend']">
+                Temps réglementaire écoulé !
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Le chronomètre officiel de <strong className="text-amber-400">{quiz.duree_minutes || 35} minutes</strong> est arrivé à son terme.
+                Votre copie a été scellée et transmise automatiquement avec vos réponses actuelles.
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 text-xs font-mono text-teal-400 flex items-center justify-center gap-2">
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              <span>Enregistrement et synchronisation de votre copie...</span>
             </div>
           </div>
         </div>
