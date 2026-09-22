@@ -11,8 +11,6 @@ import {
   ShieldCheck, 
   Sparkles, 
   Send, 
-  Lock, 
-  KeyRound, 
   Users, 
   Loader2, 
   Check, 
@@ -32,7 +30,6 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { updateDPSuiviAction } from '@/app/actions';
-import { TechnicianLoginScreen } from '@/components/tickets/TechnicianLoginScreen';
 import { getDpDetailsForTicket } from '@/lib/templates/ticketDpPdfTemplate';
 
 interface DPMonitorProps {
@@ -43,7 +40,6 @@ interface DPMonitorProps {
   adminStudents?: Apprenant[];
   allDPSuivi?: DPSuivi[];
   currentStudent?: Apprenant | null;
-  isUnauthenticated?: boolean;
 }
 
 const TECHNICAL_INTERVENTIONS = [
@@ -101,16 +97,14 @@ const TECHNICAL_INTERVENTIONS = [
 
 export const DPMonitor: React.FC<DPMonitorProps> = ({ 
   initialDPSuivi, 
-  apprenantName = 'Jordan MARIE-JOSEPH',
-  apprenantId = '8d100934-5303-4e1e-8ecf-8372bc032c66',
+  apprenantName = 'Technicien KLF',
+  apprenantId = '',
   isFormateur = false,
   adminStudents = [],
   allDPSuivi = [],
   currentStudent = null,
-  isUnauthenticated = false,
 }) => {
   const [isPending, startTransition] = useTransition();
-  const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Onglet actif : 'generator' (Fiches techniques Gotenberg) ou 'checklist' (Vérification des 5 rubriques)
@@ -123,7 +117,7 @@ export const DPMonitor: React.FC<DPMonitorProps> = ({
   const [selectedStudentId, setSelectedStudentId] = useState<string>(() => {
     if (apprenantId) return apprenantId;
     if (adminStudents.length > 0) return adminStudents[0].id;
-    return '8d100934-5303-4e1e-8ecf-8372bc032c66';
+    return '';
   });
 
   const activeStudent = isFormateur
@@ -143,12 +137,12 @@ export const DPMonitor: React.FC<DPMonitorProps> = ({
     if (initialDPSuivi) return initialDPSuivi;
     return {
       apprenant_id: effectiveApprenantId,
-      rubrique_1: true,
-      rubrique_2: true,
-      rubrique_3: true,
-      rubrique_4: true,
+      rubrique_1: false,
+      rubrique_2: false,
+      rubrique_3: false,
+      rubrique_4: false,
       rubrique_5: false,
-      statut_dp: 'en_revue',
+      statut_dp: 'brouillon',
     };
   });
 
@@ -221,16 +215,6 @@ export const DPMonitor: React.FC<DPMonitorProps> = ({
   const progress = Math.round((validCount / 5) * 100);
 
   const persistDP = (updated: DPSuivi) => {
-    if (isUnauthenticated) {
-      setDp(updated);
-      setFeedbackMsg({
-        type: 'success',
-        text: 'Modification locale (Mode Démonstration). Prenez votre poste pour sauvegarder votre fiche.',
-      });
-      setTimeout(() => setFeedbackMsg(null), 3000);
-      return;
-    }
-
     startTransition(async () => {
       const res = await updateDPSuiviAction({
         apprenantId: effectiveApprenantId,
@@ -286,11 +270,6 @@ export const DPMonitor: React.FC<DPMonitorProps> = ({
   };
 
   const handleTransmettre = () => {
-    if (isUnauthenticated) {
-      setShowLoginModal(true);
-      return;
-    }
-
     const updated: DPSuivi = {
       ...dp,
       statut_dp: 'en_revue',
@@ -305,7 +284,7 @@ export const DPMonitor: React.FC<DPMonitorProps> = ({
     });
     setFeedbackMsg({
       type: 'success',
-      text: 'Fiche d\'Exemple DP transmise pour relecture officielle à David JACQUA !',
+      text: 'Dossier Professionnel transmis pour relecture officielle à David JACQUA !',
     });
   };
 
@@ -394,54 +373,6 @@ export const DPMonitor: React.FC<DPMonitorProps> = ({
               Cockpit admin
             </Link>
           </div>
-        </div>
-      )}
-
-      {/* BANDEAU VISITEUR NON CONNECTÉ : Invitation Prise de Poste */}
-      {isUnauthenticated && !showLoginModal && (
-        <div className="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-cyan-500/20 flex items-center justify-center text-cyan-300 shrink-0">
-              <Lock className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="font-semibold font-mono text-cyan-300 text-xs sm:text-sm">
-                Exemple de démonstration • Fiche Jordan MARIE-JOSEPH
-              </span>
-              <p className="text-[11px] text-slate-300 leading-relaxed">
-                Vous visualisez un exemple type de fiche technique validée. Pour suivre et exporter votre propre Dossier Professionnel nominatif, prenez votre poste avec votre code PIN DSI.
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setShowLoginModal(true)}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold font-mono text-xs transition-all active:scale-95 shrink-0 self-start sm:self-auto"
-          >
-            <KeyRound className="w-3.5 h-3.5" />
-            <span>Prendre mon poste</span>
-          </button>
-        </div>
-      )}
-
-      {/* MODAL DE PRISE DE POSTE TECHNICIEN */}
-      {showLoginModal && (
-        <div className="p-6 rounded-2xl slate-glass border border-cyan-500/40 relative">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold text-white font-['Lexend'] flex items-center gap-2">
-              <KeyRound className="w-4 h-4 text-cyan-400" />
-              Prise de poste technicien KLF
-            </h3>
-            <button
-              type="button"
-              onClick={() => setShowLoginModal(false)}
-              className="text-xs text-slate-400 hover:text-white font-mono px-2 py-1 rounded bg-white/5"
-            >
-              Fermer (Continuer en démo)
-            </button>
-          </div>
-          <TechnicianLoginScreen />
         </div>
       )}
 
