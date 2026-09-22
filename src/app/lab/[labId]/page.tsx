@@ -6,6 +6,7 @@ import { isAdminAuthenticated } from '@/lib/adminAuth';
 import { getApprenantById, supabaseServer } from '@/lib/supabase';
 import { MOCK_APPRENANTS } from '@/data/mockData';
 import { LabWorkbench } from '@/components/lab/LabWorkbench';
+import { LabLockScreen } from '@/components/lab/LabLockScreen';
 import { LabSubmission } from '@/types/tip';
 
 export const dynamic = 'force-dynamic';
@@ -31,9 +32,19 @@ export default async function LabDetailPage({ params }: LabPageProps) {
   if (activeTechnicianId) {
     student = await getApprenantById(activeTechnicianId);
   }
-  if (!student) {
-    student = MOCK_APPRENANTS[0]; // Jordan MARIE-JOSEPH en démonstration
+
+  // Si aucun technicien n'est authentifié et qu'on n'est pas en mode formateur :
+  // Verrouillage strict par code PIN DSI (comme pour les autres espaces)
+  if (!student && !isFormateur) {
+    return (
+      <div className="w-full">
+        <LabLockScreen lab={lab} />
+      </div>
+    );
   }
+
+  // En mode formateur seul, fallback pour visualisation de test
+  const effectiveStudent = student || MOCK_APPRENANTS[0];
 
   // Récupération de la soumission existante si présente
   let initialSubmission: LabSubmission | null = null;
@@ -42,7 +53,7 @@ export default async function LabDetailPage({ params }: LabPageProps) {
       .from('sf_lab_submissions')
       .select('*')
       .eq('lab_id', lab.id)
-      .eq('apprenant_id', student.id)
+      .eq('apprenant_id', effectiveStudent.id)
       .maybeSingle();
 
     if (subData) {
@@ -56,7 +67,7 @@ export default async function LabDetailPage({ params }: LabPageProps) {
     <div className="w-full">
       <LabWorkbench
         lab={lab}
-        student={student}
+        student={effectiveStudent}
         initialSubmission={initialSubmission}
         isFormateur={isFormateur}
       />
