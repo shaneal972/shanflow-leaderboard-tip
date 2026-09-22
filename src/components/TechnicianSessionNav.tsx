@@ -102,15 +102,15 @@ export const TechnicianSessionNav: React.FC<TechnicianSessionNavProps> = ({
 
       {/* MODAL DE PRISE DE POSTE SSO UNIFIÉE */}
       {isLoginModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 overflow-y-auto p-4 sm:p-6 bg-black/80 backdrop-blur-md flex min-h-full items-center justify-center animate-in fade-in duration-200">
           <div 
             className="fixed inset-0" 
             onClick={() => setIsLoginModalOpen(false)} 
           />
-          <div className="relative w-full max-w-md p-6 rounded-3xl slate-glass border border-teal-500/30 shadow-2xl z-10 space-y-4">
+          <div className="relative w-full max-w-md my-auto p-5 sm:p-6 rounded-3xl slate-glass border border-teal-500/40 shadow-2xl shadow-black/90 z-10 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-teal-500/20 flex items-center justify-center text-teal-300 border border-teal-500/30">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-teal-500/20 flex items-center justify-center text-teal-300 border border-teal-500/30 shrink-0">
                   <KeyRound className="w-4 h-4" />
                 </div>
                 <div>
@@ -125,13 +125,14 @@ export const TechnicianSessionNav: React.FC<TechnicianSessionNavProps> = ({
               <button
                 type="button"
                 onClick={() => setIsLoginModalOpen(false)}
-                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors shrink-0 cursor-pointer"
+                aria-label="Fermer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <TechnicianLoginScreen onSuccess={handleLoginSuccess} />
+            <TechnicianLoginScreen compact={true} onSuccess={handleLoginSuccess} />
           </div>
         </div>
       )}
