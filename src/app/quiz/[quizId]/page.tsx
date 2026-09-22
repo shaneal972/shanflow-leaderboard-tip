@@ -6,6 +6,7 @@ import {
   getAllApprenantsAdmin,
   getSubmissionForStudent 
 } from '@/lib/supabase';
+import { getActiveTechnicianId } from '@/lib/studentAuth';
 import { QuizExamRoom } from '@/components/quiz/QuizExamRoom';
 
 interface QuizPageProps {
@@ -22,7 +23,11 @@ export const revalidate = 0;
 
 export default async function QuizPage({ params, searchParams }: QuizPageProps) {
   const { quizId } = await params;
-  const { apprenantId } = await searchParams;
+  const resolvedSearchParams = await searchParams;
+  const activeTechnicianId = await getActiveTechnicianId();
+
+  // Détection de l'élève actif : priorise le paramètre d'URL (supervision) sinon la session technicien connectée
+  const effectiveApprenantId = resolvedSearchParams.apprenantId || activeTechnicianId || undefined;
 
   const students = await getAllApprenantsAdmin();
 
@@ -32,16 +37,16 @@ export default async function QuizPage({ params, searchParams }: QuizPageProps) 
     notFound();
   }
 
-  // 2. Si un élève est spécifié, vérifier s'il a déjà soumis
+  // 2. Si un élève est déterminé, vérifier s'il a déjà soumis
   let initialSubmission = null;
-  if (apprenantId) {
-    initialSubmission = await getSubmissionForStudent(quizId, apprenantId);
+  if (effectiveApprenantId) {
+    initialSubmission = await getSubmissionForStudent(quizId, effectiveApprenantId);
   }
 
   // 3. Si la correction est publiée et que l'élève a une soumission, on charge le corrigé complet
   let questions = examData.questions;
-  if (examData.quiz.statut === 'correction_publiee' && apprenantId) {
-    const correctionData = await getQuizWithCorrection(quizId, apprenantId);
+  if (examData.quiz.statut === 'correction_publiee' && effectiveApprenantId) {
+    const correctionData = await getQuizWithCorrection(quizId, effectiveApprenantId);
     if (correctionData) {
       questions = correctionData.questions;
       initialSubmission = correctionData.submission;
@@ -54,7 +59,7 @@ export default async function QuizPage({ params, searchParams }: QuizPageProps) 
         quiz={examData.quiz}
         questions={questions}
         students={students}
-        initialApprenantId={apprenantId}
+        initialApprenantId={effectiveApprenantId}
         initialSubmission={initialSubmission}
       />
     </div>

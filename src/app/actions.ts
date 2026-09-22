@@ -53,76 +53,21 @@ export async function updateDPSuiviAction(formData: {
         rubrique_5,
         statut_dp,
         updated_at: new Date().toISOString(),
-      });
+      }, { onConflict: 'apprenant_id' });
 
     if (error) {
-      console.warn('Supabase DP Upsert fallback (offline/migration):', error.message);
+      console.warn('Supabase DP Upsert error:', error.message);
+      return { success: false, error: error.message };
     }
 
     revalidatePath('/dp');
     revalidatePath(`/passport/${apprenantId}`);
+    revalidatePath('/admin');
     return { success: true };
-  } catch (err) {
-    console.error('Erreur updateDPSuiviAction:', err);
-    return { success: true }; // Résilient pour tests locaux
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : 'Erreur interne lors de la sauvegarde DP';
+    console.error('Erreur updateDPSuiviAction:', errorMsg);
+    return { success: false, error: errorMsg };
   }
 }
 
-// Schéma de validation pour la résolution de tickets
-const resolveTicketSchema = z.object({
-  ticketId: z.string().min(1),
-  apprenantId: z.string().uuid(),
-  resolutionNote: z.string().min(5).max(1000).transform(sanitizeString),
-});
-
-export async function resolveTicketAction(data: {
-  ticketId: string;
-  apprenantId: string;
-  resolutionNote: string;
-}) {
-  const parsed = resolveTicketSchema.safeParse(data);
-  if (!parsed.success) {
-    return { success: false, error: 'Note de résolution invalide ou trop courte.' };
-  }
-
-  const { ticketId, apprenantId } = parsed.data;
-
-  try {
-    // 1. Mettre à jour le ticket
-    await supabaseServer
-      .from('sf_tickets_klf')
-      .update({ statut: 'resolu' })
-      .eq('id', ticketId);
-
-    // 2. Ajouter les points à l'apprenant
-    const { data: ticket } = await supabaseServer
-      .from('sf_tickets_klf')
-      .select('points_valeur')
-      .eq('id', ticketId)
-      .single();
-
-    const pointsToAdd = ticket?.points_valeur || 150;
-
-    const { data: apprenant } = await supabaseServer
-      .from('sf_apprenants')
-      .select('points_total')
-      .eq('id', apprenantId)
-      .single();
-
-    if (apprenant) {
-      const newTotal = (apprenant.points_total || 0) + pointsToAdd;
-      await supabaseServer
-        .from('sf_apprenants')
-        .update({ points_total: newTotal })
-        .eq('id', apprenantId);
-    }
-
-    revalidatePath('/');
-    revalidatePath('/tickets');
-    revalidatePath(`/passport/${apprenantId}`);
-    return { success: true };
-  } catch (err) {
-    console.error('Erreur resolveTicketAction:', err);
-    return { success: true };
-  }
-}

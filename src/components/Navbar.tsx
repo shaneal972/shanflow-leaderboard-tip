@@ -2,12 +2,20 @@ import React from 'react';
 import Link from 'next/link';
 import { StatusDot } from './ui/StatusDot';
 import { ShieldCheck, Trophy, Ticket, BookOpen, Anchor, Lock, Library } from 'lucide-react';
+import { Apprenant } from '@/types/tip';
+import { TechnicianSessionNav } from './TechnicianSessionNav';
 
 interface NavbarProps {
+  currentStudent?: Apprenant | null;
+  isFormateur?: boolean;
   onOpenRgpd?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenRgpd }) => {
+export const Navbar: React.FC<NavbarProps> = ({ 
+  currentStudent = null,
+  isFormateur = false,
+  onOpenRgpd 
+}) => {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#070F1E]/90 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -66,21 +74,31 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenRgpd }) => {
           </nav>
 
           {/* Statut & Session Promo */}
-          <div className="flex items-center gap-3">
-            <div className="hidden lg:flex flex-col items-end">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="hidden xl:flex flex-col items-end">
               <span className="text-xs font-mono font-semibold text-slate-300">Session C26031A</span>
               <span className="text-[10px] text-slate-500">Titre Pro TIP • METAFORE</span>
             </div>
 
-            <StatusDot status="operational" label="DSI en ligne" />
+            <div className="hidden sm:block">
+              <StatusDot status="operational" label="DSI en ligne" />
+            </div>
 
-            <Link
-              href="/admin"
-              className="p-2 rounded-md text-slate-400 hover:text-white hover:bg-white/5 border border-white/5 transition-colors"
-              title="Cockpit d'administration formateur"
-            >
-              <Lock className="w-4 h-4 text-amber-400/80 hover:text-amber-400" />
-            </Link>
+            {/* Badge de session SSO unifiée */}
+            <TechnicianSessionNav 
+              currentStudent={currentStudent} 
+              isFormateur={isFormateur} 
+            />
+
+            {!isFormateur && (
+              <Link
+                href="/admin"
+                className="p-2 rounded-md text-slate-400 hover:text-white hover:bg-white/5 border border-white/5 transition-colors"
+                title="Cockpit d'administration formateur"
+              >
+                <Lock className="w-4 h-4 text-amber-400/80 hover:text-amber-400" />
+              </Link>
+            )}
 
             {onOpenRgpd && (
               <button
