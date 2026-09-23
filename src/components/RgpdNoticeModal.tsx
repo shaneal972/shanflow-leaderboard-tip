@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShieldCheck, X, FileText, Lock, Clock, UserCheck } from 'lucide-react';
 
 interface RgpdNoticeModalProps {
@@ -10,6 +10,12 @@ interface RgpdNoticeModalProps {
 
 export const RgpdNoticeModal: React.FC<RgpdNoticeModalProps> = ({ isOpen: controlledIsOpen, onClose: controlledOnClose }) => {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOpen = () => setInternalIsOpen(true);
+    window.addEventListener('open-rgpd-modal', handleOpen);
+    return () => window.removeEventListener('open-rgpd-modal', handleOpen);
+  }, []);
 
   const isModalOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
   const closeModal = controlledOnClose || (() => setInternalIsOpen(false));
