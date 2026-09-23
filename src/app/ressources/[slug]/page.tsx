@@ -172,6 +172,33 @@ export default function RessourceDetailPage() {
             </Link>
           </div>
         )}
+
+        {/* Fichier d'exercice pratique à télécharger pour l'atelier */}
+        {ressource.fichierExerciceUrl && (
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-teal-500/20 via-sky-500/15 to-transparent border border-teal-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg shadow-teal-950/30">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-teal-500/20 border border-teal-500/40 flex items-center justify-center text-teal-300 shrink-0">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-white uppercase tracking-wider font-mono">
+                  Fichier d'exercice pour l'atelier en direct
+                </div>
+                <p className="text-xs text-slate-300">
+                  Téléchargez <strong>{ressource.fichierExerciceNom}</strong> pour réaliser les manipulations sur votre poste.
+                </p>
+              </div>
+            </div>
+            <a
+              href={ressource.fichierExerciceUrl}
+              download
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs shrink-0 transition-all shadow-md shadow-teal-950/40 cursor-pointer"
+            >
+              <Download className="w-4 h-4" />
+              <span>Télécharger le document brut</span>
+            </a>
+          </div>
+        )}
       </div>
 
       {/* 1. Mise en situation KLF */}
@@ -184,6 +211,46 @@ export default function RessourceDetailPage() {
           "{ressource.miseEnSituationKLF}"
         </p>
       </div>
+
+      {/* Autopsie technique : Avant / Après */}
+      {ressource.autopsieAvantApres && (
+        <div className="p-6 rounded-2xl slate-glass border border-white/10 space-y-4">
+          <h2 className="text-base font-bold text-white font-['Lexend'] flex items-center gap-2">
+            <ShieldAlert className="w-5 h-5 text-rose-400" />
+            <span>Autopsie technique : Les défauts du document brut vs Les solutions DSI</span>
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 space-y-2.5">
+              <div className="text-xs font-bold text-rose-300 uppercase tracking-wider font-mono flex items-center gap-1.5">
+                <AlertCircle className="w-4 h-4" />
+                <span>Défauts constatés (L'anti-pattern poubelle)</span>
+              </div>
+              <ul className="space-y-2 text-xs text-slate-300 leading-relaxed">
+                {ressource.autopsieAvantApres.defauts.map((d, dIdx) => (
+                  <li key={dIdx} className="flex items-start gap-2">
+                    <span className="text-rose-400 font-bold shrink-0">✕</span>
+                    <span>{d}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 space-y-2.5">
+              <div className="text-xs font-bold text-emerald-300 uppercase tracking-wider font-mono flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Normes DSI KLF appliquées (Le standard pro)</span>
+              </div>
+              <ul className="space-y-2 text-xs text-slate-300 leading-relaxed">
+                {ressource.autopsieAvantApres.solutionsDSI.map((s, sIdx) => (
+                  <li key={sIdx} className="flex items-start gap-2">
+                    <span className="text-emerald-400 font-bold shrink-0">✓</span>
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 2. Raccourcis indispensables & réflexes clavier */}
       <div className="p-6 rounded-2xl slate-glass border border-white/10 space-y-4">

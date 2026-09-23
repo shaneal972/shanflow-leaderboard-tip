@@ -45,4 +45,11 @@ export interface BureautiqueRessource {
   miniQuiz?: MiniQuizQuestion[];
   ticketAssocieId?: string; // Ex: 'TCK-101'
   badgeAssocieId?: string;
+  fichierExerciceNom?: string;
+  fichierExerciceUrl?: string;
+  fichierFormat?: string;
+  autopsieAvantApres?: {
+    defauts: string[];
+    solutionsDSI: string[];
+  };
 }

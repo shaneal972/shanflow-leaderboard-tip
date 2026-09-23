@@ -1,0 +1,58 @@
+KARUKERA LOGISTIQUE & FRET — DIRECTION DES SYSTEMES D'INFORMATION (DSI)
+MANUEL DE PROCEDURE OPERATIONNELLE STANDARD (SOP-DSI-2026-04)
+SUJET : PROCEDURES DE MAINTENANCE ET GESTION DU PARC TERMINAUX MOBILES QUAI
+DOCUMENT BRUT A STRUCTURER EN DOCUMENT LONG (GABARIT DSI .DOTX ET SOMMAIRE AUTOMATIQUE)
+
+================================================================================
+CONSIGNE DU DSI MARC VERDIER :
+Ce document doit être transformé en un Manuel de Procédure Officiel de 4 pages.
+Vous devez appliquer la numérotation hiérarchique liée aux styles (Titre 1, Titre 2),
+générer la table des matières automatique dynamique sur la page 2,
+insérer un saut de section pour numéroter "Page X sur Y" uniquement à partir du corps de texte,
+et enregistrer la trame au format Modèle Word (.dotx) dans votre espace DSI.
+================================================================================
+
+1. INTRODUCTION ET PERIMETRE OPERATIONNEL
+1.1 Présentation de l'infrastructure logistique de Jarry
+Le terminal à conteneurs de Pointe-à-Pitre / Jarry constitue le hub central des flux de fret maritime pour l'archipel guadeloupéen. Plus de 120 000 conteneurs transitent chaque année sur les quais. La continuité d'activité repose intégralement sur la disponibilité des systèmes d'information embarqués et des terminaux mobiles de saisie.
+
+1.2 Objectif du présent manuel de procédure
+Ce manuel définit l'ensemble des règles de déploiement, de maintenance préventive, de diagnostic de pannes et de recyclage des équipements mobiles utilisés par les caristes, pointeurs et agents d'exploitation. Tout technicien support intervenant sur le parc est tenu d'appliquer rigoureusement les protocoles décrits dans ce document.
+
+2. GESTION DU CYCLE DE VIE DES TERMINAUX MOBILES
+2.1 Réception, inventaire et enregistrement DSI
+À réception d'un nouveau terminal Zebra ou Honeywell, le technicien procède au contrôle physique du colis, à l'extraction de l'adresse MAC et du numéro de série (S/N), et à l'enregistrement immédiat dans la base d'inventaire GLPI sous le statut "En préparation".
+
+2.2 Masterisation et déploiement du profil sécurisé MDM
+Le terminal est raccordé au réseau de préparation DSI. La configuration est poussée automatiquement via le serveur MDM (Mobile Device Management) de KLF. Le profil applique le verrouillage du Play Store, l'interdiction de modification des paramètres Wi-Fi et l'installation de la suite logicielle KLF Cargo v4.2.
+
+2.3 Attribution nominative et carnet de prêt
+Chaque terminal est assigné à une escouade de quai (Alizé, Baie-Mahault ou Houelbourg). L'agent signataire émarge le carnet de prêt physique ou numérique lors de la prise de poste et restitue l'appareil sur son socle de charge à la fin de son quart.
+
+3. PROTOCOLES DE MAINTENANCE ET RESOLUTION DES PANNES
+3.1 Contrôle quotidien des batteries et chargeurs
+Les batteries Li-ion font l'objet d'un cycle de charge complet toutes les 24 heures. Toute batterie présentant un gonflement physique, une autonomie inférieure à 4 heures ou un nombre de cycles supérieur à 500 doit être immédiatement retirée du service et déposée dans le bac de recyclage sécurisé DSI.
+
+3.2 Diagnostic des ruptures de connectivité Wi-Fi
+En cas de déconnexion répétée sur les quais extérieurs, le technicien effectue un test de balayage radio. Il vérifie l'accrochage sur les bornes industrielles Cisco (AP-01 à AP-08). Si l'adresse IP bascule en 169.254.x.x (APIPA), le bail DHCP est renouvelé manuellement et l'état du contrôleur réseau est inspecté.
+
+3.3 Procédure d'escalade et retour sous garantie constructeur (RMA)
+Si un écran tactile est brisé ou si le module de lecture laser est inopérant, le technicien génère un ticket de retour RMA sur le portail constructeur. L'appareil est consigné dans le casier de maintenance avec son bon de transport prépayé.
+
+4. SECURITE DES DONNEES ET CONFORMITE REGLEMENTAIRE
+4.1 Effacement sécurisé des données locales
+Avant toute réattribution ou mise au rebut d'un équipement, le technicien déclenche une réinitialisation d'usine sécurisée (Wipe DSI) garantissant l'écrasement des manifestes de fret, des identifiants de session et des journaux d'erreurs locaux, conformément au RGPD.
+
+4.2 Sauvegarde quotidienne et traçabilité des interventions
+Toute opération de maintenance fait l'objet d'une fiche d'intervention signée, archivée dans le casier numérique de la DSI pendant une durée minimale de 3 ans pour répondre aux exigences des audits Qualiopi et ISO 9001.
+
+5. ANNEXES ET FICHES REFLEXES
+5.1 Tableau récapitulatif des codes d'erreurs terminaux
+Code ERR-01 : Échec d'authentification certificat 802.1X. Action : Réinjecter le certificat racine DSI.
+Code ERR-02 : Décalage d'horloge NTP supérieur à 5 minutes. Action : Forcer la synchronisation avec le serveur ntp.klf.local.
+Code ERR-03 : Mémoire flash saturée (> 95%). Action : Vider le cache de l'application Cargo Scanner.
+
+5.2 Coordonnées de l'astreinte support DSI
+Téléphone d'urgence quai : poste interne 4040.
+Email d'escalade : support-dsi@klf-logistique.gp.
+Bureau physique : Bâtiment administratif Quai 4, Jarry.

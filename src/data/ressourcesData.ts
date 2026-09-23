@@ -87,34 +87,34 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
       {
         question: 'À quoi sert la touche F4 lors de l\'écriture d\'une formule sur tableur ?',
         options: [
-          'À fermer immédiatement le classeur en cours sans sauvegarder.',
           'À convertir une référence relative (B15) en référence absolue verrouillée ($B$15).',
+          'À fermer immédiatement le classeur en cours sans sauvegarder.',
           'À multiplier automatiquement le résultat par 100.',
           'À figer la ligne d\'en-tête à l\'affichage.'
         ],
-        reponseCorrecte: 1,
+        reponseCorrecte: 0,
         explication: 'La touche F4 est le raccourci standard universel pour ajouter ou retirer les dollars ($) de figeage absolu sans les taper manuellement.'
       },
       {
         question: 'Quelle est la formule correcte pour calculer le pourcentage du chiffre d\'affaires en B2 par rapport au total en B10 ?',
         options: [
           '=(B2/B10)*100 avec format Pourcentage',
-          '=B2/$B$10 avec application du format Pourcentage',
           '=$B$2/B10',
-          '=POURCENTAGE(B2; B10)'
+          '=POURCENTAGE(B2; B10)',
+          '=B2/$B$10 avec application du format Pourcentage'
         ],
-        reponseCorrecte: 1,
+        reponseCorrecte: 3,
         explication: 'La formule mathématique saine est =B2/$B$10. Le dollar garantit que lors de l\'étirement vers le bas, le dénominateur reste fixé sur la cellule B10.'
       },
       {
         question: 'Que signifie l\'erreur #DIV/0! qui apparaît lorsqu\'on étire une formule ?',
         options: [
           'Le tableur ne trouve pas la police d\'écriture.',
-          'La formule tente de diviser un nombre par zéro ou par une cellule vide.',
           'Le fichier est corrompu par un virus de quai.',
+          'La formule tente de diviser un nombre par zéro ou par une cellule vide.',
           'La colonne est simplement trop étroite pour afficher le texte.'
         ],
-        reponseCorrecte: 1,
+        reponseCorrecte: 2,
         explication: '#DIV/0! indique une division par zéro (ou par une cellule vide), survenant presque toujours quand on a oublié de verrouiller la cellule du total avec un dollar ($).'
       }
     ]
@@ -122,29 +122,48 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
   {
     id: 'docs-fiche-intervention',
     slug: 'docs-fiche-intervention',
-    titre: 'Mise en page d\'une fiche d\'intervention normalisée DSI',
+    titre: 'Mise en page chirurgicale d\'une fiche d\'intervention & Charte DSI (Notice Zebra)',
     outil: 'docs',
     categorie: 'Mise en page DSI & Charte documentaire',
     palier: 'Palier 1',
-    tempsLecture: '8-10 min',
-    resume: 'Construire un livrable support technique irréprochable sur Google Docs et Word : hiérarchie de styles, sauts de page forcés, tableaux sans déformation et conformité charte KLF.',
+    tempsLecture: '12-15 min (Atelier pratique 1h30)',
+    resume: 'Prendre en main un document technique corrompu (.docx poubelle), éradiquer les retours à la ligne parasites via les marques masquées (¶), caler la page 2 avec Ctrl + Entrée, appliquer les styles Titre 1/Titre 2 et verrouiller l\'émargement client avec un tableau invisible.',
     ticketAssocieId: 'TCK-102',
     badgeAssocieId: 'dsi_charte_master',
+    fichierExerciceNom: 'KLF_Notice_Zebra_v1_POUBELLE.docx',
+    fichierExerciceUrl: '/api/ressources/download-sample?file=zebra-doc',
+    fichierFormat: '.docx',
+    autopsieAvantApres: {
+      defauts: [
+        '15 appuis consécutifs sur la touche Entrée pour forcer le passage à la page 2 (décalant tout le document au moindre mot ajouté).',
+        'Titres bricolés manuellement à la souris (sélectionner + police 16 + gras) détruisant l\'arborescence sémantique du fichier.',
+        'Tableau de diagnostic coupé en deux à l\'impression car non paramétré en interdiction de fractionnement des lignes.',
+        'Alignement de la signature client et du visa technicien bricolé avec 40 espaces consécutifs (partant en lambeaux sur écran large).'
+      ],
+      solutionsDSI: [
+        'Saut de page forcé instantané (Ctrl + Entrée) garantissant une page 2 toujours parfaitement calée en haut.',
+        'Application stricte des styles sémantiques Titre 1 et Titre 2 pour une uniformisation de la charte en 1 clic.',
+        'Tableau dimensionné à 100% avec l\'option « Empêcher le fractionnement de la ligne sur plusieurs pages » cochée.',
+        'Tableau invisible 1x2 sans bordures (0 pt) garantissant un alignement d\'émargement millimétré quel que soit le support.'
+      ]
+    },
     objectifsPeda: [
       'Bannir définitivement la touche Entrée répétée au profit du saut de page forcé (Ctrl + Entrée).',
-      'Appliquer rigoureusement la hiérarchie des styles (Titre 1, Titre 2, Normal) pour structurer le document.',
-      'Dimensionner des tableaux d\'intervention en pourcentages pour garantir zéro débordement lors de l\'impression.',
-      'Créer un cartouche d\'émargement client professionnel aligné grâce aux tableaux invisibles.',
-      'Normaliser le nommage du fichier PDF prêt à archiver (Standard DSI).'
+      'Activer et interpréter les caractères non imprimables (¶, flèches de tabulation, points d\'espace) pour nettoyer un document.',
+      'Appliquer rigoureusement la hiérarchie des styles (Titre 1, Titre 2, Normal) pour structurer le document selon la charte DSI.',
+      'Dimensionner des tableaux d\'intervention en pourcentages et empêcher le fractionnement des lignes.',
+      'Créer un cartouche d\'émargement client professionnel aligné grâce aux tableaux invisibles sans bordure.',
+      'Normaliser le nommage du fichier PDF prêt à archiver (Standard DSI KLF).'
     ],
     prerequis: [
-      'Notions élémentaires de traitement de texte.',
-      'Savoir sélectionner du texte et ouvrir la palette des polices.'
+      'Notions élémentaires de traitement de texte (sélectionner du texte, couper/coller).',
+      'Savoir ouvrir Microsoft Word ou Google Docs sur son poste de travail.'
     ],
-    miseEnSituationKLF: 'Sébastien, cariste sur les quais de Jarry, a besoin d\'une fiche réflexe d\'utilisation des terminaux Zebra. Un précédent stagiaire a rédigé un document sur Google Docs : dès qu\'on l\'ouvre sur un autre poste ou qu\'on l\'imprime, les titres glissent en bas de page, les logos s\'étirent horizontalement et le tableau de diagnostic est coupé en deux sur la page suivante. Pour la direction de KLF, ce manque de rigueur décrédibilise le service support.',
+    miseEnSituationKLF: 'Sébastien, cariste sur les quais de Jarry, est en détresse : la notice technique des terminaux Zebra TC57 rédigée par un précédent stagiaire (KLF_Notice_Zebra_v1_POUBELLE.docx) est un désastre opérationnel. Dès qu\'on l\'ouvre sur un autre poste ou qu\'on l\'imprime pour le quai, les titres glissent en bas de page, les logos s\'étirent horizontalement et le tableau de diagnostic est coupé en deux sur la page suivante. Pour la direction de KLF, ce manque de rigueur décrédibilise le service support.',
     raccourcisCles: [
       { touche: 'Ctrl + Entrée', action: 'Insérer un saut de page forcé instantané (Page Break)', plateforme: 'windows' },
       { touche: 'Cmd + Entrée', action: 'Insérer un saut de page forcé sur Mac Docs/Word', plateforme: 'mac' },
+      { touche: 'Ctrl + Maj + 8 (ou bouton ¶)', action: 'Afficher / masquer les caractères non imprimables', plateforme: 'windows' },
       { touche: 'Ctrl + Alt + 1', action: 'Appliquer immédiatement le style Titre 1 au paragraphe', plateforme: 'windows' },
       { touche: 'Ctrl + Alt + 2', action: 'Appliquer immédiatement le style Titre 2 au paragraphe', plateforme: 'windows' },
       { touche: 'Ctrl + Maj + C / V', action: 'Copier et coller uniquement le format de mise en page', plateforme: 'windows' }
@@ -152,90 +171,226 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
     etapesDetaillees: [
       {
         numero: 1,
-        titre: 'La structure anatomique d\'un document technique DSI',
-        detail: 'Une fiche d\'intervention ou un tutoriel support officiel KLF doit impérativement comporter 4 zones normalisées : 1) L\'en-tête organisme (Logo KLF, référence document EN-19, date) ; 2) Le cartouche d\'identification (Demandeur, poste de travail concerné, urgence P1/P2/P3) ; 3) Le corps technique structuré (Constat, Diagnostic de cause, Actions correctives détaillées) ; 4) La zone de validation et visa (Nom du technicien, signature de l\'usager).',
-        consigneTech: 'Chaque section majeure doit toujours démarrer en haut d\'une page propre, sans dépendre du volume de texte de la section précédente.',
-        astuceDSI: 'Ne modifiez jamais la taille de police à la main pour faire un titre : utilisez exclusivement le sélecteur de styles natif.'
+        titre: 'Télécharger le document poubelle et activer les marques de paragraphe (¶)',
+        detail: 'Téléchargez le fichier KLF_Notice_Zebra_v1_POUBELLE.docx via le bouton ci-dessus et ouvrez-le. Votre premier réflexe de technicien est d\'activer l\'affichage des caractères non imprimables via [Accueil] > [Groupe Paragraphe] > [Bouton ¶] (ou raccourci Ctrl + Maj + 8). Vous découvrez alors l\'ampleur du désastre : 15 symboles ¶ consécutifs tapés pour faire descendre le texte !',
+        consigneTech: 'Bannissez la peur des marques cachées : elles ne s\'impriment jamais, mais elles sont les yeux du technicien pour repérer les anomalies de mise en page.',
+        astuceDSI: 'Sur Google Docs, allez dans [Affichage] > [Afficher les caractères non imprimables].'
       },
       {
         numero: 2,
-        titre: 'Bannir la touche Entrée : le saut de page forcé réflexe',
-        detail: 'Le piège n°1 des débutants est d\'appuyer 10 fois sur la touche "Entrée" pour faire basculer le texte sur la page suivante. Dès que vous ajoutez un mot en page 1, tout le contenu de la page 2 descend et décale l\'intégralité du rapport ! Utilisez le raccourci universel Ctrl + Entrée. Le saut de page est un repère fixe : même si la page 1 se remplit, la page 2 restera solidement calée tout en haut.',
-        exempleCode: 'Menu Insertion > Saut > Saut de page (Raccourci : Ctrl + Entrée)',
-        astuceDSI: 'Sur Google Docs, activez "Affichage" > "Afficher les caractères non imprimables" pour repérer instantanément les retours à la ligne parasites.'
+        titre: 'Éradiquer les retours chariots et caler la page 2 avec Ctrl + Entrée',
+        detail: 'Sélectionnez tous les symboles ¶ parasites situés entre la section 1 et la section 2 et supprimez-les avec la touche Suppr. Positionnez ensuite votre curseur immédiatement devant le titre « 2. PROCEDURE DE PRISE DE POSTE » et appuyez sur Ctrl + Entrée. Un trait discret « Saut de page » apparaît : la page 2 est désormais scellée tout en haut, même si vous modifiez la page 1 ultérieurement.',
+        exempleCode: 'Raccourci universel : Ctrl + Entrée (Windows) / Cmd + Entrée (Mac)\nChemin ruban : [Onglet Insertion] > [Groupe Pages] > [Bouton Saut de page]',
+        astuceDSI: 'Si une page blanche vide apparaît, supprimez simplement le caractère ¶ résiduel situé juste devant la balise de saut de page.'
       },
       {
         numero: 3,
-        titre: 'Maîtriser les Styles de Titres pour une table des matières automatique',
-        detail: 'Les styles "Titre 1" et "Titre 2" ne servent pas seulement à colorer le texte. Ils créent l\'arborescence sémantique du fichier. C\'est cette hiérarchie qui permet à Google Docs ou Word de générer une table des matières dynamique en 1 clic et d\'assurer l\'accessibilité pour les lecteurs d\'écran.',
-        exempleCode: 'Titre 1 : 1. IDENTIFICATION DU POSTE ET DE L\'INCIDENT\nTitre 2 : 1.1 Coordonnées de l\'usager demandeur\nTitre 2 : 1.2 Symptômes observés et codes d\'erreurs',
-        consigneTech: 'Pour modifier l\'apparence d\'un titre sans tout refaire : mettez en forme une ligne, puis faites "Titre 1" > "Mettre à jour Titre 1 pour correspondre".'
+        titre: 'Appliquer la hiérarchie sémantique des styles (Titre 1 & Titre 2)',
+        detail: 'Ne touchez plus jamais au sélecteur de taille de police pour faire un titre ! Placez votre curseur dans le titre principal et appliquez [Accueil] > [Styles] > [Titre 1] (ou Ctrl + Alt + 1). Pour les sous-parties (2.1, 2.2), appliquez le style [Titre 2] (Ctrl + Alt + 2). Les styles confèrent une structure sémantique au document, indispensable pour l\'accessibilité et le sommaire automatique.',
+        exempleCode: 'Titre 1 : 1. CONTEXTE ET OBJECTIF DU DOCUMENT (Ctrl + Alt + 1)\nTitre 1 : 2. PROCEDURE DE PRISE DE POSTE ET D\'ALLUMAGE (Ctrl + Alt + 1)\nTitre 2 : 2.1 Contrôle des batteries et voyants (Ctrl + Alt + 2)',
+        consigneTech: 'Pour adapter la charte KLF : mettez en forme une ligne (ex: police Calibri 16 bleu marine KLF #0A192F), puis faites clic droit sur Titre 1 dans le ruban > « Mettre à jour Titre 1 pour correspondre à la sélection ».'
       },
       {
         numero: 4,
-        titre: 'Tableaux techniques sans déformation et non-fractionnement',
-        detail: 'Les fiches d\'intervention comportent souvent un tableau de pièces remplacées ou d\'étapes de test. Pour éviter qu\'un tableau ne déborde lors de l\'impression, réglez la largeur totale sur 100% de la page (marges comprises). Dans Word ou Docs, cochez la propriété "Empêcher le fractionnement de la ligne sur plusieurs pages" pour qu\'une étape technique ne soit jamais coupée au milieu.',
-        exempleCode: 'Propriétés du tableau > Alignement centré > Empêcher le fractionnement des lignes',
-        astuceDSI: 'Pour les colonnes de données chiffrées (durée d\'intervention, coût), alignez toujours le texte à droite pour faciliter la lecture des unités.'
+        titre: 'Dompter le tableau de diagnostic (100% largeur & Zéro fractionnement)',
+        detail: 'Un tableau technique ne doit jamais déborder des marges ni être coupé horizontalement au milieu d\'une ligne lors de l\'impression. Sélectionnez le tableau de diagnostic des voyants : 1) Réglez sa largeur totale sur 100% ; 2) Faites un clic droit sur le tableau > [Propriétés du tableau] > onglet [Ligne] > décochez impérativement la case « Autoriser le fractionnement des lignes sur plusieurs pages ». La ligne entière basculera proprement si l\'espace manque.',
+        exempleCode: '[Clic droit sur le tableau] > [Propriétés du tableau] > [Ligne] > Décocher [Autoriser le fractionnement des lignes sur plusieurs pages]',
+        astuceDSI: 'Dans l\'onglet [Ligne], cochez également « Répéter en tant que ligne d\'en-tête en haut de chaque page » si votre tableau dépasse sur une deuxième page.'
       },
       {
         numero: 5,
-        titre: 'Le secret des DSI : les tableaux invisibles pour les signatures',
-        detail: 'Pour placer côte à côte la date, le visa du technicien et la signature du client en bas de document, n\'utilisez jamais la barre d\'espace ou des tabulations chaotiques. Insérez un tableau de 1 ligne et 2 colonnes. Placez les mentions dans chaque colonne, puis mettez la couleur des bordures du tableau en transparent (0 pt ou blanc). L\'alignement reste parfait, quelle que soit la résolution d\'écran.',
-        exempleCode: 'Tableau 1x2 : [Colonne gauche : Visa Technicien DSI] [Colonne droite : Visa Usager KLF]\nBordures du tableau = 0 pt (Invisible à l\'impression)',
+        titre: 'Le secret des DSI : L\'émargement par tableau invisible 1x2 sans bordure',
+        detail: 'Pour placer le Visa du Technicien et la Signature du Client côte à côte en bas de document, n\'utilisez jamais la barre d\'espace ou des tabulations manuelles. Insérez un tableau de 1 ligne et 2 colonnes ([Insertion] > [Tableau] > 1x2). Saisissez les mentions dans chaque colonne, puis appliquez [Bordures] > [Aucune bordure] (0 pt). L\'alignement reste inaltérable sur tout écran et à l\'impression.',
+        exempleCode: 'Tableau 1x2 : [Colonne gauche : Visa Technicien DSI KLF] [Colonne droite : Visa Responsable Quai Sebastien LEBLANC]\nBordures du tableau = 0 pt (Bordures invisibles à l\'impression)',
         consigneTech: 'C\'est le standard absolu exigé pour les formulaires réglementaires Cerfa et Qualiopi.'
       }
     ],
     piegesAEviter: [
       'Appuyer 15 fois sur Entrée pour passer à la page suivante au lieu d\'utiliser Ctrl + Entrée.',
       'Mélanger plus de 2 polices de caractères dans un même document technique (règle DSI : une police de titre sobre, une police de corps lisible).',
-      'Insérer des images ou captures d\'écran en mode "Au-dessus du texte" flottant (risque de recouvrir des paragraphes entiers).',
+      'Insérer des images ou captures d\'écran en mode « Au-dessus du texte » flottant (risque de recouvrir des paragraphes entiers).',
       'Oublier de convertir le livrable final en PDF avant de le transmettre à un usager ou à la hiérarchie.'
     ],
     exerciceApplication: {
-      enonce: 'À partir du texte brut "Rapport_Incident_Quai_Zebra_Brut.txt", mettez en page la fiche d\'intervention officielle KLF en appliquant les règles DSI : 1) En-tête avec titre en Titre 1 ; 2) Saut de page forcé avant la section 2 ; 3) Tableau de diagnostic 3 colonnes centré sans bordures brisées ; 4) Cartouche de signature en tableau invisible 1x2 ; 5) Export au format "AAAA-MM-JJ_FicheInterv_Zebra_Prenom_NOM.pdf" (exemple fictif : 2026-09-22_FicheInterv_Zebra_Martin_RICHELIEU.pdf, à remplacer par votre propre prénom et NOM).',
+      enonce: 'À partir du fichier brut "KLF_Notice_Zebra_v1_POUBELLE.docx" téléchargé, appliquez la charte DSI complète : 1) Nettoyez les 15 retours chariots parasites et scellez la page 2 avec Ctrl + Entrée ; 2) Appliquez les styles Titre 1 et Titre 2 sur les 6 sections ; 3) Sécurisez le tableau de diagnostic (largeur 100%, non-fractionnement des lignes) ; 4) Construisez le cartouche de signature final via un tableau invisible 1x2 ; 5) Exportez le livrable officiel en PDF 2 pages strictes sous le nom AAAA-MM-JJ_Notice_Zebra_Prenom_NOM.pdf.',
       criteresReussite: [
-        'Zéro saut de ligne parasite consécutif (vérifié via caractères masqués).',
+        'Zéro saut de ligne parasite consécutif (vérifié via les marques ¶).',
         'Le document comporte un saut de page propre (Ctrl + Entrée).',
-        'Les styles Titre 1 et Titre 2 sont appliqués.',
-        'La zone d\'émargement finale est parfaitement alignée via tableau invisible.',
-        'Nom de fichier strictement normalisé : AAAA-MM-JJ_FicheInterv_Zebra_Prenom_NOM.pdf.'
+        'Les styles Titre 1 et Titre 2 sont appliqués sur l\'ensemble des rubriques.',
+        'La zone d\'émargement finale est parfaitement alignée via tableau invisible 1x2.',
+        'Nom de fichier strictement normalisé : AAAA-MM-JJ_Notice_Zebra_Prenom_NOM.pdf sur 2 pages strictes.'
       ],
-      solutionAttendue: 'Document normalisé 2 pages strictes au format AAAA-MM-JJ_FicheInterv_Zebra_Prenom_NOM.pdf, exporté en PDF haute qualité prêt pour le Dossier Professionnel (DP).'
+      solutionAttendue: 'Document normalisé 2 pages strictes au format AAAA-MM-JJ_Notice_Zebra_Prenom_NOM.pdf, exporté en PDF haute qualité prêt pour le Dossier Professionnel (DP).'
     },
     miniQuiz: [
       {
         question: 'Quel est le raccourci universel pour insérer un saut de page propre sans décaler les paragraphes suivants ?',
         options: [
           'Maj + Entrée',
-          'Ctrl + Entrée (ou Cmd + Entrée sur Mac)',
           'Alt + Entrée',
+          'Ctrl + Entrée (ou Cmd + Entrée sur Mac)',
           'Ctrl + Tab'
         ],
-        reponseCorrecte: 1,
-        explication: 'Ctrl + Entrée insère immédiatement un saut de page forcé (Page Break), garantissant que le texte suivant démarrera toujours en haut de la page suivante.'
+        reponseCorrecte: 2,
+        explication: 'Ctrl + Entrée insère immédiatement un saut de page forcé (Page Break), garantissant que le texte suivant démarrera toujours en haut de la page suivante, indépendamment des modifications de la page 1.'
       },
       {
-        question: 'Pourquoi est-il déconseillé de changer manuellement la taille et la couleur du texte pour créer un titre dans un rapport technique ?',
+        question: 'Pourquoi est-il formellement proscrit de changer manuellement la taille et la couleur du texte pour créer un titre ?',
         options: [
-          'Parce que l\'imprimante refuse d\'imprimer le texte agrandi.',
           'Parce que le document perd sa structure sémantique et ne peut pas générer de table des matières automatique.',
-          'Parce que Google Docs facture les modifications de taille de police.',
-          'Parce que cela efface automatiquement le pied de page.'
+          'Parce que les logiciels de traitement de texte bloquent l’impression des textes agrandis manuellement.',
+          'Parce que cela convertit automatiquement le paragraphe en image non modifiable.',
+          'Parce que cela efface automatiquement l’en-tête et le pied de page du document.'
         ],
-        reponseCorrecte: 1,
-        explication: 'L\'utilisation des styles prédéfinis (Titre 1, Titre 2) confère une structure sémantique au document, indispensable pour l\'arborescence, la table des matières automatique et l\'accessibilité.'
+        reponseCorrecte: 0,
+        explication: 'L\'utilisation des styles prédéfinis (Titre 1, Titre 2) confère une structure sémantique au document, indispensable pour l\'arborescence, la table des matières automatique et l\'accessibilité pour les malvoyants.'
       },
       {
         question: 'Comment aligner parfaitement deux blocs de signature côte à côte (Technicien et Usager) en bas de fiche ?',
         options: [
-          'En tapant 45 espaces consécutifs entre les deux blocs.',
-          'En insérant un tableau de 1 ligne et 2 colonnes avec des bordures transparentes (invisibles).',
-          'En utilisant la loupe de Windows.',
-          'En réduisant les marges de la page à 0 cm.'
+          'En insérant 40 espaces consécutifs ou 5 tabulations manuelles entre les deux blocs.',
+          'En insérant un tableau de 1 ligne et 2 colonnes avec des bordures transparentes (invisibles à 0 pt).',
+          'En divisant la page entière en deux colonnes de journal.',
+          'En réduisant les marges latérales de la page à 0 cm.'
         ],
         reponseCorrecte: 1,
-        explication: 'Le tableau invisible (bordures masquées à 0 pt) est la méthode professionnelle standard pour verrouiller des alignements stricts sans dépendre des polices ou des marges.'
+        explication: 'Le tableau invisible (bordures masquées à 0 pt) est la méthode professionnelle standard pour verrouiller des alignements stricts sans dépendre des polices, des tabulations aléatoires ou des marges.'
+      }
+    ]
+  },
+  {
+    id: 'docs-sommaire-gabarit-dotx',
+    slug: 'docs-sommaire-gabarit-dotx',
+    titre: 'Documents techniques longs : Sommaire automatique, Styles avancés & Modèle (.dotx)',
+    outil: 'docs',
+    categorie: 'Architecture documentaire & Automatisation',
+    palier: 'Palier 1',
+    tempsLecture: '12-15 min (Atelier pratique 1h45)',
+    resume: 'Structurer un manuel d\'exploitation KLF de 4 pages : numérotation hiérarchique multiniveaux (1. / 1.1 / 1.2) liée aux styles, volet de navigation, table des matières dynamique en 1 clic, pieds de page Page X sur Y et sauvegarde en modèle réutilisable (.dotx).',
+    ticketAssocieId: 'TCK-102',
+    badgeAssocieId: 'dsi_charte_master',
+    fichierExerciceNom: 'KLF_Manuel_Procedure_Standard_BRUT.txt',
+    fichierExerciceUrl: '/api/ressources/download-sample?file=sop-txt',
+    fichierFormat: '.txt',
+    autopsieAvantApres: {
+      defauts: [
+        'Numérotation des chapitres tapée en dur à la main (1., 1.1, 1.2), devenant fausse dès qu\'on intercale une nouvelle section.',
+        'Sommaire tapé artisanalement avec des petits points tapés à la main (.....) et numéros de pages désynchronisés à chaque mise à jour.',
+        'Absence de numérotation automatique de page (Page X sur Y), obligeant à modifier manuellement chaque pied de page.',
+        'Absence de modèle d\'entreprise (.dotx) : chaque technicien repart d\'une feuille blanche avec des polices hétérogènes.'
+      ],
+      solutionsDSI: [
+        'Numérotation hiérarchique officielle liée directement aux styles Titre 1 et Titre 2.',
+        'Table des matières automatique générée en 1 clic, actualisable instantanément via la touche F9.',
+        'Pieds de page dynamiques avec le champ automatique « Page X sur Y » et logo DSI dans l\'en-tête.',
+        'Enregistrement de la trame au format Modèle Word (.dotx) pour standardiser l\'ensemble des procédures de la promotion.'
+      ]
+    },
+    objectifsPeda: [
+      'Configurer une liste à plusieurs niveaux liée directement aux styles Titre 1 et Titre 2 pour une numérotation 100% automatique.',
+      'Exploiter le volet de navigation pour réorganiser des chapitres entiers par simple glisser-déposer sans copier-coller.',
+      'Générer, personnaliser et actualiser (touche F9) une table des matières dynamique avec points de suite.',
+      'Insérer des pieds de page normés avec le champ automatique « Page X sur Y ».',
+      'Enregistrer et déployer un Modèle Word d\'entreprise (.dotx) prêt à l\'emploi dans les modèles Office.'
+    ],
+    prerequis: [
+      'Maîtriser les styles Titre 1 et Titre 2 vus dans le Module 1.',
+      'Savoir insérer un saut de page propre (Ctrl + Entrée).'
+    ],
+    miseEnSituationKLF: 'Après le succès de la remise en état de la notice Zebra, le DSI Marc Verdier vous confie une mission d\'envergure : transformer les notes brutes de maintenance (KLF_Manuel_Procedure_Standard_BRUT.txt) en un Manuel de Procédure Standard DSI officiel de 4 pages. Ce document doit être doté d\'une couverture sobre, d\'un sommaire dynamique automatique en page 2, de numéros de pages X/Y et être enregistré au format Modèle Word (.dotx) pour servir de matrice à toutes les équipes informatiques de Jarry.',
+    raccourcisCles: [
+      { touche: 'F9', action: 'Mettre à jour instantanément les champs et la table des matières sélectionnée', plateforme: 'windows' },
+      { touche: 'Alt + Maj + P', action: 'Insérer automatiquement le numéro de page dynamique dans le pied de page', plateforme: 'windows' },
+      { touche: 'Ctrl + F (onglet Titres)', action: 'Ouvrir le volet de navigation pour réorganiser les chapitres par glisser-déposer', plateforme: 'windows' },
+      { touche: 'Maj + F3', action: 'Basculer la casse du texte sélectionné (Majuscules, Minuscules, Nom propre)', plateforme: 'windows' },
+      { touche: 'Ctrl + Maj + S', action: 'Ouvrir la fenêtre flottante d\'application rapide des styles', plateforme: 'windows' }
+    ],
+    etapesDetaillees: [
+      {
+        numero: 1,
+        titre: 'Importer le texte brut et poser l\'architecture en 4 pages',
+        detail: 'Téléchargez KLF_Manuel_Procedure_Standard_BRUT.txt et collez son contenu dans un document Word vierge. Posez les 4 pages d\'emblée grâce à des sauts de page (Ctrl + Entrée) : Page 1 = Page de garde sobre (Titre, Référence SOP, Auteur, Date) ; Page 2 = Emplacement réservé pour la Table des matières ; Page 3 & 4 = Corps de procédure technique.',
+        consigneTech: 'Ne commencez jamais à mettre en forme avant d\'avoir structuré l\'enchaînement de vos pages.',
+        astuceDSI: 'Insérez un saut de page immédiatement après le titre du document pour isoler la couverture.'
+      },
+      {
+        numero: 2,
+        titre: 'Lier la liste multiniveau aux styles Titre 1 et Titre 2',
+        detail: 'Pour que vos titres se numérotent automatiquement (1. INTRODUCTION, 1.1 Contexte), ne tapez aucun chiffre à la main ! Cliquez sur [Accueil] > [Groupe Paragraphe] > [Bouton Liste à plusieurs niveaux ▾] > choisissez la bibliothèque affichant « 1. Titre 1 / 1.1 Titre 2 ». Dès que vous appliquez le style Titre 1, Word numérote 1, 2, 3... Si vous appliquez Titre 2, il numérote 1.1, 1.2, 2.1... Si vous déplacez un chapitre, toute la numérotation se recalcule instantanément !',
+        exempleCode: '[Onglet Accueil] > [Groupe Paragraphe] > [Liste à plusieurs niveaux ▾] > Sélectionner [1 Titre 1 / 1.1 Titre 2]',
+        astuceDSI: 'Si vous insérez un nouveau chapitre entre le 1 et le 2, le 2 devient automatiquement 3 sans aucun risque d\'erreur humaine.'
+      },
+      {
+        numero: 3,
+        titre: 'Générer la table des matières automatique en 1 clic',
+        detail: 'Placez votre curseur en haut de la Page 2. Allez dans [Références] > [Groupe Table des matières] > [Bouton Table des matières] > sélectionnez « Table automatique 1 ». En 1 seconde, Word scanne l\'intégralité de vos styles Titre 1 et Titre 2, extrait les intitulés, pose les taquets avec points de suite et associe les bons numéros de page !',
+        exempleCode: '[Onglet Références] > [Table des matières] > [Table automatique 1]\nRaccourci de mise à jour : Clic sur la table + touche F9 > « Mettre à jour toute la table »',
+        consigneTech: 'Interdiction formelle de taper des petits points (...) au clavier : c\'est le premier motif de sanction au TOSA Word et face au jury Titre Pro.'
+      },
+      {
+        numero: 4,
+        titre: 'Insérer le pied de page normé « Page X sur Y »',
+        detail: 'Double-cliquez dans le bas de la Page 3 pour ouvrir la zone de pied de page. Allez dans [En-tête et pied de page] > [Numéro de page] > [Bas de page] > descendez jusqu\'à la catégorie « Page X sur Y » (Numéro gras 2). Word gère automatiquement le compteur dynamique. Pour aligner le logo KLF à gauche et la pagination à droite, utilisez un tableau invisible 1x2.',
+        exempleCode: '[En-tête et pied de page] > [Numéro de page] > [Bas de page] > [Page X sur Y]',
+        astuceDSI: 'Pour que le numéro n\'apparaisse pas sur la couverture, cochez simplement la case « Première page différente » dans le ruban d\'en-tête.'
+      },
+      {
+        numero: 5,
+        titre: 'Enregistrer le chef-d\'œuvre en Modèle Word (.dotx)',
+        detail: 'Pour que votre travail serve de matrice à toute la DSI de KLF : allez dans [Fichier] > [Enregistrer sous] > changez le type de fichier en « Modèle Word (*.dotx) ». Word vous redirige automatiquement dans votre dossier « Modèles Office personnalisés ». Nommez-le KLF_Gabarit_Procedure_DSI.dotx. Désormais, un simple double-clic dessus ouvrira un nouveau document vierge reprenant vos styles, votre logo et vos pieds de page sans jamais écraser le modèle original !',
+        exempleCode: '[Fichier] > [Enregistrer sous] > Type : Modèle Word (*.dotx) > Nom : KLF_Gabarit_Procedure_DSI.dotx',
+        consigneTech: 'La différence vitale : un .docx s\'écrase si on clique sur Enregistrer. Un .dotx génère toujours un "Document 1" protégé.'
+      }
+    ],
+    piegesAEviter: [
+      'Taper les points de suite du sommaire à la main avec la touche point (.....).',
+      'Attribuer le style Titre 1 à un paragraphe entier de texte courant (le texte entier se retrouve aspiré dans le sommaire !).',
+      'Oublier d\'actualiser la table des matières avec F9 avant d\'exporter en PDF.',
+      'Enregistrer le gabarit en .docx standard au lieu du format modèle .dotx.'
+    ],
+    exerciceApplication: {
+      enonce: 'À partir du texte brut "KLF_Manuel_Procedure_Standard_BRUT.txt" téléchargé, construisez le manuel officiel DSI : 1) Structurez le document en 4 pages avec couverture et sommaire en page 2 ; 2) Appliquez la numérotation multiniveau liée aux styles Titre 1 et Titre 2 ; 3) Insérez la table des matières dynamique avec points de suite ; 4) Insérez le pied de page Page X sur Y ; 5) Enregistrez le fichier final sous deux formats : le PDF officiel AAAA-MM-JJ_ManuelProcedure_Zebra_Prenom_NOM.pdf et le modèle d\'entreprise KLF_Gabarit_Procedure_DSI.dotx.',
+      criteresReussite: [
+        'La table des matières dynamique se met à jour en 1 clic via F9 sans aucun point tapé à la main.',
+        'La numérotation 1., 1.1, 1.2 est générée automatiquement par la liste multiniveaux liée aux styles.',
+        'Le pied de page affiche dynamiquement Page X sur Y avec première page différente.',
+        'Le document est exporté en PDF haute qualité et en modèle .dotx réutilisable.'
+      ],
+      solutionAttendue: 'Manuel DSI 4 pages avec sommaire dynamique actualisable, numérotation multiniveaux, pied de page Page X sur Y et modèle réutilisable .dotx.'
+    },
+    miniQuiz: [
+      {
+        question: 'Quelle est la méthode officielle pour mettre à jour instantanément une table des matières après avoir modifié des titres dans Word ?',
+        options: [
+          'Supprimer la table des matières et la retaper manuellement depuis le début.',
+          'Changer la police de la table des matières dans l’onglet Accueil.',
+          'Faire un clic droit sur la table puis « Couper / Coller ».',
+          'Faire un clic droit sur la table et choisir « Mettre à jour les champs » (ou appuyer sur F9).'
+        ],
+        reponseCorrecte: 3,
+        explication: 'La touche F9 (ou clic droit > Mettre à jour les champs) recalcule dynamiquement l\'arborescence des styles et actualise les numéros de page sans réinsérer la table.'
+      },
+      {
+        question: 'Pourquoi est-il fortement recommandé d’enregistrer une trame officielle sous l’extension .dotx plutôt que .docx ?',
+        options: [
+          'Parce que le format .dotx est le seul qui autorise l’impression en couleur.',
+          'Parce qu’un double-clic sur un fichier .dotx ouvre une copie vierge sans jamais écraser le fichier modèle d’origine.',
+          'Parce que les fichiers .dotx sont automatiquement cryptés avec un mot de passe militaire.',
+          'Parce que Google Docs refuse d’ouvrir les fichiers .docx standards.'
+        ],
+        reponseCorrecte: 1,
+        explication: 'Le format .dotx (Document Template) est un modèle d\'entreprise : à chaque ouverture, il crée un nouveau document vierge prêt à être complété, sanctuarisant ainsi la matrice originale contre les écrasements accidentels.'
+      },
+      {
+        question: 'Où se situe l’option permettant de réorganiser des chapitres entiers par simple glisser-déposer sans aucun copier-coller ?',
+        options: [
+          'Dans la corbeille de Windows.',
+          'Dans le menu contextuel du correcteur d’orthographe.',
+          'Dans le Volet de navigation (accessible via Ctrl + F ou l’onglet Affichage).',
+          'Dans les options avancées d’impression du document.'
+        ],
+        reponseCorrecte: 2,
+        explication: 'Dans le Volet de navigation (Ctrl + F > onglet Titres), l\'arborescence des styles Titre 1 et Titre 2 permet de glisser-déposer des sections entières : le titre et tout son contenu associé se déplacent d\'un bloc !'
       }
     ]
   },
@@ -325,11 +480,11 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
         question: 'Pourquoi devez-vous TOUJOURS spécifier FAUX (ou 0) comme 4ème argument dans la fonction RECHERCHEV ?',
         options: [
           'Pour indiquer que le tableau doit être imprimé en noir et blanc.',
-          'Pour exiger une correspondance exacte et empêcher le tableur de renvoyer une valeur approximative erronée.',
           'Pour accélérer la vitesse de calcul du processeur.',
-          'Pour masquer les chiffres confidentiels aux stagiaires.'
+          'Pour masquer les chiffres confidentiels aux stagiaires.',
+          'Pour exiger une correspondance exacte et empêcher le tableur de renvoyer une valeur approximative erronée.'
         ],
-        reponseCorrecte: 1,
+        reponseCorrecte: 3,
         explication: 'Le 4ème argument FAUX (ou 0) force la correspondance exacte. S\'il est omis ou mis à VRAI, le tableur renverra la valeur la plus proche si le tableau est trié, créant des erreurs comptables redoutables.'
       },
       {
@@ -346,12 +501,12 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
       {
         question: 'Quelle formule permet d\'afficher "Non trouvé" au lieu du message d\'erreur #N/A si une recherche échoue ?',
         options: [
-          '=SI(ERREUR; ...)',
           '=SIERREUR(RECHERCHEV(...); "Non trouvé")',
+          '=SI(ERREUR; ...)',
           '=EFFACER.ERREUR(RECHERCHEV(...))',
           '=RECHERCHEV(SIERREUR(...))'
         ],
-        reponseCorrecte: 1,
+        reponseCorrecte: 0,
         explication: 'La fonction =SIERREUR(formule; valeur_alternative) intercepte n\'importe quelle erreur (comme #N/A, #DIV/0!, #VALEUR!) et affiche le texte de remplacement choisi à la place.'
       }
     ]

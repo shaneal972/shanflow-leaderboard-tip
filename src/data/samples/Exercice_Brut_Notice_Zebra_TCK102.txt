@@ -1,0 +1,55 @@
+﻿KARUKERA LOGISTIQUE & FRET - SERVICE DSI JARRY
+FICHE REFLEXE TECHNIQUE - TERMINAUX MOBILES ZEBRA TC57
+DOCUMENT BRUT A METTRE EN FORME SELON LA CHARTE DSI KLF
+Ticket associe : TCK-102 (Quai & Entrepots - Sebastien LEBLANC)
+
+CONSIGNE D'EXPORT DU LIVRABLE :
+Exportez imperativement votre document final au format PDF en le nommant :
+AAAA-MM-JJ_FicheInterv_Zebra_Prenom_NOM.pdf
+(Exemple fictif pour Martin RICHELIEU : 2026-09-22_FicheInterv_Zebra_Martin_RICHELIEU.pdf)
+
+================================================================================
+
+1. CONTEXTE ET OBJECTIF DU DOCUMENT
+Les caristes et preparateurs de commandes du terminal maritime de Jarry sont equipes de 8 terminaux durcis Zebra TC57 Android. Ces appareils permettent le scan en temps reel des conteneurs maritimes et l'edition des bons de livraison sur les quais d'expedition.
+Ce document constitue la fiche reflexe obligatoire pour la prise de poste, la configuration reseau et la resolution des blocages d'application de premier niveau.
+
+2. PROCEDURE DE PRISE DE POSTE ET D'ALLUMAGE
+Etape 1 : Recuperer le terminal Zebra sur le rack de charge n°2 dans le local des caristes. Verifier que le voyant de charge superieur est vert fixe (batterie > 90%).
+Etape 2 : Maintenir le bouton d'alimentation lateral droit enfonce pendant 3 secondes jusqu'a la vibration de confirmation.
+Etape 3 : Saisir le code PIN de securite usager cariste (Code temporaire : 2026).
+Etape 4 : Verifier la presence de l'icone Wi-Fi "KLF_LOGISTIQUE_PRO" avec 4 barres de reception.
+
+3. PROCEDURE DE SCAN DES CONTENEURS AU QUAI
+Pour scanner un conteneur maritime de 40 pieds :
+Pointer le faisceau laser rouge situe en tete de terminal vers le code-barres 1D ou le QR code situe sur la porte droite du conteneur.
+Distance preconisee : entre 30 cm et 1,5 metre.
+Maintenir la gachette jaune enfoncee jusqu'au signal sonore ("Bip" aigu) et au flash lumineux vert de validation.
+Verifier sur l'ecran tactile l'affichage du numero de conteneur normalise (Exemple : KLFU-784512-9) ainsi que le statut "DECHARGEMENT VALIDE".
+
+4. TABLEAU DE DIAGNOSTIC DES VOYANTS ET ANOMALIES
+Voyant vert clignotant : Terminal en cours de synchronisation avec le serveur central DSI. Action : Patienter 15 secondes sans eteindre.
+Voyant orange fixe : Batterie inferieure a 15% ou memoire cache saturee. Action : Remplacer la batterie amovible ou brancher sur socle chargeur.
+Voyant rouge fixe ou clignotant : Echec de connexion au reseau Wi-Fi entrepots ou scan non reconnu. Action : Redemarrer l'application KLF Scan ou lancer le vidage du cache.
+Ecran bloque ou freeze total : Le terminal ne reagit plus au toucher. Action : Reboot force (maintenir Alimentation + Touche Scan gauche pendant 10 secondes).
+
+5. PROCEDURE DE VIDAGE DU CACHE EN CAS DE GEL
+Ouvrir les Parametres Android du terminal.
+Naviguer dans Applications > KLF Cargo Scanner > Stockage.
+Appuyer imperativement sur "Vider le cache" (Attention : ne jamais appuyer sur "Effacer le stockage" sous peine de supprimer la configuration DSI).
+Relancer l'application KLF Cargo Scanner et verifier que le statut passe au vert.
+
+6. ZONE D'EMARGEMENT ET VISA DE CONFORMITE
+Document redige et verifie par le technicien support DSI KLF :
+Nom et Prenom du Technicien : ............................................
+Date de validation : 22/09/2026
+Signature du Technicien :
+
+Visa du responsable quai et entrepots :
+Nom : Sebastien LEBLANC
+Date de reception : ............................................
+Signature de l'usager :
+
+================================================================================
+RAPPEL STANDARD DSI : Format du livrable PDF = AAAA-MM-JJ_FicheInterv_Zebra_Prenom_NOM.pdf
+(Exemple fictif : 2026-09-22_FicheInterv_Zebra_Martin_RICHELIEU.pdf)
