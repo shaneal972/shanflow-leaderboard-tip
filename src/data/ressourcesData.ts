@@ -212,15 +212,29 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
       'Oublier de convertir le livrable final en PDF avant de le transmettre à un usager ou à la hiérarchie.'
     ],
     exerciceApplication: {
-      enonce: 'À partir du fichier brut "KLF_Notice_Zebra_v1_POUBELLE.docx" téléchargé, appliquez la charte DSI complète : 1) Nettoyez les 15 retours chariots parasites et scellez la page 2 avec Ctrl + Entrée ; 2) Appliquez les styles Titre 1 et Titre 2 sur les 6 sections ; 3) Sécurisez le tableau de diagnostic (largeur 100%, non-fractionnement des lignes) ; 4) Construisez le cartouche de signature final via un tableau invisible 1x2 ; 5) Exportez le livrable officiel en PDF 2 pages strictes sous le nom AAAA-MM-JJ_Notice_Zebra_Prenom_NOM.pdf.',
+      enonce: `DÉFI AUTONOME (Ticket TCK-104) : La procédure technique d'exploitation du Pont-Bascule de Quai 2 a été rédigée sous forme d'un document brut chaotique (KLF_Procedure_PontBascule_v1_POUBELLE.docx). Votre mission de technicien support consiste à restructurer ce document en un livrable DSI officiel de 4 pages strictes :
+
+1. Découpage chirurgical (4 pages) : Éradiquez tous les retours chariots parasites (¶) et scellez chaque partie en haut de sa page dédiée via Ctrl + Entrée (Page 1 = Contexte ; Page 2 = Étalonnage ; Page 3 = Diagnostic ; Page 4 = Émargement).
+2. Hiérarchie complète des styles à 3 niveaux :
+   • Titre 1 : Parties principales (1, 2, 3, 4).
+   • Titre 2 : Sous-parties (1.1, 1.2, 2.1, 2.2, 3.1, 3.2, 4.1, 4.2).
+   • Titre 3 : Points d'attention technique spécifiques (1.1.1 Caractéristiques de la fosse, 2.1.1 Contrôle des capteurs).
+3. Tableau technique (Page 3) : Caler le tableau des codes erreurs à 100% de largeur et interdire le fractionnement des lignes sur plusieurs pages.
+4. Émargement scellé (Page 4) : Construire le bloc de double signature (Visa Technicien DSI / Visa Responsable Quai) via un tableau invisible 1x2 sans bordure (0 pt).
+5. ⚠️ RÈGLE TEMPORELLE IMPORTANTE : Aucun sommaire automatique n'est demandé sur ce document (la création de la table des matières dynamique et des gabarits .dotx sera abordée dans le module suivant, après la pause).
+6. Export normalisé : Enregistrez le livrable final en PDF sous le format : AAAA-MM-JJ_Procedure_PontBascule_Prenom_NOM.pdf.`,
+      fichierNom: 'KLF_Procedure_PontBascule_v1_POUBELLE.docx',
+      fichierUrl: '/api/ressources/download-sample?file=pont-bascule-doc',
       criteresReussite: [
-        'Zéro saut de ligne parasite consécutif (vérifié via les marques ¶).',
-        'Le document comporte un saut de page propre (Ctrl + Entrée).',
-        'Les styles Titre 1 et Titre 2 sont appliqués sur l\'ensemble des rubriques.',
-        'La zone d\'émargement finale est parfaitement alignée via tableau invisible 1x2.',
-        'Nom de fichier strictement normalisé : AAAA-MM-JJ_Notice_Zebra_Prenom_NOM.pdf sur 2 pages strictes.'
+        'Zéro saut de ligne parasite consécutif (contrôlé avec l\'affichage des marques ¶ masquées).',
+        'Document scellé sur 4 pages strictes grâce à des sauts de page forcés (Ctrl + Entrée).',
+        'Arborescence sémantique complète et uniforme avec 3 niveaux de styles (Titre 1, Titre 2 et Titre 3).',
+        'Tableau de diagnostic (page 3) calé à 100% de largeur sans rupture de ligne.',
+        'Bloc d\'émargement final (page 4) rigoureusement aligné grâce au tableau invisible 1x2 sans bordures.',
+        'Respect de la séquence pédagogique : aucun sommaire automatique généré à cette étape.',
+        'Nom de fichier strictement normalisé : AAAA-MM-JJ_Procedure_PontBascule_Prenom_NOM.pdf sur 4 pages.'
       ],
-      solutionAttendue: 'Document normalisé 2 pages strictes au format AAAA-MM-JJ_Notice_Zebra_Prenom_NOM.pdf, exporté en PDF haute qualité prêt pour le Dossier Professionnel (DP).'
+      solutionAttendue: 'Document technique de 4 pages strictes nommé AAAA-MM-JJ_Procedure_PontBascule_Prenom_NOM.pdf, arborescence sémantique complète (Titre 1/2/3), émargement verrouillé par tableau invisible, sans table des matières (prévue au Module 2).'
     },
     miniQuiz: [
       {

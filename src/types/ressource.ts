@@ -41,6 +41,8 @@ export interface BureautiqueRessource {
     enonce: string;
     criteresReussite: string[];
     solutionAttendue?: string;
+    fichierNom?: string;
+    fichierUrl?: string;
   };
   miniQuiz?: MiniQuizQuestion[];
   ticketAssocieId?: string; // Ex: 'TCK-101'

@@ -1,0 +1,99 @@
+KARUKERA LOGISTIQUE & FRET (KLF) — SERVICE SUPPORT DSI JARRY
+PROCEDURE D'EXPLOITATION ET DE MAINTENANCE — TERMINAL DE PESAGE PONT-BASCULE QUAI 2
+DOCUMENT BRUT D'EXERCICE AUTONOME A METTRE EN FORME SELON LA CHARTE DSI KLF
+Ticket d'intervention associe : TCK-104 (Terminal conteneurs - Rodrigue VIRASSAMY)
+
+CONSIGNES DU FORMATEUR (MODULE 1 - SANS SOMMAIRE) :
+Ce document doit être rigoureusement mis en page sur 4 pages strictes (1 grande partie par page grâce au saut de page Ctrl + Entrée).
+Vous devez appliquer les 3 niveaux de styles sémantiques (Titre 1, Titre 2 et Titre 3).
+Le grand tableau technique de pesée en page 3 doit être verrouillé à 100% sans coupure de ligne.
+La zone de signature finale en page 4 doit utiliser un tableau invisible 1x2 sans bordure.
+Attention : Aucun sommaire n'est demandé pour cet exercice (il sera généré lors du Module 2 après la pause).
+Format d'export PDF obligatoire : AAAA-MM-JJ_Procedure_PontBascule_Prenom_NOM.pdf (4 pages strictes).
+
+================================================================================
+
+1. CONTEXTE ET PERIMETRE DE L'INFRASTRUCTURE DE PESAGE
+1.1 Rôle du pont-bascule dans les flux portuaires de Jarry
+Le pont-bascule Quai 2 est l'artère vitale du terminal maritime de Jarry. Chaque ensemble routier entrant ou sortant doit obligatoirement être pesé pour valider la masse brute vérifiée (VGM) avant le chargement sur les porte-conteneurs. Une indisponibilité de ce poste entraîne un blocage immédiat de la rocade de Jarry et paralyse les opérations de manutention.
+
+1.1.1 Contrôle des surcharges et pesée réglementaire SOLAS
+La convention internationale SOLAS impose une pesée certifiée de chaque conteneur d'exportation. Toute discordance supérieure à 500 kg entre le manifeste douanier et la pesée réelle au pont-bascule déclenche un blocage informatique immédiat et l'émission d'une alerte DSI prioritaire (P1).
+
+1.1.2 Topologie des capteurs piézoélectriques d'essieu
+Le tablier métallique de 18 mètres repose sur 8 pesons numériques haute précision en acier inoxydable IP68. Les signaux millivoltés émis par les capteurs sont collectés par une boîte de raccordement étanche située sous la fosse technique avant numérisation.
+
+1.2 Nature de la panne et diagnostic initial
+Le 23 septembre à 07h15, Rodrigue (opérateur balance) a signalé l'impossibilité de valider les tickets de pesée des transporteurs maritimes. L'indicateur de poids affichait des valeurs oscillant de manière erratique entre -12 tonnes et +45 tonnes, bloquant la barrière automatique de sortie.
+
+1.2.1 Rupture de la liaison série RS-232 et passerelle Ethernet
+Le diagnostic de premier niveau a révélé un écrasement du câble blindé RS-232 reliant l'indicateur numérique GSE à la passerelle Moxa Ethernet. Le convertisseur ne transmettait plus les trames ASCII au serveur logistique central.
+
+1.2.2 Impact sur l'engorgement de la voie d'accès Quai 2
+En moins de 30 minutes, 14 semi-remorques transportant des denrées périssables sous température dirigée se sont retrouvés bloqués en amont de la barrière, nécessitant l'ouverture d'un couloir de délestage manuel.
+
+2. PROTOCOLE TECHNIQUE D'ETALONNAGE ET DE REGLAGE
+2.1 Remise à zéro et tarage du tablier métallique
+Avant toute remise en service, le tablier de pesée doit être nettoyé et calibré à vide pour éliminer les résidus de boue, de graviers et d'eau de pluie qui faussent le zéro mécanique.
+
+2.1.1 Vérification mécanique des butées longitudinales d'arrêt
+Le technicien doit inspecter visuellement les 4 butées longitudinales et transversales. Le jeu mécanique fonctionnel doit être strictement compris entre 2 mm et 4 mm pour absorber les chocs de freinage des camions sans brider les cellules de pesage.
+
+2.1.2 Test d'injection de la masse étalon DSI de 10 tonnes
+À l'aide du chariot élévateur lourd du quai n°4, déposer délicatement la masse étalon certifiée de 10 000 kg au centre géométrique du tablier. Relever la valeur affichée sur le pupitre. L'écart toléré ne doit pas excéder +/- 10 kg sous peine de réajustement des potentiomètres de gain.
+
+2.2 Reconfiguration de la passerelle IP de pesée
+Suite au remplacement du convertisseur de données défaillant, la nouvelle unité Moxa NPort 5150 doit être réintégrée dans le sous-réseau sécurisé de la DSI de KLF.
+
+2.2.1 Réadressage statique hors plage dynamique DHCP
+Raccorder un PC portable de maintenance au port Ethernet de service du convertisseur. Définir l'adresse IP statique du pont-bascule : 192.168.10.45, masque 255.255.255.0, passerelle 192.168.10.254. Désactiver formellement le protocole DHCP pour prévenir tout conflit d'adressage.
+
+2.2.2 Test de connectivité ping et sockets TCP/IP
+Depuis l'invite de commande PowerShell, exécuter un ping étendu de 50 paquets vers la passerelle. Vérifier que la latence moyenne reste inférieure à 2 millisecondes sans aucune perte de paquets. Ouvrir une session Telnet sur le port 4001 pour observer le flux de trames de pesée en temps réel.
+
+3. MATRICE DE DIAGNOSTIC DES VOYANTS ET ANOMALIES
+3.1 Tableau technique d'étalonnage et tolérances de tare
+Le tableau suivant récapitule les seuils de tolérance réglementaires applicables aux véhicules de fret maritime transitant sur le terminal de Jarry :
+
+Type de véhicule | Poids à vide théorique | Seuil d'alerte surcharge | Tolérance balance | Action requise technicien DSI
+Tracteur routier 4x2 | 7 200 kg | 8 500 kg | +/- 20 kg | Contrôle du zéro mécanique et inspection du tablier
+Semi-remorque plateau | 6 800 kg | 7 500 kg | +/- 20 kg | Vérification des butées d'arrêt d'essieu
+Ensemble articulé 40T | 14 500 kg | 44 000 kg | +/- 50 kg | Contrôle obligatoire de la masse brute vérifiée VGM
+Porteur 3 essieux | 11 000 kg | 26 000 kg | +/- 30 kg | Étalonnage des pesons intermédiaires 3 et 4
+Conteneur frigorifique | 4 200 kg | 32 500 kg | +/- 20 kg | Relevé contradictoire avec le service Douanes
+
+3.2 Protocoles d'urgence et mode dégradé
+En cas de coupure réseau prolongée ou de panne matérielle lourde de l'indicateur numérique, la procédure de continuité d'activité (PCA) doit être immédiatement activée par le technicien support.
+
+3.2.1 Déverrouillage manuel de la barrière automatique
+Ouvrir le coffret de commande de la barrière d'accès situé à droite de la guérite à l'aide de la clé triangulaire de sécurité DSI n°4. Tourner la vis de purge hydraulique d'un demi-tour dans le sens anti-horaire pour lever manuellement la lisse et permettre l'évacuation des camions.
+
+3.2.2 Bascule sur le classeur de pesée de secours
+Lancer sur le poste de l'opérateur le classeur Excel KLF_Pesee_Secours_Jarry.xlsx conservé sur la clé USB rouge de secours DSI. Saisir manuellement l'immatriculation du camion, le numéro du conteneur et le poids relevé sur le cadran analogique pour imprimer les bons de sortie temporaires.
+
+4. PROCEDURES DE CLOTURE ET VISA DE REMISE EN SERVICE
+4.1 Essais de charge contradictoires en conditions réelles
+Après remplacement du câblage et reconfiguration de l'adresse réseau, deux tests de passage dynamique sont obligatoires avant d'autoriser la réouverture de la voie de pesage n°2.
+
+4.1.1 Pesée test à vide (tracteur routier seul)
+Faire passer un tracteur routier à vide à une vitesse constante de 5 km/h sur le tablier. L'indicateur doit stabiliser la mesure en moins de 3 secondes dès l'arrêt du véhicule. Le ticket de pesée d'essai n°TEST-01 doit être imprimé et agrafé au présent rapport.
+
+4.1.2 Pesée test en charge (semi-remorque conteneur 40 pieds)
+Faire avancer un ensemble chargé de 38 tonnes. Vérifier la conformité de l'affichage sur le panneau répétiteur géant visible par le chauffeur. S'assurer que le feu de signalisation passe du rouge au vert dès que la pesée est acquittée par le système central.
+
+4.2 Émargement officiel et transfert de responsabilité
+La présente intervention technique est clôturée de manière contradictoire entre le technicien d'assistance informatique et le responsable d'exploitation du quai :
+
+Visa et signature du technicien support DSI KLF :
+Nom et prénom : ............................................
+Date et heure de fin : 29/09/2026 à 11h45
+Signature du technicien :
+
+Visa et signature du chef de quai / opérateur pont-bascule :
+Nom et prénom : Rodrigue VIRASSAMY
+Statut : Exploitation Quai 2 Jarry
+Signature du responsable :
+
+================================================================================
+RAPPEL STANDARD DSI : Livrable à exporter au format PDF sous le nom :
+AAAA-MM-JJ_Procedure_PontBascule_Prenom_NOM.pdf (Strictement 4 pages).

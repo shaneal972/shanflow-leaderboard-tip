@@ -20,6 +20,14 @@ export async function GET(req: NextRequest) {
         filename: 'KLF_Manuel_Procedure_Standard_BRUT.txt',
         contentType: 'text/plain; charset=utf-8',
       },
+      'pont-bascule-doc': {
+        filename: 'KLF_Procedure_PontBascule_v1_POUBELLE.docx',
+        contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      },
+      'pont-bascule-txt': {
+        filename: 'KLF_Procedure_PontBascule_BRUT.txt',
+        contentType: 'text/plain; charset=utf-8',
+      },
     };
 
     if (!fileKey || !fileMap[fileKey]) {

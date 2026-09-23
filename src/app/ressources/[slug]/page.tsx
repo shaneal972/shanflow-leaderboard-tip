@@ -360,10 +360,29 @@ export default function RessourceDetailPage() {
           Exercice d'application pratique (Atelier support KLF)
         </h2>
 
-        <div className="p-4 rounded-xl bg-black/40 border border-white/10 space-y-2">
-          <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+        <div className="p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
+          <p className="text-xs sm:text-sm text-slate-200 leading-relaxed whitespace-pre-line">
             {ressource.exerciceApplication.enonce}
           </p>
+
+          {ressource.exerciceApplication.fichierUrl && (
+            <div className="p-3.5 rounded-xl bg-teal-500/10 border border-teal-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <FileText className="w-5 h-5 text-teal-400 shrink-0" />
+                <div className="text-xs text-slate-200">
+                  Document de travail dédié au défi : <strong className="text-teal-300 font-mono">{ressource.exerciceApplication.fichierNom || 'Fichier exercice'}</strong>
+                </div>
+              </div>
+              <a
+                href={ressource.exerciceApplication.fichierUrl}
+                download
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs shrink-0 transition-colors shadow-sm shadow-teal-950/40 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Télécharger le sujet (.docx)</span>
+              </a>
+            </div>
+          )}
 
           <div className="pt-2 border-t border-white/10 space-y-1.5">
             <div className="text-[11px] font-mono text-slate-400 uppercase font-semibold">Critères de validation du formateur :</div>
