@@ -350,10 +350,11 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
       },
       {
         numero: 5,
-        titre: 'Enregistrer le chef-d\'œuvre en Modèle Word (.dotx)',
+        titre: 'Bonus Pro (+35 pts) : Enregistrer le chef-d\'œuvre en Modèle Word (.dotx)',
         detail: 'Pour que votre travail serve de matrice à toute la DSI de KLF : allez dans [Fichier] > [Enregistrer sous] > changez le type de fichier en « Modèle Word (*.dotx) ». Word vous redirige automatiquement dans votre dossier « Modèles Office personnalisés ». Nommez-le KLF_Gabarit_Procedure_DSI.dotx. Désormais, un simple double-clic dessus ouvrira un nouveau document vierge reprenant vos styles, votre logo et vos pieds de page sans jamais écraser le modèle original !',
         exempleCode: '[Fichier] > [Enregistrer sous] > Type : Modèle Word (*.dotx) > Nom : KLF_Gabarit_Procedure_DSI.dotx',
-        consigneTech: 'La différence vitale : un .docx s\'écrase si on clique sur Enregistrer. Un .dotx génère toujours un "Document 1" protégé.'
+        consigneTech: 'La différence vitale : un .docx s\'écrase si on clique sur Enregistrer. Un .dotx génère toujours un "Document 1" protégé.',
+        astuceDSI: 'Défi bonus : La création et le dépôt du fichier .dotx rapportent +35 points d\'expérience sur le leaderboard.'
       }
     ],
     piegesAEviter: [
@@ -363,14 +364,15 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
       'Enregistrer le gabarit en .docx standard au lieu du format modèle .dotx.'
     ],
     exerciceApplication: {
-      enonce: 'À partir du texte brut "KLF_Manuel_Procedure_Standard_BRUT.txt" téléchargé, construisez le manuel officiel DSI : 1) Structurez le document en 4 pages avec couverture et sommaire en page 2 ; 2) Appliquez la numérotation multiniveau liée aux styles Titre 1 et Titre 2 ; 3) Insérez la table des matières dynamique avec points de suite ; 4) Insérez le pied de page Page X sur Y ; 5) Export et dépôt Drive : Enregistrez et déposez vos deux livrables sur le Google Drive dans l\'arborescence officielle 02_CASIERS_DES_APPRENANTS > Evaluations_Bureautique > Word-Docs : le PDF officiel AAAA-MM-JJ_ManuelProcedure_Zebra_Prenom_NOM.pdf et le modèle d\'entreprise KLF_Gabarit_Procedure_DSI.dotx.',
+      enonce: 'À partir du texte brut "KLF_Manuel_Procedure_Standard_BRUT.txt" téléchargé, construisez le manuel officiel DSI : 1) Structurez le document en 4 pages avec couverture et sommaire en page 2 ; 2) Appliquez la numérotation multiniveau liée aux styles Titre 1 et Titre 2 ; 3) Insérez la table des matières dynamique avec points de suite ; 4) Insérez le pied de page Page X sur Y ; 5) Export et dépôt Drive obligatoire : Enregistrez le PDF officiel AAAA-MM-JJ_ManuelProcedure_Zebra_Prenom_NOM.pdf et déposez-le dans 02_CASIERS_DES_APPRENANTS > Evaluations_Bureautique > Word-Docs ; 6) 🎁 Bonus DSI (+35 PTS) : Sauvegardez la trame au format Modèle Word d\'entreprise KLF_Gabarit_Procedure_DSI.dotx et déposez-la aux côtés de votre PDF pour valider le bonus.',
       criteresReussite: [
         'La table des matières dynamique se met à jour en 1 clic via F9 sans aucun point tapé à la main.',
         'La numérotation 1., 1.1, 1.2 est générée automatiquement par la liste multiniveaux liée aux styles.',
         'Le pied de page affiche dynamiquement Page X sur Y avec première page différente.',
-        'Les livrables (PDF officiel et modèle .dotx) sont déposés sur le Google Drive dans 02_CASIERS_DES_APPRENANTS > Evaluations_Bureautique > Word-Docs.'
+        'Livrable obligatoire : Le document PDF officiel est déposé sur le Google Drive dans 02_CASIERS_DES_APPRENANTS > Evaluations_Bureautique > Word-Docs.',
+        '🎁 Bonus DSI (+35 PTS) : Le fichier modèle d\'entreprise KLF_Gabarit_Procedure_DSI.dotx est également déposé dans le dossier.'
       ],
-      solutionAttendue: 'Manuel DSI 4 pages avec sommaire dynamique actualisable, numérotation multiniveaux, pied de page Page X sur Y et modèle réutilisable .dotx déposés sur le Google Drive dans 02_CASIERS_DES_APPRENANTS > Evaluations_Bureautique > Word-Docs.'
+      solutionAttendue: 'Manuel DSI 4 pages (PDF obligatoire) avec sommaire dynamique actualisable, numérotation multiniveaux et pied de page Page X sur Y, complété du modèle réutilisable .dotx pour décrocher le bonus de +35 points.'
     },
     miniQuiz: [
       {
