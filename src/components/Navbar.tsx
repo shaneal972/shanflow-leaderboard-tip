@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { StatusDot } from './ui/StatusDot';
-import { ShieldCheck, Trophy, Ticket, BookOpen, Anchor, Lock, Library, FlaskConical } from 'lucide-react';
+import { ShieldCheck, Trophy, Ticket, BookOpen, Anchor, Lock, Library, FlaskConical, Compass } from 'lucide-react';
 import { Apprenant } from '@/types/tip';
 import { TechnicianSessionNav } from './TechnicianSessionNav';
 
@@ -78,6 +78,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Library className="w-4 h-4 text-cyan-400" />
               Ressources
             </Link>
+            <Link
+              href="/guide"
+              className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-slate-200 hover:text-white hover:bg-white/5 transition-colors"
+            >
+              <Compass className="w-4 h-4 text-sky-400" />
+              Guide
+            </Link>
           </nav>
 
           {/* Statut & Session Promo */}
@@ -143,6 +150,10 @@ export const Navbar: React.FC<NavbarProps> = ({
         <Link href="/ressources" className="flex items-center gap-1 text-xs text-slate-300 hover:text-teal-400 shrink-0">
           <Library className="w-3.5 h-3.5 text-cyan-400" />
           Ressources
+        </Link>
+        <Link href="/guide" className="flex items-center gap-1 text-xs text-slate-300 hover:text-sky-400 shrink-0">
+          <Compass className="w-3.5 h-3.5 text-sky-400" />
+          Guide
         </Link>
       </div>
     </header>
