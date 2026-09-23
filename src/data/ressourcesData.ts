@@ -222,9 +222,11 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
 3. Tableau technique (Page 3) : Caler le tableau des codes erreurs à 100% de largeur et interdire le fractionnement des lignes sur plusieurs pages.
 4. Émargement scellé (Page 4) : Construire le bloc de double signature (Visa Technicien DSI / Visa Responsable Quai) via un tableau invisible 1x2 sans bordure (0 pt).
 5. ⚠️ RÈGLE TEMPORELLE IMPORTANTE : Aucun sommaire automatique n'est demandé sur ce document (la création de la table des matières dynamique et des gabarits .dotx sera abordée dans le module suivant, après la pause).
-6. Export et dépôt Drive : Enregistrez le livrable final en PDF sous le format :
-   • AAAA-MM-JJ_Procedure_PontBascule_Prenom_NOM.pdf
-   Déposez-le directement sur le Google Drive dans l'arborescence officielle :
+6. Export et dépôt Drive obligatoire (Le duo .docx + .pdf) :
+   Enregistrez et déposez vos deux fichiers dans l'arborescence officielle :
+   • AAAA-MM-JJ_Procedure_PontBascule_Prenom_NOM.docx (document source pour contrôle formateur des styles ¶)
+   • AAAA-MM-JJ_Procedure_PontBascule_Prenom_NOM.pdf (livrable scellé officiel prêt pour diffusion quai)
+   Emplacement de dépôt :
    • 02_CASIERS_DES_APPRENANTS > Evaluations_Bureautique > Word-Docs`,
       fichierNom: 'KLF_Procedure_PontBascule_v1_POUBELLE.docx',
       fichierUrl: '/api/ressources/download-sample?file=pont-bascule-doc',
@@ -235,9 +237,9 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
         'Tableau de diagnostic (page 3) calé à 100% de largeur sans rupture de ligne.',
         'Bloc d\'émargement final (page 4) rigoureusement aligné grâce au tableau invisible 1x2 sans bordures.',
         'Respect de la séquence pédagogique : aucun sommaire automatique généré à cette étape.',
-        'Livrable PDF 4 pages déposé sur le Google Drive dans 02_CASIERS_DES_APPRENANTS > Evaluations_Bureautique > Word-Docs avec le nom normalisé : AAAA-MM-JJ_Procedure_PontBascule_Prenom_NOM.pdf.'
+        'Duo complet (.docx source de contrôle + .pdf officiel 4 pages) déposé sur le Google Drive dans 02_CASIERS_DES_APPRENANTS > Evaluations_Bureautique > Word-Docs sous le nom : AAAA-MM-JJ_Procedure_PontBascule_Prenom_NOM.'
       ],
-      solutionAttendue: 'Document technique de 4 pages strictes nommé AAAA-MM-JJ_Procedure_PontBascule_Prenom_NOM.pdf, arborescence sémantique complète (Titre 1/2/3), émargement verrouillé par tableau invisible, sans table des matières (prévue au Module 2), déposé sur le Drive dans 02_CASIERS_DES_APPRENANTS > Evaluations_Bureautique > Word-Docs.'
+      solutionAttendue: 'Duo de fichiers 4 pages strictes (.docx et .pdf) nommé AAAA-MM-JJ_Procedure_PontBascule_Prenom_NOM, arborescence sémantique complète (Titre 1/2/3), émargement verrouillé par tableau invisible, sans table des matières (prévue au Module 2), déposé sur le Drive dans 02_CASIERS_DES_APPRENANTS > Evaluations_Bureautique > Word-Docs.'
     },
     miniQuiz: [
       {
@@ -373,23 +375,25 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
 2. Appliquez la numérotation multiniveau automatique (1. / 1.1) liée aux styles Titre 1 et Titre 2 (aucun chiffre tapé à la main).
 3. Générez la table des matières dynamique en Page 2 avec points de suite et taquets automatiques (actualisable via F9).
 4. Insérez le pied de page dynamique Page X sur Y (avec l'option Première page différente cochée pour masquer le pied de page sur la couverture).
-5. Export et dépôt Drive obligatoire : Enregistrez le PDF officiel :
-   • AAAA-MM-JJ_Manuel_PRA_Sauvegardes_Prenom_NOM.pdf
-   Déposez-le directement sur le Google Drive dans l'arborescence officielle :
+5. Export et dépôt Drive obligatoire (Le duo .docx + .pdf) :
+   Enregistrez et déposez vos deux fichiers officiels :
+   • AAAA-MM-JJ_Manuel_PRA_Sauvegardes_Prenom_NOM.docx (document source pour contrôle formateur F9 du sommaire dynamique)
+   • AAAA-MM-JJ_Manuel_PRA_Sauvegardes_Prenom_NOM.pdf (livrable scellé officiel prêt pour archivage DSI)
+   Emplacement de dépôt :
    • 02_CASIERS_DES_APPRENANTS > Evaluations_Bureautique > Word-Docs
 6. 🎁 Bonus DSI (+35 PTS) : Sauvegardez la trame vierge au format Modèle Word d'entreprise :
    • KLF_Gabarit_Procedure_DSI.dotx
-   et déposez-la aux côtés de votre PDF pour valider le bonus.`,
+   et déposez-la aux côtés de votre duo pour valider le bonus.`,
       fichierNom: 'KLF_Manuel_PRA_Sauvegardes_BRUT.txt',
       fichierUrl: '/api/ressources/download-sample?file=pra-txt',
       criteresReussite: [
         'La table des matières dynamique en page 2 se met à jour en 1 clic via F9 sans aucun point tapé à la main.',
         'La numérotation 1., 1.1, 1.2 est générée automatiquement par la liste multiniveaux liée aux styles.',
         'Le pied de page affiche dynamiquement Page X sur Y avec première page différente (couverture non paginée).',
-        'Livrable obligatoire : Le document PDF officiel 4 pages est déposé sur le Google Drive dans 02_CASIERS_DES_APPRENANTS > Evaluations_Bureautique > Word-Docs sous le nom : AAAA-MM-JJ_Manuel_PRA_Sauvegardes_Prenom_NOM.pdf.',
+        'Livrables obligatoires : Le duo (.docx source pour test F9 et styles + .pdf officiel 4 pages) est déposé sur le Google Drive dans 02_CASIERS_DES_APPRENANTS > Evaluations_Bureautique > Word-Docs sous le nom : AAAA-MM-JJ_Manuel_PRA_Sauvegardes_Prenom_NOM.',
         '🎁 Bonus DSI (+35 PTS) : Le fichier modèle d\'entreprise KLF_Gabarit_Procedure_DSI.dotx est également déposé dans le dossier.'
       ],
-      solutionAttendue: 'Manuel DSI 4 pages (PDF obligatoire AAAA-MM-JJ_Manuel_PRA_Sauvegardes_Prenom_NOM.pdf) avec sommaire dynamique actualisable, numérotation multiniveaux et pied de page Page X sur Y, complété du modèle réutilisable .dotx pour décrocher le bonus de +35 points.'
+      solutionAttendue: 'Manuel DSI 4 pages (duo .docx et .pdf obligatoire) avec sommaire dynamique actualisable, numérotation multiniveaux et pied de page Page X sur Y, complété du modèle réutilisable .dotx pour décrocher le bonus de +35 points.'
     },
     miniQuiz: [
       {
