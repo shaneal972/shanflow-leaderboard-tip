@@ -222,7 +222,10 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
 3. Tableau technique (Page 3) : Caler le tableau des codes erreurs à 100% de largeur et interdire le fractionnement des lignes sur plusieurs pages.
 4. Émargement scellé (Page 4) : Construire le bloc de double signature (Visa Technicien DSI / Visa Responsable Quai) via un tableau invisible 1x2 sans bordure (0 pt).
 5. ⚠️ RÈGLE TEMPORELLE IMPORTANTE : Aucun sommaire automatique n'est demandé sur ce document (la création de la table des matières dynamique et des gabarits .dotx sera abordée dans le module suivant, après la pause).
-6. Export et dépôt Drive : Enregistrez le livrable final en PDF sous le format : AAAA-MM-JJ_Procedure_PontBascule_Prenom_NOM.pdf et déposez-le directement sur le Google Drive dans l'arborescence officielle : 02_CASIERS_DES_APPRENANTS > Evaluations_Bureautique > Word-Docs.`,
+6. Export et dépôt Drive : Enregistrez le livrable final en PDF sous le format :
+   • AAAA-MM-JJ_Procedure_PontBascule_Prenom_NOM.pdf
+   Déposez-le directement sur le Google Drive dans l'arborescence officielle :
+   • 02_CASIERS_DES_APPRENANTS > Evaluations_Bureautique > Word-Docs`,
       fichierNom: 'KLF_Procedure_PontBascule_v1_POUBELLE.docx',
       fichierUrl: '/api/ressources/download-sample?file=pont-bascule-doc',
       criteresReussite: [
@@ -364,7 +367,19 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
       'Enregistrer le gabarit en .docx standard au lieu du format modèle .dotx.'
     ],
     exerciceApplication: {
-      enonce: 'À partir du texte brut "KLF_Manuel_Procedure_Standard_BRUT.txt" téléchargé, construisez le manuel officiel DSI : 1) Structurez le document en 4 pages avec couverture et sommaire en page 2 ; 2) Appliquez la numérotation multiniveau liée aux styles Titre 1 et Titre 2 ; 3) Insérez la table des matières dynamique avec points de suite ; 4) Insérez le pied de page Page X sur Y ; 5) Export et dépôt Drive obligatoire : Enregistrez le PDF officiel AAAA-MM-JJ_ManuelProcedure_Zebra_Prenom_NOM.pdf et déposez-le dans 02_CASIERS_DES_APPRENANTS > Evaluations_Bureautique > Word-Docs ; 6) 🎁 Bonus DSI (+35 PTS) : Sauvegardez la trame au format Modèle Word d\'entreprise KLF_Gabarit_Procedure_DSI.dotx et déposez-la aux côtés de votre PDF pour valider le bonus.',
+      enonce: `À partir du texte brut "KLF_Manuel_Procedure_Standard_BRUT.txt" téléchargé, construisez le manuel officiel DSI :
+
+1. Structurez le document en 4 pages avec couverture et sommaire en page 2.
+2. Appliquez la numérotation multiniveau liée aux styles Titre 1 et Titre 2.
+3. Insérez la table des matières dynamique avec points de suite.
+4. Insérez le pied de page Page X sur Y (première page différente).
+5. Export et dépôt Drive obligatoire : Enregistrez le PDF officiel :
+   • AAAA-MM-JJ_ManuelProcedure_Zebra_Prenom_NOM.pdf
+   Déposez-le directement sur le Google Drive dans l'arborescence officielle :
+   • 02_CASIERS_DES_APPRENANTS > Evaluations_Bureautique > Word-Docs
+6. 🎁 Bonus DSI (+35 PTS) : Sauvegardez la trame au format Modèle Word d'entreprise :
+   • KLF_Gabarit_Procedure_DSI.dotx
+   et déposez-la aux côtés de votre PDF pour valider le bonus.`,
       criteresReussite: [
         'La table des matières dynamique se met à jour en 1 clic via F9 sans aucun point tapé à la main.',
         'La numérotation 1., 1.1, 1.2 est générée automatiquement par la liste multiniveaux liée aux styles.',
