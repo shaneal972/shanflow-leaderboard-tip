@@ -28,6 +28,10 @@ export async function GET(req: NextRequest) {
         filename: 'KLF_Procedure_PontBascule_BRUT.txt',
         contentType: 'text/plain; charset=utf-8',
       },
+      'pra-txt': {
+        filename: 'KLF_Manuel_PRA_Sauvegardes_BRUT.txt',
+        contentType: 'text/plain; charset=utf-8',
+      },
     };
 
     if (!fileKey || !fileMap[fileKey]) {

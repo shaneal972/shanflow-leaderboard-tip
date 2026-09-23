@@ -379,7 +379,7 @@ export default function RessourceDetailPage() {
                 className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs shrink-0 transition-colors shadow-sm shadow-teal-950/40 cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>Télécharger le sujet (.docx)</span>
+                <span>Télécharger le sujet ({ressource.exerciceApplication.fichierNom?.endsWith('.txt') ? '.txt' : '.docx'})</span>
               </a>
             </div>
           )}

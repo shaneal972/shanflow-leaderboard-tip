@@ -367,27 +367,29 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
       'Enregistrer le gabarit en .docx standard au lieu du format modèle .dotx.'
     ],
     exerciceApplication: {
-      enonce: `À partir du texte brut "KLF_Manuel_Procedure_Standard_BRUT.txt" téléchargé, construisez le manuel officiel DSI :
+      enonce: `DÉFI AUTONOME (Plan de Reprise d'Activité DSI) : À partir du texte brut "KLF_Manuel_PRA_Sauvegardes_BRUT.txt" téléchargé via le bouton ci-dessous, construisez le Manuel de Procédure Standard DSI officiel en 4 pages strictes :
 
-1. Structurez le document en 4 pages avec couverture et sommaire en page 2.
-2. Appliquez la numérotation multiniveau liée aux styles Titre 1 et Titre 2.
-3. Insérez la table des matières dynamique avec points de suite.
-4. Insérez le pied de page Page X sur Y (première page différente).
+1. Structurez le document en 4 pages via Ctrl + Entrée : Page 1 = Couverture (Titre PRA, Référence PRA-DSI-2026-02, Auteur, Date) ; Page 2 = Emplacement réservé au Sommaire ; Pages 3 & 4 = Corps de procédure technique.
+2. Appliquez la numérotation multiniveau automatique (1. / 1.1) liée aux styles Titre 1 et Titre 2 (aucun chiffre tapé à la main).
+3. Générez la table des matières dynamique en Page 2 avec points de suite et taquets automatiques (actualisable via F9).
+4. Insérez le pied de page dynamique Page X sur Y (avec l'option Première page différente cochée pour masquer le pied de page sur la couverture).
 5. Export et dépôt Drive obligatoire : Enregistrez le PDF officiel :
-   • AAAA-MM-JJ_ManuelProcedure_Zebra_Prenom_NOM.pdf
+   • AAAA-MM-JJ_Manuel_PRA_Sauvegardes_Prenom_NOM.pdf
    Déposez-le directement sur le Google Drive dans l'arborescence officielle :
    • 02_CASIERS_DES_APPRENANTS > Evaluations_Bureautique > Word-Docs
-6. 🎁 Bonus DSI (+35 PTS) : Sauvegardez la trame au format Modèle Word d'entreprise :
+6. 🎁 Bonus DSI (+35 PTS) : Sauvegardez la trame vierge au format Modèle Word d'entreprise :
    • KLF_Gabarit_Procedure_DSI.dotx
    et déposez-la aux côtés de votre PDF pour valider le bonus.`,
+      fichierNom: 'KLF_Manuel_PRA_Sauvegardes_BRUT.txt',
+      fichierUrl: '/api/ressources/download-sample?file=pra-txt',
       criteresReussite: [
-        'La table des matières dynamique se met à jour en 1 clic via F9 sans aucun point tapé à la main.',
+        'La table des matières dynamique en page 2 se met à jour en 1 clic via F9 sans aucun point tapé à la main.',
         'La numérotation 1., 1.1, 1.2 est générée automatiquement par la liste multiniveaux liée aux styles.',
-        'Le pied de page affiche dynamiquement Page X sur Y avec première page différente.',
-        'Livrable obligatoire : Le document PDF officiel est déposé sur le Google Drive dans 02_CASIERS_DES_APPRENANTS > Evaluations_Bureautique > Word-Docs.',
+        'Le pied de page affiche dynamiquement Page X sur Y avec première page différente (couverture non paginée).',
+        'Livrable obligatoire : Le document PDF officiel 4 pages est déposé sur le Google Drive dans 02_CASIERS_DES_APPRENANTS > Evaluations_Bureautique > Word-Docs sous le nom : AAAA-MM-JJ_Manuel_PRA_Sauvegardes_Prenom_NOM.pdf.',
         '🎁 Bonus DSI (+35 PTS) : Le fichier modèle d\'entreprise KLF_Gabarit_Procedure_DSI.dotx est également déposé dans le dossier.'
       ],
-      solutionAttendue: 'Manuel DSI 4 pages (PDF obligatoire) avec sommaire dynamique actualisable, numérotation multiniveaux et pied de page Page X sur Y, complété du modèle réutilisable .dotx pour décrocher le bonus de +35 points.'
+      solutionAttendue: 'Manuel DSI 4 pages (PDF obligatoire AAAA-MM-JJ_Manuel_PRA_Sauvegardes_Prenom_NOM.pdf) avec sommaire dynamique actualisable, numérotation multiniveaux et pied de page Page X sur Y, complété du modèle réutilisable .dotx pour décrocher le bonus de +35 points.'
     },
     miniQuiz: [
       {

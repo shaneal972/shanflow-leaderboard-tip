@@ -1,0 +1,68 @@
+KARUKERA LOGISTIQUE & FRET — DIRECTION DES SYSTEMES D'INFORMATION (DSI)
+MANUEL DE PROCEDURE STANDARD : PLAN DE REPRISE D'ACTIVITE (PRA) & SAUVEGARDES
+REFERENCE OFFICIELLE : PRA-DSI-2026-02
+DOCUMENT BRUT A RESTRUCTURER EN MANUEL DSI DE 4 PAGES (SOMMAIRE AUTOMATIQUE & GABARIT .DOTX)
+
+================================================================================
+CONSIGNE DU DSI MARC VERDIER POUR L'ATELIER AUTONOME :
+Ce document brut regroupe l'ensemble des protocoles de sauvegarde et de secours
+informatique de la plateforme portuaire de Jarry.
+Votre mission de technicien support consiste à transformer ce texte brut en un
+Manuel de Procédure Standard DSI officiel de 4 pages strictes :
+- Page 1 : Page de garde professionnelle (Titre, Référence PRA-DSI, Auteur, Date).
+- Page 2 : Table des matières automatique dynamique (générée en 1 clic via F9).
+- Page 3 & 4 : Corps de procédure technique numéroté automatiquement via la
+  liste multiniveaux liée aux styles Titre 1 et Titre 2.
+- Pied de page dynamique : Mention "Page X sur Y" (première page différente).
+================================================================================
+
+1. CONTEXTE STRATEGIQUE ET OBJECTIFS DE RESILIENCE
+1.1 Enjeux de la continuité logistique en milieu portuaire caraïbe
+La plateforme logistique de Jarry assure l'approvisionnement vital de la Guadeloupe en denrées alimentaires, fret médical et biens industriels. Une interruption prolongée du système d'information de quai paralyserait le débarquement des navires porte-conteneurs et entraînerait des pénalités journalières majeures. La DSI doit garantir une reprise d'activité quasi-instantanée face aux aléas techniques, climatiques ou cybercriminels.
+
+1.2 Objectifs de temps de reprise (RTO) et de perte de données (RPO)
+Les engagements de service (SLA) fixés par la direction de KLF imposent :
+- RTO (Recovery Time Objective) : Durée maximale d'interruption admissible fixée à 2 heures pour le serveur de gestion de quai (CargoCore) et la facturation douanière.
+- RPO (Recovery Point Objective) : Perte maximale de données tolérée limitée à 15 minutes grâce aux instantanés transactionnels automatisés.
+
+2. ARCHITECTURE TECHNIQUE DES SAUVEGARDES (REGLE 3-2-1)
+2.1 Sauvegardes locales immuables sur baie NAS Synology Quai 2
+Toutes les machines virtuelles, bases de données PostgreSQL et partages de fichiers sont sauvegardés localement chaque nuit sur une baie NAS Synology dédiée située dans le local serveur sécurisé du Quai 2. Les sauvegardes locales sont configurées en mode WORM (Write Once, Read Many) : aucun administrateur ni logiciel malveillant ne peut modifier ou chiffrer les archives pendant 30 jours.
+
+2.2 Réplication chiffrée hors-site et immuabilité Cloud (Stockage S3)
+Afin de prévenir tout sinistre physique affectant le site de Jarry (incendie, inondation ou onde de tempête cyclonique), une copie différentielle chiffrée en AES-256 est répliquée chaque nuit vers un stockage d'objets Cloud certifié ISO 27001 situé en Métropole. La clé de déchiffrement est conservée exclusivement sur un coffre-fort numérique DSI hors-ligne.
+
+2.3 Fréquence des instantanés et politique de rétention
+La politique de rétention s'applique selon le schéma Grand-Père / Père / Fils :
+- Instantanés horaires conservés pendant 48 heures pour les restaurations de fichiers accidentellement supprimés.
+- Sauvegardes complètes quotidiennes conservées pendant 14 jours.
+- Archives mensuelles de clôture comptable scellées et conservées pendant 10 ans pour conformité fiscale et réglementaire.
+
+3. PROCEDURE DE GESTION DE CRISE ET DECLENCHEMENT DU PRA
+3.1 Scénarios d'activation de la cellule d'urgence
+Le PRA est formellement activé par le DSI ou le Responsable d'astreinte dans trois situations critiques :
+- Détection d'une cyberattaque par ransomware avec propagation latérale sur le réseau local.
+- Défaillance matérielle irréversible de l'hyperviseur principal sans bascule automatique.
+- Vigilance cyclonique rouge / violette entraînant l'évacuation physique des installations et la coupure programmée du réseau électrique EDF.
+
+3.2 Isolation d'urgence des segments réseau et bascule d'alimentation
+En cas de cyberattaque, le technicien d'astreinte procède immédiatement à l'isolation physique du local technique en déconnectant les liaisons montantes (Uplinks fibre) vers les switchs de quai. En cas de coupure secteur, les onduleurs APC maintiennent la charge pendant 45 minutes avant le relais automatique par le groupe électrogène de secours diesel du Bâtiment Administratif.
+
+3.3 Ordre séquentiel de restauration des services critiques
+La remise en production des infrastructures sinistrées doit impérativement respecter la chronologie suivante :
+1. Restauration du contrôleur de domaine Active Directory et des serveurs DNS internes.
+2. Démarrage de la base de données PostgreSQL de gestion du fret et vérification de l'intégrité des tables.
+3. Rétablissement du service d'authentification Wi-Fi 802.1X et des passerelles d'interconnexion terminaux mobiles.
+4. Réouverture des accès clients et des interfaces de déclaration douanière.
+
+4. CONTROLES PERIODIQUES, AUDITS QUALIOPI ET CELLULE DE CRISE
+4.1 Tests trimestriels de restauration à blanc (Sandbox DSI)
+La validité d'une sauvegarde ne se présume pas, elle s'éprouve : chaque trimestre, le technicien support exécute une restauration complète de la base CargoCore dans un environnement isolé (Sandbox) et certifie que l'ensemble des données est exploitable sans corruption. Le procès-verbal d'essai est consigné dans le registre DSI.
+
+4.2 Registre des épreuves de secours et conformité réglementaire
+Chaque test de restauration fait l'objet d'un rapport technique signé, intégré aux preuves documentaires de la démarche qualité Qualiopi (Indicateur 19 - Ressources et veille technologique) et des audits annuels des douanes maritimes.
+
+4.3 Matrice de contact et escalade d'urgence
+- Astreinte DSI KLF (24/7) : 0690 12 34 56 (Poste interne : 4040).
+- Support infogérance Cloud : support-soc@prestataire-cloud.fr.
+- Responsable Sécurité des SI (RSSI) : rssi@klf-logistique.gp.
