@@ -222,7 +222,7 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
 3. Tableau technique (Page 3) : Caler le tableau des codes erreurs à 100% de largeur et interdire le fractionnement des lignes sur plusieurs pages.
 4. Émargement scellé (Page 4) : Construire le bloc de double signature (Visa Technicien DSI / Visa Responsable Quai) via un tableau invisible 1x2 sans bordure (0 pt).
 5. ⚠️ RÈGLE TEMPORELLE IMPORTANTE : Aucun sommaire automatique n'est demandé sur ce document (la création de la table des matières dynamique et des gabarits .dotx sera abordée dans le module suivant, après la pause).
-6. Export normalisé : Enregistrez le livrable final en PDF sous le format : AAAA-MM-JJ_Procedure_PontBascule_Prenom_NOM.pdf.`,
+6. Export et dépôt Drive : Enregistrez le livrable final en PDF sous le format : AAAA-MM-JJ_Procedure_PontBascule_Prenom_NOM.pdf et déposez-le directement sur le Google Drive de la promotion, dans votre dossier d'apprenant individuel (sous-dossier Évaluations_Bureautique).`,
       fichierNom: 'KLF_Procedure_PontBascule_v1_POUBELLE.docx',
       fichierUrl: '/api/ressources/download-sample?file=pont-bascule-doc',
       criteresReussite: [
@@ -232,9 +232,9 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
         'Tableau de diagnostic (page 3) calé à 100% de largeur sans rupture de ligne.',
         'Bloc d\'émargement final (page 4) rigoureusement aligné grâce au tableau invisible 1x2 sans bordures.',
         'Respect de la séquence pédagogique : aucun sommaire automatique généré à cette étape.',
-        'Nom de fichier strictement normalisé : AAAA-MM-JJ_Procedure_PontBascule_Prenom_NOM.pdf sur 4 pages.'
+        'Livrable PDF 4 pages déposé dans son dossier apprenant individuel sur le Google Drive de la promo avec le nom normalisé : AAAA-MM-JJ_Procedure_PontBascule_Prenom_NOM.pdf.'
       ],
-      solutionAttendue: 'Document technique de 4 pages strictes nommé AAAA-MM-JJ_Procedure_PontBascule_Prenom_NOM.pdf, arborescence sémantique complète (Titre 1/2/3), émargement verrouillé par tableau invisible, sans table des matières (prévue au Module 2).'
+      solutionAttendue: 'Document technique de 4 pages strictes nommé AAAA-MM-JJ_Procedure_PontBascule_Prenom_NOM.pdf, arborescence sémantique complète (Titre 1/2/3), émargement verrouillé par tableau invisible, sans table des matières (prévue au Module 2), déposé sur le Google Drive dans le dossier apprenant.'
     },
     miniQuiz: [
       {
@@ -363,14 +363,14 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
       'Enregistrer le gabarit en .docx standard au lieu du format modèle .dotx.'
     ],
     exerciceApplication: {
-      enonce: 'À partir du texte brut "KLF_Manuel_Procedure_Standard_BRUT.txt" téléchargé, construisez le manuel officiel DSI : 1) Structurez le document en 4 pages avec couverture et sommaire en page 2 ; 2) Appliquez la numérotation multiniveau liée aux styles Titre 1 et Titre 2 ; 3) Insérez la table des matières dynamique avec points de suite ; 4) Insérez le pied de page Page X sur Y ; 5) Enregistrez le fichier final sous deux formats : le PDF officiel AAAA-MM-JJ_ManuelProcedure_Zebra_Prenom_NOM.pdf et le modèle d\'entreprise KLF_Gabarit_Procedure_DSI.dotx.',
+      enonce: 'À partir du texte brut "KLF_Manuel_Procedure_Standard_BRUT.txt" téléchargé, construisez le manuel officiel DSI : 1) Structurez le document en 4 pages avec couverture et sommaire en page 2 ; 2) Appliquez la numérotation multiniveau liée aux styles Titre 1 et Titre 2 ; 3) Insérez la table des matières dynamique avec points de suite ; 4) Insérez le pied de page Page X sur Y ; 5) Export et dépôt Drive : Enregistrez et déposez vos deux livrables sur le Google Drive de la promotion dans votre dossier d\'apprenant individuel (sous-dossier Évaluations_Bureautique) : le PDF officiel AAAA-MM-JJ_ManuelProcedure_Zebra_Prenom_NOM.pdf et le modèle d\'entreprise KLF_Gabarit_Procedure_DSI.dotx.',
       criteresReussite: [
         'La table des matières dynamique se met à jour en 1 clic via F9 sans aucun point tapé à la main.',
         'La numérotation 1., 1.1, 1.2 est générée automatiquement par la liste multiniveaux liée aux styles.',
         'Le pied de page affiche dynamiquement Page X sur Y avec première page différente.',
-        'Le document est exporté en PDF haute qualité et en modèle .dotx réutilisable.'
+        'Les livrables (PDF officiel et modèle .dotx) sont déposés sur le Google Drive dans le dossier d\'apprenant.'
       ],
-      solutionAttendue: 'Manuel DSI 4 pages avec sommaire dynamique actualisable, numérotation multiniveaux, pied de page Page X sur Y et modèle réutilisable .dotx.'
+      solutionAttendue: 'Manuel DSI 4 pages avec sommaire dynamique actualisable, numérotation multiniveaux, pied de page Page X sur Y et modèle réutilisable .dotx déposés sur le Google Drive de la promo dans le dossier apprenant.'
     },
     miniQuiz: [
       {
