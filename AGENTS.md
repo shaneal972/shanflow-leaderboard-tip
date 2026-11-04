@@ -7,3 +7,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+# Directives d'Excellence Pédagogique & Technique KLF
+
+- **Standard PDF A4 Zéro-Défaut** : Tout script ou route générant un document PDF DOIT obligatoirement utiliser le Design System PDF (`scripts/lib/klf-pdf-design-system.ts`) et être validé par `assertPerfectPdf()` (`scripts/lib/klf-pdf-validator.ts`). Voir [.agent/rules/pdf-generation.md](file:///.agent/rules/pdf-generation.md).
+- **Standard Tableur OpenXML** : Zéro chaîne inerte en formule dans SheetJS (`aoa_to_sheet`), toujours des cellules typées avec formule en anglais (`.f`), valeur (`.v`) et masque numérique (`.z`).
+

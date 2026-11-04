@@ -4,6 +4,8 @@ import * as XLSX from 'xlsx';
 import { FORE_LOGO_BASE64, FRANCE_TRAVAIL_LOGO_BASE64 } from '../src/lib/templates/fichesLogos';
 import { generateCorinneBrutWorkbook } from '../src/lib/lab/corinneWorkbook';
 import { auditCorinneManifesteExcel } from '../src/lib/lab/excelAuditEngine';
+import { KLF_A4_PDF_STYLES, PDF_ICONS, nowrap } from './lib/klf-pdf-design-system';
+import { assertPerfectPdf } from './lib/klf-pdf-validator';
 
 const webhookUrl = process.env.N8N_QUALIOPI_PDF_WEBHOOK_URL || 'https://n8n.shandev.cloud/webhook/qualiopi-pdf-generate';
 const bearerToken = process.env.KLF_WEBHOOK_BEARER_TOKEN || 'klf_tip_bearer_secret_2026_jarry_secure!';
@@ -28,15 +30,6 @@ async function compilePdf(html: string, filename: string): Promise<Buffer> {
 
   const arrBuf = await res.arrayBuffer();
   return Buffer.from(arrBuf);
-}
-
-/**
- * Analyse le binaire PDF pour compter strictement le nombre de pages physiques
- */
-function getPdfPageCount(pdfBuffer: Buffer): number {
-  const content = pdfBuffer.toString('binary');
-  const matches = content.match(/\/Type\s*\/Page\b/g);
-  return matches ? matches.length : 0;
 }
 
 /**
@@ -181,275 +174,7 @@ function generateTpHtml(): string {
   <meta charset="UTF-8">
   <title>TP Cadrage Qualiopi - Sauvetage du Manifeste Corinne & Fiscalité Antilles</title>
   <style>
-    @page {
-      size: A4 portrait;
-      margin: 10mm 14mm 10mm 14mm;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
-      color: #0f172a;
-      background: #fff;
-      font-size: 10.5pt;
-      line-height: 1.65;
-    }
-
-    .page {
-      width: 100%;
-      height: 276mm;
-      max-height: 276mm;
-      box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      overflow: hidden;
-      page-break-after: always;
-      break-after: page;
-    }
-    .page:last-child {
-      page-break-after: auto;
-      break-after: auto;
-    }
-
-    .header-table {
-      width: 100%;
-      border-collapse: collapse;
-      border: 1.5px solid #0f172a;
-      margin-bottom: 8px;
-    }
-    .header-table td {
-      border: 1.5px solid #0f172a;
-      padding: 6px 10px;
-      vertical-align: middle;
-    }
-    .logo-cell { width: 18%; text-align: center; }
-    .logo-cell img { max-height: 48px; display: block; margin: 0 auto; }
-    .title-cell {
-      width: 60%;
-      text-align: center;
-      line-height: 1.25;
-    }
-    .main-title {
-      font-size: 14pt;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      color: #0f172a;
-    }
-    .sub-title {
-      font-size: 10pt;
-      color: #475569;
-      font-weight: 700;
-      margin-top: 2px;
-    }
-    .tp-badge {
-      display: inline-block;
-      background: #0f172a;
-      color: #fff;
-      font-size: 8.5pt;
-      font-weight: 800;
-      padding: 2.5px 8px;
-      border-radius: 4px;
-      margin-top: 3px;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-    .ref-cell {
-      width: 22%;
-      text-align: right;
-      font-size: 9pt;
-      line-height: 1.25;
-    }
-    .ref-cell img { max-height: 40px; margin-top: 3px; display: inline-block; }
-
-    .meta-bar {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      background: #f8fafc;
-      border: 1.2px solid #cbd5e1;
-      padding: 6px 10px;
-      border-radius: 4px;
-      margin-bottom: 8px;
-      font-size: 9.5pt;
-    }
-    .meta-item strong { color: #0f172a; }
-
-    .callout {
-      padding: 12px 16px;
-      border-radius: 4px;
-      margin-bottom: 14px;
-      font-size: 10.2pt;
-      line-height: 1.6;
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-    .callout-title {
-      font-weight: 800;
-      text-transform: uppercase;
-      margin-bottom: 5px;
-      font-size: 10.8pt;
-      padding-left: 2px;
-    }
-    .callout-blue {
-      background: #f8fafc;
-      border: 1.2px solid #cbd5e1;
-      border-left: 4px solid #0f172a;
-    }
-    .callout-blue .callout-title { color: #0f172a; }
-
-    .callout-red {
-      background: #fef2f2;
-      border: 1.2px solid #fecaca;
-      border-left: 4px solid #dc2626;
-    }
-    .callout-red .callout-title { color: #b91c1c; }
-
-    .callout-green {
-      background: #f0fdf4;
-      border: 1.2px solid #bbf7d0;
-      border-left: 4px solid #16a34a;
-    }
-    .callout-green .callout-title { color: #15803d; }
-
-    .section-header {
-      background: #0f172a;
-      color: #fff;
-      font-size: 11pt;
-      font-weight: 800;
-      padding: 8px 14px;
-      border-radius: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      margin: 14px 0 12px 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      break-after: avoid;
-      page-break-after: avoid;
-    }
-    .section-header .tag {
-      background: #334155;
-      font-size: 8.5pt;
-      padding: 2px 7px;
-      border-radius: 3px;
-      white-space: nowrap;
-    }
-
-    .notion-box {
-      background: #eff6ff;
-      border: 1.2px solid #bfdbfe;
-      border-left: 4px solid #2563eb;
-      border-radius: 4px;
-      padding: 12px 16px;
-      margin: 10px 0 14px 0;
-      font-size: 10.2pt;
-      line-height: 1.6;
-      color: #1e3a8a;
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-    .notion-box strong { color: #1d4ed8; font-size: 10.8pt; }
-
-    p { margin-bottom: 6px; font-size: 10.5pt; line-height: 1.65; }
-    ul, ol { margin-left: 20px; margin-bottom: 10px; }
-    li { margin-bottom: 8px; font-size: 10.5pt; line-height: 1.62; color: #1e293b; }
-
-    .data-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 10px 0;
-      font-size: 9.5pt;
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-    .data-table th, .data-table td {
-      border: 1.2px solid #cbd5e1;
-      padding: 9px 12px;
-      text-align: left;
-      line-height: 1.5;
-    }
-    .data-table th {
-      background: #f1f5f9;
-      color: #0f172a;
-      font-weight: 800;
-      text-transform: uppercase;
-      font-size: 9pt;
-    }
-
-    .formula-code {
-      font-family: "Courier New", Courier, monospace;
-      background: #f1f5f9;
-      color: #0f172a;
-      font-weight: 700;
-      font-size: 9.5pt;
-      padding: 2px 6px;
-      border-radius: 3px;
-      border: 1px solid #cbd5e1;
-      display: inline-block;
-    }
-
-    .code-box {
-      background: #0f172a;
-      color: #38bdf8;
-      font-family: "Courier New", Courier, monospace;
-      font-size: 10.5pt;
-      padding: 12px 16px;
-      border-radius: 4px;
-      margin: 10px 0;
-      border-left: 4px solid #38bdf8;
-      line-height: 1.55;
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-
-    .eval-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 9.5pt;
-      margin-top: 10px;
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-    .eval-table th, .eval-table td {
-      border: 1.2px solid #cbd5e1;
-      padding: 9px 12px;
-      line-height: 1.5;
-    }
-    .eval-table th {
-      background: #0f172a;
-      color: #fff;
-      font-size: 9pt;
-      text-transform: uppercase;
-      font-weight: 700;
-    }
-
-    .sign-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-      border: 1.5px dashed #94a3b8;
-      border-radius: 4px;
-      font-size: 9.5pt;
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-    .sign-table td {
-      padding: 10px 14px;
-      vertical-align: top;
-      font-size: 9.5pt;
-      line-height: 1.45;
-    }
-
-    .footer-bar {
-      border-top: 1px solid #cbd5e1;
-      padding-top: 5px;
-      margin-top: 6px;
-      display: flex;
-      justify-content: space-between;
-      font-size: 8.5pt;
-      color: #64748b;
-    }
+${KLF_A4_PDF_STYLES}
   </style>
 </head>
 <body>
@@ -465,7 +190,7 @@ function generateTpHtml(): string {
           <td class="title-cell">
             <div class="main-title">Karukera Logistique & Fret (KLF)</div>
             <div class="sub-title">Direction des Systèmes d'Information • Jarry (Guadeloupe)</div>
-            <span class="tp-badge">TP PALIER 2 • SÉANCE 8 (05/11/2026) — <span style="white-space: nowrap;">TICKET TCK-101</span></span>
+            <span class="tp-badge">TP PALIER 2 • SÉANCE 8 (05/11/2026) — ${nowrap('TICKET TCK-101')}</span>
           </td>
           <td class="ref-cell">
             <strong>Qualiopi Ind. 4 & 5</strong><br>
@@ -489,7 +214,7 @@ function generateTpHtml(): string {
       </div>
 
       <div class="callout callout-blue">
-        <div class="callout-title" style="display: flex; align-items: center; gap: 6px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Réflexe professionnel du technicien TIP avant toute modification</span></div>
+        <div class="callout-title" style="display: flex; align-items: center; gap: 6px;">${PDF_ICONS.shield}<span>Réflexe professionnel du technicien TIP avant toute modification</span></div>
         Ne modifiez <strong>JAMAIS</strong> directement un fichier corrompu en production ! Téléchargez le fichier brut <code>KLF_Manifeste_Arrivages_Corinne_BRUT.xlsx</code> et créez immédiatement une copie de sauvegarde horodatée <code>..._BRUT_SAVE.xlsx</code> sur votre poste de travail.
       </div>
 
@@ -1141,12 +866,8 @@ async function run() {
   const tpPdfPath = path.join(targetBrainDir, 'TP_Consignes_Corinne_RECHERCHEV_Fiscalite_051126.pdf');
   fs.writeFileSync(tpPdfPath, tpPdfBuffer);
 
-  const pageCount = getPdfPageCount(tpPdfBuffer);
-  console.log(`📄 Nombre de pages physiques détecté dans le PDF : ${pageCount} page(s)`);
-  if (pageCount !== 4) {
-    throw new Error(`ERREUR BLOQUANTE : Le PDF généré comporte ${pageCount} pages physiques au lieu de STRICTEMENT 4 pages !`);
-  }
-  console.log(`✅ LIVRABLE 2 (PDF Gotenberg) validé conforme : STRICTEMENT 4 PAGES (${tpPdfPath}, ${tpPdfBuffer.length} octets)`);
+  // VALIDATION DOCIMOLOGIQUE & GÉOMÉTRIQUE OBLIGATOIRE (KLF PDF VALIDATOR)
+  await assertPerfectPdf(tpHtmlPath, tpPdfBuffer, 4);
 
   // ---------------------------------------------------------------------------
   // 3. LIVRABLE 3 : Classeurs Excel Brut et Corrigé DSI (Formules Vives)
