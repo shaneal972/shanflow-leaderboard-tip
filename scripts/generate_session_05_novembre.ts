@@ -315,7 +315,7 @@ function generateTpHtml(): string {
     .section-header {
       background: #0f172a;
       color: #fff;
-      font-size: 11.5pt;
+      font-size: 11pt;
       font-weight: 800;
       padding: 8px 14px;
       border-radius: 4px;
@@ -333,6 +333,7 @@ function generateTpHtml(): string {
       font-size: 8.5pt;
       padding: 2px 7px;
       border-radius: 3px;
+      white-space: nowrap;
     }
 
     .notion-box {
@@ -488,7 +489,7 @@ function generateTpHtml(): string {
       </div>
 
       <div class="callout callout-blue">
-        <div class="callout-title"><span style="display: inline-block; padding-left: 3px; margin-right: 4px;">🛡️</span>Réflexe professionnel du technicien TIP avant toute modification</div>
+        <div class="callout-title" style="display: flex; align-items: center; gap: 6px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Réflexe professionnel du technicien TIP avant toute modification</span></div>
         Ne modifiez <strong>JAMAIS</strong> directement un fichier corrompu en production ! Téléchargez le fichier brut <code>KLF_Manifeste_Arrivages_Corinne_BRUT.xlsx</code> et créez immédiatement une copie de sauvegarde horodatée <code>..._BRUT_SAVE.xlsx</code> sur votre poste de travail.
       </div>
 
@@ -638,7 +639,7 @@ function generateTpHtml(): string {
   <div class="page">
     <div>
       <div class="section-header">
-        <span>Étape 5 : Dépôt & Clôture Professionnelle du Ticket TCK-101 (Poste Technicien)</span>
+        <span>Étape 5 : Dépôt & Clôture Professionnelle du Ticket <span style="white-space: nowrap;">TCK-101</span> (Poste Technicien)</span>
         <span class="tag">Posture ITIL & REAC</span>
       </div>
       <div class="notion-box">
@@ -654,7 +655,7 @@ function generateTpHtml(): string {
       </ul>
 
       <div class="section-header">
-        <span>Grille d'Évaluation Formative des Compétences REAC (CCP 1)</span>
+        <span>Grille d'Évaluation Formative des Compétences REAC <span style="white-space: nowrap;">(CCP 1)</span></span>
         <span class="tag">Qualiopi Ind. 11</span>
       </div>
       <table class="eval-table">
