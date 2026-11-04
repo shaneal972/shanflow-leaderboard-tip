@@ -663,7 +663,20 @@ export async function getLabsData(): Promise<Lab[]> {
     if (error || !data || data.length === 0) {
       return ALL_LABS;
     }
-    return data as Lab[];
+
+    const dbLabsMap = new Map(data.map((d: any) => [d.id, d]));
+
+    return ALL_LABS.map((staticLab) => {
+      const dbLab = dbLabsMap.get(staticLab.id);
+      if (!dbLab) return staticLab;
+      return {
+        ...staticLab,
+        ...dbLab,
+        objectifs: Array.isArray(dbLab.objectifs) ? dbLab.objectifs : staticLab.objectifs,
+        consignes_etapes: Array.isArray(dbLab.consignes_etapes) ? dbLab.consignes_etapes : staticLab.consignes_etapes,
+        jalons: Array.isArray(dbLab.jalons) ? dbLab.jalons : staticLab.jalons,
+      };
+    });
   } catch {
     return ALL_LABS;
   }

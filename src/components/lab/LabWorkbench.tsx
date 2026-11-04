@@ -125,7 +125,7 @@ export const LabWorkbench: React.FC<LabWorkbenchProps> = ({
           <div>
             <span className="font-semibold text-slate-300">Objectifs opérationnels visés :</span>
             <ul className="mt-1 space-y-1 text-slate-400 list-disc list-inside">
-              {lab.objectifs.map((obj, i) => (
+              {(lab.objectifs || []).map((obj, i) => (
                 <li key={i}>{obj}</li>
               ))}
             </ul>
@@ -133,7 +133,7 @@ export const LabWorkbench: React.FC<LabWorkbenchProps> = ({
           <div>
             <span className="font-semibold text-slate-300">Protocole de réalisation :</span>
             <ol className="mt-1 space-y-1 text-slate-400 list-decimal list-inside">
-              {lab.consignes_etapes.slice(0, 4).map((consigne, i) => (
+              {(lab.consignes_etapes || []).slice(0, 4).map((consigne, i) => (
                 <li key={i}>{consigne}</li>
               ))}
             </ol>
@@ -170,7 +170,7 @@ export const LabWorkbench: React.FC<LabWorkbenchProps> = ({
 
             {/* Liste des jalons */}
             <LabMilestoneList
-              milestones={lab.jalons}
+              milestones={lab.jalons || []}
               auditDetails={auditDetails}
             />
           </div>

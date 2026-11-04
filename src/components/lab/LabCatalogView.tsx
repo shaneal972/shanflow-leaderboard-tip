@@ -154,7 +154,7 @@ export const LabCatalogView: React.FC<LabCatalogViewProps> = ({
                         {lab.duree_estimee}
                       </span>
                       <span>
-                        {lab.jalons.length > 0 ? `${lab.jalons.length} jalons d'audit` : 'En préparation'}
+                        {(lab.jalons?.length ?? 0) > 0 ? `${lab.jalons.length} jalons d'audit` : 'En préparation'}
                       </span>
                     </div>
                   </div>
