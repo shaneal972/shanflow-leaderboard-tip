@@ -10,6 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Directives d'Excellence Pédagogique & Technique KLF
 
+- **Standard de Sécurité DevSecOps Zéro-Trust** : Toute route API, Server Action ou composant Next.js DOIT respecter les règles Zero-Trust et être validé par `npm run security:check` (`scripts/lib/shan-security-validator.ts`). Voir [.agent/rules/security-hardening.md](file:///.agent/rules/security-hardening.md).
 - **Standard PDF A4 Zéro-Défaut** : Tout script ou route générant un document PDF DOIT obligatoirement utiliser le Design System PDF (`scripts/lib/klf-pdf-design-system.ts`) et être validé par `assertPerfectPdf()` (`scripts/lib/klf-pdf-validator.ts`). Voir [.agent/rules/pdf-generation.md](file:///.agent/rules/pdf-generation.md).
 - **Standard Tableur OpenXML** : Zéro chaîne inerte en formule dans SheetJS (`aoa_to_sheet`), toujours des cellules typées avec formule en anglais (`.f`), valeur (`.v`) et masque numérique (`.z`).
 

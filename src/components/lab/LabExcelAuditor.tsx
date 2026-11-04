@@ -40,6 +40,12 @@ export const LabExcelAuditor: React.FC<LabExcelAuditorProps> = ({
       return;
     }
 
+    // Protection anti-DoS client / fichier volumineux
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Fichier trop volumineux : La taille maximale autorisée est de 10 Mo.");
+      return;
+    }
+
     setIsAuditing(true);
     try {
       const buffer = await file.arrayBuffer();

@@ -42,7 +42,8 @@ export async function GET(req: NextRequest) {
     }
 
     const { filename, contentType } = fileMap[fileKey];
-    const filePath = path.join(process.cwd(), 'src', 'data', 'samples', filename);
+    const safeFilename = path.basename(filename);
+    const filePath = path.join(process.cwd(), 'src', 'data', 'samples', safeFilename);
 
     if (!fs.existsSync(filePath)) {
       return NextResponse.json(

@@ -12,6 +12,11 @@ export async function auditCorinneManifesteExcel(
 ): Promise<LabAuditSummary> {
   const details: LabAuditDetail[] = [];
 
+  // Garde-fou de sécurité : taille maximale du buffer (10 Mo)
+  if (fileBuffer.byteLength > 10 * 1024 * 1024 || fileSize > 10 * 1024 * 1024) {
+    throw new Error("Le fichier dépasse la limite maximale autorisée de 10 Mo.");
+  }
+
   try {
     const workbook = XLSX.read(fileBuffer, {
       type: 'array',
