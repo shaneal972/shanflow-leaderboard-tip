@@ -317,18 +317,18 @@ on conflict (id) do update set
 
 -- Insertion des Apprenants Promotion C26031A (Promotion Réelle METAFORE Jarry)
 insert into tip.sf_apprenants (id, prenom, nom, email, avatar_url, points_total, palier_actuel, equipe, is_admin, pin_code, consentement_rgpd) values
-('3a8aa397-267e-4c93-bb46-e236b7f0876a', 'Chrys', 'ARÇON', 'arcon-chrys-tech@proton.me', 'https://api.dicebear.com/7.x/bottts/svg?seed=arcon', 450, 'Palier 2', 'Escouade Alizé', false, '2026', true),
-('3c2267b3-83f4-422e-b5f1-2c176361627a', 'Thomas', 'BAUDOIN', 'tbaudoin623@gmail.com', 'https://api.dicebear.com/7.x/bottts/svg?seed=baudoin', 50, 'Palier 0', 'Escouade Houelbourg', false, '2026', true),
-('9b41d8c5-ee0f-4b4c-8af3-4664ad70efde', 'Jordan', 'DAL-LAGO', 'dlg-jordan-tech@proton.me', 'https://api.dicebear.com/7.x/bottts/svg?seed=dallago', 450, 'Palier 2', 'Escouade Alizé', false, '2026', true),
-('d6c88c6f-9920-4090-9f7c-501f99364945', 'Kehyann', 'DESPOIS', 'despois-kehyann-tech@proton.me', 'https://api.dicebear.com/7.x/bottts/svg?seed=despois', 50, 'Palier 0', 'Escouade Baie-Mahault', false, '2026', true),
-('f1d6ed91-2b2c-433b-ae7a-b0d9614244eb', 'Tristan', 'ELMACIN OBERTAN', 'elmacin-tristan-tech@proton.me', 'https://api.dicebear.com/7.x/bottts/svg?seed=elmacin', 250, 'Palier 1', 'Escouade Houelbourg', false, '2026', true),
-('894e2113-3c57-423c-a731-8ccbe5ae2831', 'Olivier', 'GIBRIEN', 'gibrien-olivier-tech@proton.me', 'https://api.dicebear.com/7.x/bottts/svg?seed=gibrien', 150, 'Palier 1', 'Escouade Baie-Mahault', false, '2026', true),
-('0c581de6-9948-4a19-8f14-cca4b65fb041', 'Wilfried', 'JOSEPH', 'azerty7111@gmail.com', 'https://api.dicebear.com/7.x/bottts/svg?seed=joseph', 150, 'Palier 1', 'Escouade Alizé', false, '2026', true),
-('485bea34-74dc-4e57-a1e1-17b856376c84', 'Jessy', 'JUDOR', 'jjudor05@gmail.com', 'https://api.dicebear.com/7.x/bottts/svg?seed=judor', 150, 'Palier 1', 'Escouade Houelbourg', false, '2026', true),
-('8d100934-5303-4e1e-8ecf-8372bc032c66', 'Steeven', 'MATIGNON', 'matignon-steeven-tech@proton.me', 'https://api.dicebear.com/7.x/bottts/svg?seed=matignon', 250, 'Palier 1', 'Escouade Baie-Mahault', false, '2026', true),
-('0c82c301-004a-469b-8bfa-448dd03b21cf', 'Thomas', 'PLUMAIN', 'plumain-thomas-tech@proton.me', 'https://api.dicebear.com/7.x/bottts/svg?seed=plumain', 450, 'Palier 2', 'Escouade Alizé', false, '2026', true),
-('8728ce3c-f335-432d-a60f-e564495a7eed', 'Thomas', 'RABORD', 'thomasrabord898@gmail.com', 'https://api.dicebear.com/7.x/bottts/svg?seed=rabord', 50, 'Palier 0', 'Escouade Houelbourg', false, '2026', true),
-('97064618-36c0-4315-964c-412c9d8170cd', 'Chloé', 'SAHA', '2026taiclo@gmail.com', 'https://api.dicebear.com/7.x/bottts/svg?seed=saha', 650, 'Palier 3', 'Escouade Baie-Mahault', false, '2026', true),
+('3a8aa397-267e-4c93-bb46-e236b7f0876a', 'Chrys', 'ARÇON', 'arcon-chrys-tech@proton.me', 'https://api.dicebear.com/7.x/bottts/svg?seed=arcon', 450, 'Palier 2', 'Escouade Alizé', false, '9554', true),
+('3c2267b3-83f4-422e-b5f1-2c176361627a', 'Thomas', 'BAUDOIN', 'tbaudoin623@gmail.com', 'https://api.dicebear.com/7.x/bottts/svg?seed=baudoin', 50, 'Palier 0', 'Escouade Houelbourg', false, '9699', true),
+('9b41d8c5-ee0f-4b4c-8af3-4664ad70efde', 'Jordan', 'DAL-LAGO', 'dlg-jordan-tech@proton.me', 'https://api.dicebear.com/7.x/bottts/svg?seed=dallago', 450, 'Palier 2', 'Escouade Alizé', false, '9345', true),
+('d6c88c6f-9920-4090-9f7c-501f99364945', 'Kehyann', 'DESPOIS', 'despois-kehyann-tech@proton.me', 'https://api.dicebear.com/7.x/bottts/svg?seed=despois', 50, 'Palier 0', 'Escouade Baie-Mahault', false, '8962', true),
+('f1d6ed91-2b2c-433b-ae7a-b0d9614244eb', 'Tristan', 'ELMACIN OBERTAN', 'elmacin-tristan-tech@proton.me', 'https://api.dicebear.com/7.x/bottts/svg?seed=elmacin', 250, 'Palier 1', 'Escouade Houelbourg', false, '8222', true),
+('894e2113-3c57-423c-a731-8ccbe5ae2831', 'Olivier', 'GIBRIEN', 'gibrien-olivier-tech@proton.me', 'https://api.dicebear.com/7.x/bottts/svg?seed=gibrien', 150, 'Palier 1', 'Escouade Baie-Mahault', false, '8914', true),
+('0c581de6-9948-4a19-8f14-cca4b65fb041', 'Wilfried', 'JOSEPH', 'azerty7111@gmail.com', 'https://api.dicebear.com/7.x/bottts/svg?seed=joseph', 150, 'Palier 1', 'Escouade Alizé', false, '4937', true),
+('485bea34-74dc-4e57-a1e1-17b856376c84', 'Jessy', 'JUDOR', 'jjudor05@gmail.com', 'https://api.dicebear.com/7.x/bottts/svg?seed=judor', 150, 'Palier 1', 'Escouade Houelbourg', false, '8360', true),
+('8d100934-5303-4e1e-8ecf-8372bc032c66', 'Steeven', 'MATIGNON', 'matignon-steeven-tech@proton.me', 'https://api.dicebear.com/7.x/bottts/svg?seed=matignon', 250, 'Palier 1', 'Escouade Baie-Mahault', false, '7587', true),
+('0c82c301-004a-469b-8bfa-448dd03b21cf', 'Thomas', 'PLUMAIN', 'plumain-thomas-tech@proton.me', 'https://api.dicebear.com/7.x/bottts/svg?seed=plumain', 450, 'Palier 2', 'Escouade Alizé', false, '2664', true),
+('8728ce3c-f335-432d-a60f-e564495a7eed', 'Thomas', 'RABORD', 'thomasrabord898@gmail.com', 'https://api.dicebear.com/7.x/bottts/svg?seed=rabord', 50, 'Palier 0', 'Escouade Houelbourg', false, '1110', true),
+('97064618-36c0-4315-964c-412c9d8170cd', 'Chloé', 'SAHA', '2026taiclo@gmail.com', 'https://api.dicebear.com/7.x/bottts/svg?seed=saha', 650, 'Palier 3', 'Escouade Baie-Mahault', false, '5399', true),
 ('e9e8382e-92e0-45b5-bea9-988a8ba32771', 'David', 'JACQUA', 'david.jacqua@shanflow.cloud', 'https://api.dicebear.com/7.x/bottts/svg?seed=david', 0, 'Formateur Référent', 'Coordination Pédagogique', true, '2026', true),
 ('00000000-0000-0000-0000-000000000099', 'David', 'JACQUA', 'oshaneal@gmail.com', 'https://api.dicebear.com/7.x/bottts/svg?seed=david', 200, 'Formateur Référent', 'Coordination Pédagogique', true, '2089', true)
 on conflict (email) do update set

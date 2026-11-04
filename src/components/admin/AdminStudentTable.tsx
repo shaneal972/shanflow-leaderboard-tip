@@ -20,14 +20,16 @@ import {
   EyeOff,
   KeyRound,
   ExternalLink,
-  RefreshCw
+  RefreshCw,
+  Copy
 } from 'lucide-react';
 import { 
   createStudentAction, 
   updateStudentAction, 
   deleteStudentAction, 
   adjustPointsAction,
-  updateStudentPinAction
+  updateStudentPinAction,
+  generateBulkUniquePinsAction
 } from '@/app/admin/actions';
 
 interface AdminStudentTableProps {
@@ -69,11 +71,116 @@ export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({
 
   // Gestion des Codes PIN DSI
   const [revealedPins, setRevealedPins] = useState<Record<string, boolean>>({});
+  const [allPinsRevealed, setAllPinsRevealed] = useState(false);
   const [pinModalStudent, setPinModalStudent] = useState<Apprenant | null>(null);
   const [pinModalValue, setPinModalValue] = useState('');
 
   const togglePin = (id: string) => {
-    setRevealedPins((prev) => ({ ...prev, [id]: !prev[id] }));
+    setRevealedPins((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      const nonAdmin = studentsList.filter((s) => !s.is_admin);
+      const allRevealed = nonAdmin.length > 0 && nonAdmin.every((s) => next[s.id]);
+      setAllPinsRevealed(allRevealed);
+      return next;
+    });
+  };
+
+  const handleToggleAllPins = () => {
+    const nextState = !allPinsRevealed;
+    setAllPinsRevealed(nextState);
+    const newRevealed: Record<string, boolean> = {};
+    studentsList.forEach((s) => {
+      newRevealed[s.id] = nextState;
+    });
+    setRevealedPins(newRevealed);
+  };
+
+  const handleCopyPinsList = async (listToCopy?: Apprenant[]) => {
+    const targetList = listToCopy || studentsList;
+    const nonAdminStudents = targetList.filter((s) => !s.is_admin);
+    const textToCopy = nonAdminStudents
+      .map((s) => `${s.prenom} ${s.nom.toUpperCase()} : ${s.pin_code || '2026'}`)
+      .join('\n');
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(textToCopy);
+      }
+      setMessage({
+        type: 'success',
+        text: `📋 ${nonAdminStudents.length} codes PIN copiés dans le presse-papiers !`,
+      });
+      setTimeout(() => setMessage(null), 4000);
+    } catch {
+      setMessage({
+        type: 'error',
+        text: 'Impossible de copier la liste dans le presse-papiers.',
+      });
+    }
+  };
+
+  const handleBulkGeneratePins = () => {
+    const nonAdminCount = studentsList.filter((s) => !s.is_admin).length;
+    if (
+      !confirm(
+        `Générer un code PIN unique à 4 chiffres pour les ${nonAdminCount} apprenants de la promotion ?\n\nCette action mettra à jour la base de données, révélera les nouveaux codes et les copiera dans le presse-papiers.`
+      )
+    ) {
+      return;
+    }
+
+    startTransition(async () => {
+      setMessage({ type: 'success', text: 'Génération et attribution des PIN uniques en cours...' });
+      const res = await generateBulkUniquePinsAction();
+      if (res.success && res.updatedPins) {
+        const pinMap = new Map(res.updatedPins.map((p) => [p.id, p.pin_code]));
+
+        const updatedList = studentsList.map((s) => {
+          const newPin = pinMap.get(s.id);
+          return newPin ? { ...s, pin_code: newPin } : s;
+        });
+
+        setStudentsList(updatedList);
+
+        // Révéler automatiquement tous les codes PIN
+        const newRevealed: Record<string, boolean> = {};
+        updatedList.forEach((s) => {
+          newRevealed[s.id] = true;
+        });
+        setRevealedPins(newRevealed);
+        setAllPinsRevealed(true);
+
+        // Copier la liste immédiatement dans le presse-papiers
+        const textToCopy = res.updatedPins
+          .map((p) => `${p.prenom} ${p.nom.toUpperCase()} : ${p.pin_code}`)
+          .join('\n');
+        try {
+          if (typeof navigator !== 'undefined' && navigator.clipboard) {
+            await navigator.clipboard.writeText(textToCopy);
+          }
+        } catch {
+          // ignore
+        }
+
+        if (onStudentUpdated) {
+          updatedList.forEach((s) => {
+            if (pinMap.has(s.id)) onStudentUpdated(s);
+          });
+        }
+
+        setMessage({
+          type: 'success',
+          text: `🔑 ${res.updatedPins.length} codes PIN uniques générés, révélés et copiés dans le presse-papiers !`,
+        });
+        router.refresh();
+        setTimeout(() => setMessage(null), 5000);
+      } else {
+        setMessage({
+          type: 'error',
+          text: res.error || 'Erreur lors de la génération en masse des codes PIN.',
+        });
+      }
+    });
   };
 
   const handleUpdatePinSubmit = (e: React.FormEvent) => {
@@ -262,7 +369,7 @@ export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({
       )}
 
       {/* Barre d'outils et filtres */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl slate-glass border border-white/10">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-4 rounded-xl slate-glass border border-white/10">
         <div className="flex flex-wrap items-center gap-3">
           {/* Recherche */}
           <div className="relative">
@@ -289,14 +396,56 @@ export const AdminStudentTable: React.FC<AdminStudentTableProps> = ({
           </select>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsAddOpen(true)}
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-teal-500 hover:bg-teal-400 text-slate-950 transition-all active:scale-95 self-start sm:self-auto"
-        >
-          <UserPlus className="w-3.5 h-3.5" />
-          <span>Ajouter un apprenant</span>
-        </button>
+        {/* Boutons d'action groupée & ajout */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* 1. Afficher / Masquer tous les PIN */}
+          <button
+            type="button"
+            onClick={handleToggleAllPins}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all active:scale-95 ${
+              allPinsRevealed
+                ? 'bg-amber-500/15 text-amber-300 border-amber-500/30 hover:bg-amber-500/25'
+                : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/10 hover:text-white'
+            }`}
+            title={allPinsRevealed ? 'Masquer tous les codes PIN du tableau' : 'Afficher tous les codes PIN du tableau'}
+          >
+            {allPinsRevealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            <span>{allPinsRevealed ? 'Masquer les PIN' : 'Afficher tous les PIN'}</span>
+          </button>
+
+          {/* 2. Copier liste PIN */}
+          <button
+            type="button"
+            onClick={() => handleCopyPinsList()}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 hover:bg-white/10 text-slate-300 hover:text-teal-300 border border-white/10 transition-all active:scale-95"
+            title="Copier la liste complète des apprenants au format Prénom NOM : PIN"
+          >
+            <Copy className="w-3.5 h-3.5" />
+            <span>Copier liste PIN</span>
+          </button>
+
+          {/* 3. Générer PIN uniques (Promo) */}
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={handleBulkGeneratePins}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-all active:scale-95 disabled:opacity-50"
+            title="Générer des codes PIN uniques pour tous les apprenants"
+          >
+            <KeyRound className="w-3.5 h-3.5" />
+            <span>Générer PIN uniques (Promo)</span>
+          </button>
+
+          {/* 4. Ajouter un apprenant */}
+          <button
+            type="button"
+            onClick={() => setIsAddOpen(true)}
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-teal-500 hover:bg-teal-400 text-slate-950 transition-all active:scale-95"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>Ajouter un apprenant</span>
+          </button>
+        </div>
       </div>
 
       {/* Tableau des apprenants avec colonne actions sticky */}

@@ -1484,3 +1484,80 @@ export async function updateStudentPinAction(studentId: string, newPin: string) 
   }
 }
 
+/**
+ * 9. ATTRIBUTION EN MASSE DE CODES PIN UNIQUES
+ * Génère un code PIN à 4 chiffres unique pour chaque apprenant non-admin
+ * en excluant les codes triviaux et en garantissant 0 doublon dans la promotion.
+ */
+export async function generateBulkUniquePinsAction(): Promise<{
+  success: boolean;
+  error?: string;
+  updatedPins?: { id: string; prenom: string; nom: string; email: string; pin_code: string }[];
+}> {
+  const isAuth = await isAdminAuthenticated();
+  if (!isAuth) return { success: false, error: 'Accès non autorisé.' };
+
+  try {
+    const { data: students, error: fetchError } = await supabaseServer
+      .from('sf_apprenants')
+      .select('id, prenom, nom, email')
+      .eq('is_admin', false)
+      .order('nom', { ascending: true })
+      .order('prenom', { ascending: true });
+
+    if (fetchError || !students) {
+      return { success: false, error: fetchError?.message || 'Impossible de récupérer la liste des apprenants.' };
+    }
+
+    const FORBIDDEN_PINS = new Set([
+      '2026', '0000', '1111', '2222', '3333', '4444',
+      '5555', '6666', '7777', '8888', '9999', '1234', '4321'
+    ]);
+    const usedPins = new Set<string>();
+    const updatedPins: { id: string; prenom: string; nom: string; email: string; pin_code: string }[] = [];
+
+    for (const student of students) {
+      let pin = '';
+      let attempts = 0;
+      do {
+        pin = Math.floor(1000 + Math.random() * 9000).toString();
+        attempts++;
+        if (attempts > 10000) break;
+      } while (FORBIDDEN_PINS.has(pin) || usedPins.has(pin));
+
+      usedPins.add(pin);
+
+      const { error: updateError } = await supabaseServer
+        .from('sf_apprenants')
+        .update({ pin_code: pin })
+        .eq('id', student.id);
+
+      if (updateError) {
+        return {
+          success: false,
+          error: `Erreur lors de la mise à jour pour ${student.prenom} ${student.nom} : ${updateError.message}`
+        };
+      }
+
+      updatedPins.push({
+        id: student.id,
+        prenom: student.prenom,
+        nom: student.nom,
+        email: student.email,
+        pin_code: pin,
+      });
+    }
+
+    revalidatePath('/admin');
+    revalidatePath('/');
+    for (const p of updatedPins) {
+      revalidatePath(`/passport/${p.id}`);
+    }
+
+    return { success: true, updatedPins };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Erreur serveur lors de la génération en masse des PIN.' };
+  }
+}
+
+
