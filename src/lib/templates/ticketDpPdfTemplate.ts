@@ -1,4 +1,5 @@
 import { TicketKLF, TicketResolution, Apprenant } from '@/types/tip';
+import { escapeHtml } from '@/core/domain/antillesFiscal';
 
 export interface DpTemplateData {
   titreDp: string;
@@ -84,15 +85,37 @@ export function generateTicketDpPdfHtml(
         year: 'numeric',
       });
 
-  const statutLibelle = resolution.statut === 'valide'
-    ? 'Intervention validée & clôturée'
-    : 'Intervention réalisée (En attente d’homologation)';
+  const isSpecimen = Boolean(resolution.id && resolution.id.startsWith('draft-'));
+  const statutLibelle =
+    resolution.statut === 'valide' && !isSpecimen
+      ? '✓ Intervention validée & clôturée'
+      : isSpecimen
+      ? 'Spécimen méthodologique REAC (Entraînement DP)'
+      : 'Intervention enregistrée (En attente d’homologation)';
+  const statutColor =
+    resolution.statut === 'valide' && !isSpecimen
+      ? '#047857'
+      : isSpecimen
+      ? '#0369A1'
+      : '#B45309';
+
+  const safeNom = escapeHtml(student.nom).toUpperCase();
+  const safePrenom = escapeHtml(student.prenom);
+  const safeEquipe = escapeHtml(student.equipe);
+  const safeTicketId = escapeHtml(ticket.id);
+  const safeService = escapeHtml(ticket.service);
+  const safeDemandeur = escapeHtml(ticket.demandeur);
+  const safeTicketTitre = escapeHtml(ticket.titre);
+  const safeCat = escapeHtml(resolution.diagnostic_categorie).toUpperCase();
+  const safeUrg = escapeHtml(resolution.diagnostic_urgence);
+  const safeDemarcheHtml = escapeHtml(resolution.demarche_technique).replace(/\r?\n/g, '<br>');
+  const safeMessageUsager = escapeHtml(resolution.message_usager.replace(/\r?\n/g, ' '));
 
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Fiche DP • ${student.nom} ${student.prenom} • ${ticket.id}</title>
+  <title>Fiche DP • ${safeNom} ${safePrenom} • ${safeTicketId}</title>
   <style>
     @page {
       size: A4 portrait;
@@ -328,21 +351,21 @@ export function generateTicketDpPdfHtml(
     <table class="id-table">
       <tr>
         <td class="id-label">Candidat(e) :</td>
-        <td class="id-val">${student.nom.toUpperCase()} ${student.prenom}</td>
+        <td class="id-val">${safeNom} ${safePrenom}</td>
         <td class="id-label">Réf. Incident :</td>
-        <td class="id-val">${ticket.id} (${ticket.service})</td>
+        <td class="id-val">${safeTicketId} (${safeService})</td>
       </tr>
       <tr>
         <td class="id-label">Escouade :</td>
-        <td class="id-val">${student.equipe}</td>
+        <td class="id-val">${safeEquipe}</td>
         <td class="id-label">Date d'action :</td>
         <td class="id-val">${dateSoumission}</td>
       </tr>
       <tr>
         <td class="id-label">Qualification :</td>
-        <td class="id-val">${resolution.diagnostic_categorie.toUpperCase()} • URGENCE ${resolution.diagnostic_urgence}</td>
+        <td class="id-val">${safeCat} • URGENCE ${safeUrg}</td>
         <td class="id-label">Homologation :</td>
-        <td class="id-val" style="color: #047857;">✓ ${statutLibelle}</td>
+        <td class="id-val" style="color: ${statutColor};">${statutLibelle}</td>
       </tr>
     </table>
   </div>
@@ -368,7 +391,7 @@ export function generateTicketDpPdfHtml(
     <div class="rubrique-body">
       <div style="margin-bottom: 3px;">${details.contexteDp}</div>
       <div style="font-size: 7.5pt; color: #475569;">
-        <strong>Demandeur :</strong> ${ticket.demandeur} | <strong>Incident initial :</strong> ${ticket.titre}
+        <strong>Demandeur :</strong> ${safeDemandeur} | <strong>Incident initial :</strong> ${safeTicketTitre}
       </div>
       <div>
         <span class="tools-tag">Moyens & Outils : ${details.outilsMobilises}</span>
@@ -383,7 +406,7 @@ export function generateTicketDpPdfHtml(
       Démarche technique appliquée & chronologie d'intervention (Rédigée par le candidat)
     </div>
     <div class="rubrique-body">
-      <div class="code-block">${resolution.demarche_technique.replace(/\n/g, '<br>')}</div>
+      <div class="code-block">${safeDemarcheHtml}</div>
     </div>
   </div>
 
@@ -395,7 +418,7 @@ export function generateTicketDpPdfHtml(
     </div>
     <div class="rubrique-body">
       <div style="font-style: italic; color: #1E293B; background: #F8FAFC; padding: 4px 6px; border-left: 3px solid #0284C7; font-size: 7.8pt;">
-        « ${resolution.message_usager.replace(/\n/g, ' ')} »
+        « ${safeMessageUsager} »
       </div>
     </div>
   </div>

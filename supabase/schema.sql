@@ -213,7 +213,9 @@ create table if not exists tip.sf_lab_submissions (
 create index if not exists idx_sf_lab_submissions_lab_apprenant on tip.sf_lab_submissions(lab_id, apprenant_id);
 
 -- ==============================================================================
--- 16. POLITIQUES DE SÉCURITÉ ROW LEVEL SECURITY (RLS)
+-- 16. POLITIQUES DE SÉCURITÉ ROW LEVEL SECURITY (RLS - ARCHITECTURE ZERO-TRUST)
+-- Toutes les lectures/écritures sensibles transitent côté serveur via service_role.
+-- Le rôle public anon n'a aucun accès en écriture ni aucun accès aux secrets/corrigés.
 -- ==============================================================================
 
 alter table tip.sf_apprenants enable row level security;
@@ -223,70 +225,44 @@ alter table tip.sf_tickets_klf enable row level security;
 alter table tip.sf_ticket_resolutions enable row level security;
 alter table tip.sf_dp_suivi enable row level security;
 alter table tip.sf_idempotency enable row level security;
-
--- Politiques de lecture publique
-drop policy if exists "Lecture publique apprenants" on tip.sf_apprenants;
-create policy "Lecture publique apprenants" on tip.sf_apprenants for select using (true);
-
-drop policy if exists "Lecture publique badges" on tip.sf_badges;
-create policy "Lecture publique badges" on tip.sf_badges for select using (true);
-
-drop policy if exists "Lecture publique achievements" on tip.sf_achievements;
-create policy "Lecture publique achievements" on tip.sf_achievements for select using (true);
-
-drop policy if exists "Lecture publique tickets" on tip.sf_tickets_klf;
-create policy "Lecture publique tickets" on tip.sf_tickets_klf for select using (true);
-
-drop policy if exists "Lecture publique résolutions" on tip.sf_ticket_resolutions;
-create policy "Lecture publique résolutions" on tip.sf_ticket_resolutions for select using (true);
-
-drop policy if exists "Gestion résolutions" on tip.sf_ticket_resolutions;
-create policy "Gestion résolutions" on tip.sf_ticket_resolutions for all using (true);
-
-drop policy if exists "Lecture publique dp" on tip.sf_dp_suivi;
-create policy "Lecture publique dp" on tip.sf_dp_suivi for select using (true);
-
 alter table tip.sf_quizzes enable row level security;
 alter table tip.sf_quiz_questions enable row level security;
 alter table tip.sf_quiz_options enable row level security;
 alter table tip.sf_quiz_submissions enable row level security;
+alter table tip.sf_labs enable row level security;
+alter table tip.sf_lab_submissions enable row level security;
+
+-- Suppression des anciennes politiques permissives (anti-triche & protection RGPD/PIN)
+drop policy if exists "Lecture publique apprenants" on tip.sf_apprenants;
+drop policy if exists "Lecture publique résolutions" on tip.sf_ticket_resolutions;
+drop policy if exists "Gestion résolutions" on tip.sf_ticket_resolutions;
+drop policy if exists "Lecture publique dp" on tip.sf_dp_suivi;
+drop policy if exists "Gestion quizzes" on tip.sf_quizzes;
+drop policy if exists "Lecture publique questions" on tip.sf_quiz_questions;
+drop policy if exists "Gestion questions" on tip.sf_quiz_questions;
+drop policy if exists "Lecture publique options" on tip.sf_quiz_options;
+drop policy if exists "Gestion options" on tip.sf_quiz_options;
+drop policy if exists "Lecture publique submissions" on tip.sf_quiz_submissions;
+drop policy if exists "Gestion submissions" on tip.sf_quiz_submissions;
+drop policy if exists "Gestion labs" on tip.sf_labs;
+drop policy if exists "Lecture publique lab submissions" on tip.sf_lab_submissions;
+drop policy if exists "Gestion lab submissions" on tip.sf_lab_submissions;
+
+-- Lecture seule strictement limitée aux catalogues publics non sensibles
+drop policy if exists "Lecture publique badges" on tip.sf_badges;
+create policy "Lecture publique badges" on tip.sf_badges for select to anon, authenticated using (true);
+
+drop policy if exists "Lecture publique achievements" on tip.sf_achievements;
+create policy "Lecture publique achievements" on tip.sf_achievements for select to anon, authenticated using (true);
+
+drop policy if exists "Lecture publique tickets" on tip.sf_tickets_klf;
+create policy "Lecture publique tickets" on tip.sf_tickets_klf for select to anon, authenticated using (true);
 
 drop policy if exists "Lecture publique quizzes" on tip.sf_quizzes;
-create policy "Lecture publique quizzes" on tip.sf_quizzes for select using (true);
+create policy "Lecture publique quizzes" on tip.sf_quizzes for select to anon, authenticated using (true);
 
-drop policy if exists "Gestion quizzes" on tip.sf_quizzes;
-create policy "Gestion quizzes" on tip.sf_quizzes for all using (true);
-
-drop policy if exists "Lecture publique questions" on tip.sf_quiz_questions;
-create policy "Lecture publique questions" on tip.sf_quiz_questions for select using (true);
-
-drop policy if exists "Gestion questions" on tip.sf_quiz_questions;
-create policy "Gestion questions" on tip.sf_quiz_questions for all using (true);
-
-drop policy if exists "Lecture publique options" on tip.sf_quiz_options;
-create policy "Lecture publique options" on tip.sf_quiz_options for select using (true);
-
-drop policy if exists "Gestion options" on tip.sf_quiz_options;
-create policy "Gestion options" on tip.sf_quiz_options for all using (true);
-
-drop policy if exists "Lecture publique submissions" on tip.sf_quiz_submissions;
-create policy "Lecture publique submissions" on tip.sf_quiz_submissions for select using (true);
-
-drop policy if exists "Gestion submissions" on tip.sf_quiz_submissions;
-create policy "Gestion submissions" on tip.sf_quiz_submissions for all using (true);
-
--- Politiques Labs
 drop policy if exists "Lecture publique labs" on tip.sf_labs;
-create policy "Lecture publique labs" on tip.sf_labs for select using (true);
-
-drop policy if exists "Gestion labs" on tip.sf_labs;
-create policy "Gestion labs" on tip.sf_labs for all using (true);
-
-drop policy if exists "Lecture publique lab submissions" on tip.sf_lab_submissions;
-create policy "Lecture publique lab submissions" on tip.sf_lab_submissions for select using (true);
-
-drop policy if exists "Gestion lab submissions" on tip.sf_lab_submissions;
-create policy "Gestion lab submissions" on tip.sf_lab_submissions for all using (true);
+create policy "Lecture publique labs" on tip.sf_labs for select to anon, authenticated using (true);
 
 -- ==============================================================================
 -- SEED DATA : BADGES, TICKETS ET APPRENANTS DE DÉMONSTRATION
@@ -862,12 +838,30 @@ on conflict (id) do update set
   dsi_explanation = excluded.dsi_explanation;
 
 -- ==============================================================================
--- 15. PERMISSIONS ET DROITS SUR LE SCHÉMA TIP
+-- 15. PERMISSIONS ET DROITS SUR LE SCHÉMA TIP (MOINDRE PRIVILÈGE)
 -- ==============================================================================
 grant usage on schema tip to anon, authenticated, service_role;
-grant all on all tables in schema tip to anon, authenticated, service_role;
-grant all on all sequences in schema tip to anon, authenticated, service_role;
-grant all on all routines in schema tip to anon, authenticated, service_role;
-alter default privileges in schema tip grant all on tables to anon, authenticated, service_role;
-alter default privileges in schema tip grant all on sequences to anon, authenticated, service_role;
-alter default privileges in schema tip grant all on routines to anon, authenticated, service_role;
+
+-- Accès complet réservé exclusivement au backend Next.js (service_role)
+grant all on all tables in schema tip to service_role;
+grant all on all sequences in schema tip to service_role;
+grant all on all routines in schema tip to service_role;
+alter default privileges in schema tip grant all on tables to service_role;
+alter default privileges in schema tip grant all on sequences to service_role;
+alter default privileges in schema tip grant all on routines to service_role;
+
+-- Révocation totale des écritures et des lectures sensibles pour anon & authenticated
+revoke all on all tables in schema tip from anon, authenticated;
+revoke all on all sequences in schema tip from anon, authenticated;
+alter default privileges in schema tip revoke all on tables from anon, authenticated;
+alter default privileges in schema tip revoke all on sequences from anon, authenticated;
+
+-- Lecture publique autorisée uniquement sur la vue RGPD et les référentiels non sensibles
+grant select on
+  tip.v_leaderboard_public,
+  tip.sf_badges,
+  tip.sf_achievements,
+  tip.sf_tickets_klf,
+  tip.sf_quizzes,
+  tip.sf_labs
+to anon, authenticated;

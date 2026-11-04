@@ -26,6 +26,7 @@ import confetti from 'canvas-confetti';
 import { submitTicketResolutionAction } from '@/app/admin/actions';
 import { TechnicianLoginScreen } from '@/components/tickets/TechnicianLoginScreen';
 import { logoutTechnicianAction, getTechnicianResolutionsAction } from '@/app/tickets/actions';
+import { calculateImportDutiesAntilles, ANTILLES_TAX_RATES } from '@/core/domain/antillesFiscal';
 
 interface TicketDeskProps {
   initialTickets: TicketKLF[];
@@ -148,10 +149,19 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
     }
   }, [activeTicket, currentResolution]);
 
-  // Calculateur simulateur pour Ticket #101 (Corinne Facturation)
-  const [montantHT, setMontantHT] = useState<number>(1000);
-  const [tauxOctroi, setTauxOctroi] = useState<number>(8.5);
-  const [tauxTVA, setTauxTVA] = useState<number>(8.5);
+  // Calculateur simulateur pour Ticket #101 (Corinne Facturation) — État initial vierge (Anti-Dirty-State)
+  const [montantHTInput, setMontantHTInput] = useState<string>('');
+  const [tauxOctroiInput, setTauxOctroiInput] = useState<string>('');
+  const [tauxTVAInput, setTauxTVAInput] = useState<string>('');
+  const [fieldErrors, setFieldErrors] = useState<{ demarche?: string; messageUsager?: string }>({});
+
+  // Reset du simulateur et des erreurs de champs lors du changement ou de la fermeture du ticket
+  useEffect(() => {
+    setMontantHTInput('');
+    setTauxOctroiInput('');
+    setTauxTVAInput('');
+    setFieldErrors({});
+  }, [activeTicket]);
 
   const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -255,6 +265,18 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
     if (!activeTicket || !effectiveStudentId) return;
 
     setErrorMessage(null);
+    const nextFieldErrors: { demarche?: string; messageUsager?: string } = {};
+    if (demarche.trim().length < 10) {
+      nextFieldErrors.demarche = 'La démarche technique doit comporter au moins 10 caractères.';
+    }
+    if (messageUsager.trim().length < 10) {
+      nextFieldErrors.messageUsager = "Le message de clôture à l'usager doit comporter au moins 10 caractères.";
+    }
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setFieldErrors(nextFieldErrors);
+      return;
+    }
+    setFieldErrors({});
 
     startTransition(async () => {
       const res = await submitTicketResolutionAction({
@@ -292,10 +314,12 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
     });
   };
 
-  // Calculs fiscaux Antilles pour Corinne
-  const montantOctroi = (montantHT * tauxOctroi) / 100;
-  const montantTVA = ((montantHT + montantOctroi) * tauxTVA) / 100;
-  const totalTTC = montantHT + montantOctroi + montantTVA;
+  // Calculs fiscaux Antilles (Domaine pur) pour Corinne
+  const dutiesCalc = calculateImportDutiesAntilles(
+    parseFloat(montantHTInput) || 0,
+    parseFloat(tauxOctroiInput) || 0,
+    parseFloat(tauxTVAInput) || 0
+  );
 
   // Si aucun apprenant n'est identifié et qu'on n'est pas formateur -> Affichage du sas PIN
   if (!activeStudent && !isFormateur) {
@@ -591,52 +615,90 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
               {/* Aides techniques spécifiques par scénario */}
               {activeTicket.id === 'TCK-101' && (
                 <div className="p-4 rounded-xl bg-teal-500/5 border border-teal-500/20 space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-teal-300 font-['Lexend']">
-                    <Calculator className="w-4 h-4 text-teal-400" />
-                    Simulateur de formule tableur : Octroi de mer et TVA Antilles (8.5%)
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-teal-300 font-['Lexend']">
+                      <Calculator className="w-4 h-4 text-teal-400" />
+                      Simulateur de formule tableur : Octroi de mer et TVA Antilles
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[10px] font-mono">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTauxOctroiInput(String(ANTILLES_TAX_RATES.OCTROI_MER_STANDARD_PCT));
+                          setTauxTVAInput(String(ANTILLES_TAX_RATES.TVA_NORMALE_PCT));
+                        }}
+                        className="px-2 py-0.5 rounded bg-teal-500/15 hover:bg-teal-500/25 text-teal-300 border border-teal-500/30 transition-colors cursor-pointer"
+                      >
+                        Barème 971 (8,5 % / 8,5 %)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTauxTVAInput(String(ANTILLES_TAX_RATES.TVA_REDUITE_PCT))}
+                        className="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-colors cursor-pointer"
+                      >
+                        TVA réduite (2,1 %)
+                      </button>
+                    </div>
                   </div>
                   
                   <div className="grid grid-cols-3 gap-2 text-xs font-mono">
                     <div>
-                      <label className="text-slate-400 block mb-1 text-[10px]">Montant HT (€)</label>
+                      <label className="text-slate-400 block mb-1 text-[10px]">Valeur HT (€)</label>
                       <input
                         type="number"
-                        value={montantHT}
-                        onChange={(e) => setMontantHT(Number(e.target.value))}
-                        className="w-full px-2.5 py-1 rounded bg-[#070F1E] border border-white/10 text-white"
+                        inputMode="decimal"
+                        min="0"
+                        step="0.01"
+                        placeholder="Ex : 1000"
+                        value={montantHTInput}
+                        onChange={(e) => setMontantHTInput(e.target.value)}
+                        className="w-full px-2.5 py-1 rounded bg-[#070F1E] border border-white/10 text-white placeholder-slate-600 focus:outline-none focus:border-teal-400"
                       />
                     </div>
                     <div>
                       <label className="text-slate-400 block mb-1 text-[10px]">Taux Octroi (%)</label>
                       <input
                         type="number"
-                        value={tauxOctroi}
-                        onChange={(e) => setTauxOctroi(Number(e.target.value))}
-                        className="w-full px-2.5 py-1 rounded bg-[#070F1E] border border-white/10 text-white"
+                        inputMode="decimal"
+                        min="0"
+                        step="0.1"
+                        placeholder="Ex : 8.5"
+                        value={tauxOctroiInput}
+                        onChange={(e) => setTauxOctroiInput(e.target.value)}
+                        className="w-full px-2.5 py-1 rounded bg-[#070F1E] border border-white/10 text-white placeholder-slate-600 focus:outline-none focus:border-teal-400"
                       />
                     </div>
                     <div>
-                      <label className="text-slate-400 block mb-1 text-[10px]">TVA Locale (%)</label>
+                      <label className="text-slate-400 block mb-1 text-[10px]">TVA locale (%)</label>
                       <input
                         type="number"
-                        value={tauxTVA}
-                        onChange={(e) => setTauxTVA(Number(e.target.value))}
-                        className="w-full px-2.5 py-1 rounded bg-[#070F1E] border border-white/10 text-white"
+                        inputMode="decimal"
+                        min="0"
+                        step="0.1"
+                        placeholder="8.5 ou 2.1"
+                        value={tauxTVAInput}
+                        onChange={(e) => setTauxTVAInput(e.target.value)}
+                        className="w-full px-2.5 py-1 rounded bg-[#070F1E] border border-white/10 text-white placeholder-slate-600 focus:outline-none focus:border-teal-400"
                       />
                     </div>
                   </div>
 
-                  <div className="p-2.5 rounded bg-[#070F1E] border border-white/5 flex items-center justify-between text-xs font-mono">
+                  <div className="p-2.5 rounded bg-[#070F1E] border border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
                     <span className="text-slate-400">
-                      Octroi: {montantOctroi.toFixed(2)}€ | TVA: {montantTVA.toFixed(2)}€
+                      HT : {dutiesCalc.montantHT.toFixed(2)} € | Octroi : {dutiesCalc.montantOctroi.toFixed(2)} € | TVA ({dutiesCalc.tauxTvaPct}%) : {dutiesCalc.montantTVA.toFixed(2)} €
                     </span>
                     <span className="text-teal-400 font-bold">
-                      Total TTC: {totalTTC.toFixed(2)}€
+                      Total TTC dédouané : {dutiesCalc.totalTTC.toFixed(2)} €
                     </span>
                   </div>
 
-                  <div className="text-[11px] text-slate-400">
-                    Formule corrigée pour Corinne : <code>=SIERREUR(RECHERCHEX(A2; Douane!A:B; 2); 0)</code>
+                  <div className="text-[11px] text-slate-400 space-y-1">
+                    <div>
+                      Formule recherche exacte sans espace parasite : <code>=SIERREUR(RECHERCHEX(SUPPRESPACE(A2); Douane!$A$2:$A$50; Douane!$B$2:$B$50; 0; 0); 0)</code>
+                    </div>
+                    <div>
+                      Formule TTC douane Antilles (verrouillage absolu F4) : <code>=C2*(1+$E$1)*(1+$E$2)</code>
+                    </div>
                   </div>
                 </div>
               )}
@@ -810,10 +872,21 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
                     required
                     rows={3}
                     value={demarche}
-                    onChange={(e) => setDemarche(e.target.value)}
+                    onChange={(e) => {
+                      setDemarche(e.target.value);
+                      if (fieldErrors.demarche) setFieldErrors((prev) => ({ ...prev, demarche: undefined }));
+                    }}
                     placeholder="Exemple : 1. Constat du décalage de la cellule de taux lors de l'étirement. 2. Verrouillage absolu de la cellule avec le symbole $ ($E$1 via F4). 3. Figeage des volets de la ligne 1 via le menu Affichage..."
-                    className="w-full p-3 rounded-xl bg-[#070F1E] border border-white/15 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-400 transition-colors disabled:opacity-60"
+                    className={`w-full p-3 rounded-xl bg-[#070F1E] border text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-400 transition-colors disabled:opacity-60 ${
+                      fieldErrors.demarche ? 'border-amber-500/60' : 'border-white/15'
+                    }`}
                   />
+                  {fieldErrors.demarche && (
+                    <p className="text-[11px] font-mono text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
+                      <span>⚠️</span>
+                      <span>{fieldErrors.demarche}</span>
+                    </p>
+                  )}
                 </div>
 
                 {/* Étape 3 : Message usager */}
@@ -830,10 +903,21 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
                     required
                     rows={2}
                     value={messageUsager}
-                    onChange={(e) => setMessageUsager(e.target.value)}
+                    onChange={(e) => {
+                      setMessageUsager(e.target.value);
+                      if (fieldErrors.messageUsager) setFieldErrors((prev) => ({ ...prev, messageUsager: undefined }));
+                    }}
                     placeholder="Exemple : Bonjour Corinne, votre tableau a été corrigé et recalculé. Le fichier est disponible sur le dossier partagé..."
-                    className="w-full p-3 rounded-xl bg-[#070F1E] border border-white/15 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-400 transition-colors disabled:opacity-60"
+                    className={`w-full p-3 rounded-xl bg-[#070F1E] border text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-400 transition-colors disabled:opacity-60 ${
+                      fieldErrors.messageUsager ? 'border-amber-500/60' : 'border-white/15'
+                    }`}
                   />
+                  {fieldErrors.messageUsager && (
+                    <p className="text-[11px] font-mono text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
+                      <span>⚠️</span>
+                      <span>{fieldErrors.messageUsager}</span>
+                    </p>
+                  )}
                 </div>
 
                 {/* Alertes d'état */}

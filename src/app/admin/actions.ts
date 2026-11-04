@@ -10,6 +10,16 @@ import {
   clearAdminSession, 
   isAdminAuthenticated 
 } from '@/lib/adminAuth';
+import {
+  getActiveTechnicianId,
+  isStudentAuthenticated,
+} from '@/lib/studentAuth';
+import { calculatePalierForPoints } from '@/core/domain/gamification';
+import { sanitizePlainText } from '@/core/domain/antillesFiscal';
+import {
+  evaluateQuizSubmission,
+  validateAndPrepareNewQuizKlf,
+} from '@/core/domain/quizEvaluation';
 import { 
   Apprenant, 
   DPSuivi, 
@@ -221,7 +231,7 @@ export async function adjustPointsAction(data: {
   try {
     const { data: student, error: fetchErr } = await supabaseServer
       .from('sf_apprenants')
-      .select('points_total')
+      .select('points_total, is_admin, palier_actuel')
       .eq('id', parsed.data.studentId)
       .single();
 
@@ -230,13 +240,10 @@ export async function adjustPointsAction(data: {
     }
 
     const newTotal = Math.max(0, (student.points_total || 0) + parsed.data.deltaPoints);
-
-    // Calcul automatique du palier selon les points
-    let newPalier = 'Palier 0';
-    if (newTotal >= 1000) newPalier = 'Palier 4';
-    else if (newTotal >= 650) newPalier = 'Palier 3';
-    else if (newTotal >= 350) newPalier = 'Palier 2';
-    else if (newTotal >= 150) newPalier = 'Palier 1';
+    const newPalier = calculatePalierForPoints(newTotal, {
+      isAdmin: student.is_admin,
+      currentPalier: student.palier_actuel,
+    });
 
     const { error: updateErr } = await supabaseServer
       .from('sf_apprenants')
@@ -335,10 +342,10 @@ export async function awardTicketToStudentAction(ticketId: string, studentId: st
   if (!isAuth) return { success: false, error: 'Accès non autorisé.' };
 
   try {
-    // 1. Récupérer le ticket pour connaître sa valeur en points
+    // 1. Récupérer le ticket pour connaître sa valeur en points et son urgence
     const { data: ticket, error: ticketErr } = await supabaseServer
       .from('sf_tickets_klf')
-      .select('points_valeur, statut')
+      .select('id, points_valeur, urgence, statut')
       .eq('id', ticketId)
       .single();
 
@@ -346,13 +353,61 @@ export async function awardTicketToStudentAction(ticketId: string, studentId: st
       return { success: false, error: 'Ticket introuvable.' };
     }
 
-    // 2. Marquer le ticket résolu
-    await supabaseServer
-      .from('sf_tickets_klf')
-      .update({ statut: 'resolu' })
-      .eq('id', ticketId);
+    // 2. Vérifier s'il existe déjà une résolution validée pour éviter tout double crédit
+    const { data: existingRes } = await supabaseServer
+      .from('sf_ticket_resolutions')
+      .select('*')
+      .eq('ticket_id', ticketId)
+      .eq('apprenant_id', studentId)
+      .maybeSingle();
 
-    // 3. Ajuster les points de l'apprenant
+    if (existingRes?.statut === 'valide') {
+      return {
+        success: false,
+        error: 'Ce ticket a déjà été homologué et crédité pour cet apprenant.',
+      };
+    }
+
+    const defaultCategory =
+      ticketId === 'TCK-105'
+        ? 'reseau'
+        : ticketId === 'TCK-102'
+        ? 'materiel'
+        : ticketId === 'TCK-104'
+        ? 'systeme'
+        : 'applicatif';
+
+    // 3. Créer ou homologuer la fiche individuelle dans sf_ticket_resolutions (sans fermer le scénario pour le reste de la promo)
+    const { error: resUpsertErr } = await supabaseServer
+      .from('sf_ticket_resolutions')
+      .upsert(
+        {
+          ticket_id: ticketId,
+          apprenant_id: studentId,
+          diagnostic_categorie: existingRes?.diagnostic_categorie || defaultCategory,
+          diagnostic_urgence: existingRes?.diagnostic_urgence || ticket.urgence || 'P2',
+          demarche_technique:
+            existingRes?.demarche_technique ||
+            'Intervention technique validée en présentiel lors de l’atelier pratique supervisé par le formateur référent.',
+          message_usager:
+            existingRes?.message_usager ||
+            'Incident résolu et recette opérationnelle validée directement auprès du service demandeur.',
+          statut: 'valide',
+          points_attribues: ticket.points_valeur,
+          feedback_formateur:
+            existingRes?.feedback_formateur || 'Attribution et homologation directe par David JACQUA.',
+          soumis_le: existingRes?.soumis_le || new Date().toISOString(),
+          evalue_le: new Date().toISOString(),
+          evalue_par: 'David JACQUA',
+        },
+        { onConflict: 'ticket_id,apprenant_id' }
+      );
+
+    if (resUpsertErr) {
+      return { success: false, error: resUpsertErr.message };
+    }
+
+    // 4. Ajuster les points et le palier de l'apprenant
     const adjustResult = await adjustPointsAction({
       studentId,
       deltaPoints: ticket.points_valeur,
@@ -365,6 +420,7 @@ export async function awardTicketToStudentAction(ticketId: string, studentId: st
 
     revalidatePath('/admin');
     revalidatePath('/tickets');
+    revalidatePath(`/passport/${studentId}`);
     revalidatePath('/');
     return { success: true };
   } catch (err: any) {
@@ -377,12 +433,18 @@ export async function awardTicketToStudentAction(ticketId: string, studentId: st
    ========================================================================== */
 
 const SubmitTicketResolutionSchema = z.object({
-  ticketId: z.string().min(1, 'Identifiant ticket requis'),
+  ticketId: z.string().min(1, 'Identifiant ticket requis').max(30),
   studentId: z.string().uuid('Identifiant apprenant invalide'),
   diagnosticCategorie: z.enum(['materiel', 'systeme', 'reseau', 'applicatif']),
   diagnosticUrgence: z.enum(['P1', 'P2', 'P3']),
-  demarcheTechnique: z.string().min(10, 'La démarche technique doit être détaillée (au moins 10 caractères)'),
-  messageUsager: z.string().min(10, 'Le message à l\'usager doit être formulé avec soin (au moins 10 caractères)'),
+  demarcheTechnique: z
+    .string()
+    .transform(sanitizePlainText)
+    .pipe(z.string().min(10, 'La démarche technique doit être détaillée (au moins 10 caractères)').max(5000)),
+  messageUsager: z
+    .string()
+    .transform(sanitizePlainText)
+    .pipe(z.string().min(10, 'Le message à l\'usager doit être formulé avec soin (au moins 10 caractères)').max(2000)),
 });
 
 export async function submitTicketResolutionAction(formData: {
@@ -401,13 +463,40 @@ export async function submitTicketResolutionAction(formData: {
 
     const { ticketId, studentId, diagnosticCategorie, diagnosticUrgence, demarcheTechnique, messageUsager } = parsed.data;
 
+    // Vérification stricte de session (Anti-usurpation d'identité inter-élèves)
+    const isFormateur = await isAdminAuthenticated();
+    const activeTechId = await getActiveTechnicianId();
+    const isPassportAuth = await isStudentAuthenticated(studentId);
+
+    if (!isFormateur && activeTechId !== studentId && !isPassportAuth) {
+      return {
+        success: false,
+        error: 'Session technicien expirée ou non autorisée. Veuillez vous identifier avec votre code PIN.',
+      };
+    }
+
+    // Empêcher l'écrasement d'une résolution déjà homologuée par le formateur
+    const { data: existing } = await supabaseServer
+      .from('sf_ticket_resolutions')
+      .select('statut')
+      .eq('ticket_id', ticketId)
+      .eq('apprenant_id', studentId)
+      .maybeSingle();
+
+    if (existing?.statut === 'valide' && !isFormateur) {
+      return {
+        success: false,
+        error: 'Cette intervention a déjà été homologuée par le formateur et est désormais scellée.',
+      };
+    }
+
     const payload = {
       ticket_id: ticketId,
       apprenant_id: studentId,
       diagnostic_categorie: diagnosticCategorie,
       diagnostic_urgence: diagnosticUrgence,
-      demarche_technique: demarcheTechnique.trim(),
-      message_usager: messageUsager.trim(),
+      demarche_technique: demarcheTechnique,
+      message_usager: messageUsager,
       statut: 'en_attente_validation',
       soumis_le: new Date().toISOString()
     };
@@ -695,53 +784,59 @@ export async function publishQuizCorrectionAction(quizId: string) {
       .select('id, points')
       .eq('quiz_id', quizId);
 
+    const questionIds = (questions || []).map(q => q.id);
     const { data: options } = await supabaseServer
       .from('sf_quiz_options')
-      .select('id, question_id, is_correct');
+      .select('id, question_id, is_correct')
+      .in('question_id', questionIds.length > 0 ? questionIds : ['00000000-0000-0000-0000-000000000000']);
 
     const correctOptionsSet = new Set(
       (options || []).filter(o => o.is_correct).map(o => o.id)
     );
 
-    let totalPointsPossibles = 0;
-    (questions || []).forEach(q => {
-      totalPointsPossibles += (q.points || 1);
-    });
-
-    // 3. Récupérer toutes les soumissions de ce quiz
-    const { data: submissions } = await supabaseServer
+    // 3. Récupérer toutes les soumissions finalisées de ce quiz
+    const { data: rawSubmissions } = await supabaseServer
       .from('sf_quiz_submissions')
       .select('*')
       .eq('quiz_id', quizId);
 
-    // 4. Calculer le score de chaque copie et attribuer les points/badges
-    for (const sub of (submissions || [])) {
-      let scoreObtenu = 0;
-      (questions || []).forEach(q => {
-        const chosen = sub.reponses_choisies?.[q.id];
-        if (chosen && correctOptionsSet.has(chosen)) {
-          scoreObtenu += (q.points || 1);
-        }
+    const submissions = (rawSubmissions || []).filter(
+      (s) => Boolean(s.closed_for_cheating || s.submitted_at)
+    );
+
+    // 4. Calculer le score de chaque copie (Domaine pur) et attribuer les points/paliers/badges
+    for (const sub of submissions) {
+      const outcome = evaluateQuizSubmission({
+        questions: questions || [],
+        correctOptionIds: correctOptionsSet,
+        answers: sub.reponses_choisies,
+        seuilValidation: quiz.seuil_validation || 75,
+        pointsRecompense: quiz.points_recompense || 200,
+        closedForCheating: !!sub.closed_for_cheating,
       });
 
-      const scorePourcentage = totalPointsPossibles > 0 
-        ? Math.round((scoreObtenu / totalPointsPossibles) * 100) 
-        : 0;
-      const isValidated = scorePourcentage >= (quiz.seuil_validation || 75);
-      const pointsToAward = isValidated ? (quiz.points_recompense || 200) : 0;
+      const { scoreObtenu, scorePourcentage, isValidated, pointsAttribues: pointsToAward } = outcome;
 
-      // Si l'élève a validé et n'a pas encore reçu ses points
-      if (isValidated && (sub.points_attribues || 0) === 0) {
+      // Si l'élève a validé (sans triche) et n'a pas encore reçu ses points
+      if (isValidated && !sub.closed_for_cheating && (sub.points_attribues || 0) === 0) {
         const { data: appData } = await supabaseServer
           .from('sf_apprenants')
-          .select('points_total')
+          .select('points_total, is_admin, palier_actuel')
           .eq('id', sub.apprenant_id)
           .single();
 
         if (appData) {
+          const newPointsTotal = (appData.points_total || 0) + pointsToAward;
+          const newPalier = calculatePalierForPoints(newPointsTotal, {
+            isAdmin: appData.is_admin,
+            currentPalier: appData.palier_actuel,
+          });
           await supabaseServer
             .from('sf_apprenants')
-            .update({ points_total: (appData.points_total || 0) + pointsToAward })
+            .update({
+              points_total: newPointsTotal,
+              palier_actuel: newPalier,
+            })
             .eq('id', sub.apprenant_id);
         }
 
@@ -757,14 +852,18 @@ export async function publishQuizCorrectionAction(quizId: string) {
         }
       }
 
-      // Mise à jour de la soumission
+      // Mise à jour de la soumission (sanction 0/20 préservée si closed_for_cheating)
       await supabaseServer
         .from('sf_quiz_submissions')
         .update({
           score_obtenu: scoreObtenu,
           score_pourcentage: scorePourcentage,
           is_validated: isValidated,
-          points_attribues: isValidated ? pointsToAward : sub.points_attribues
+          points_attribues: sub.closed_for_cheating
+            ? 0
+            : isValidated
+            ? Math.max(sub.points_attribues || 0, pointsToAward)
+            : sub.points_attribues || 0,
         })
         .eq('id', sub.id);
     }
@@ -823,17 +922,47 @@ export async function importQuizJsonAction(jsonString: string) {
       return { success: false, error: 'Structure JSON invalide (title ou questions manquants).' };
     }
 
-    const quizId = 'quiz-' + (parsed.id || Date.now().toString(36));
-    const letters = ['A', 'B', 'C', 'D'];
+    const rawId = typeof parsed.id === 'string' ? parsed.id.trim() : '';
+    const quizId = rawId
+      ? rawId.startsWith('quiz-')
+        ? rawId
+        : `quiz-${rawId}`
+      : 'quiz-' + Date.now().toString(36);
+
+    // Protection stricte des quiz ayant déjà des copies d'élèves scellées
+    const { count: existingSubmissionsCount } = await supabaseServer
+      .from('sf_quiz_submissions')
+      .select('*', { count: 'exact', head: true })
+      .eq('quiz_id', quizId);
+
+    if ((existingSubmissionsCount || 0) > 0) {
+      return {
+        success: false,
+        error: `Protection d'intégrité : le quiz "${quizId}" possède déjà ${existingSubmissionsCount} copie(s) d'élèves enregistrée(s) et ne peut pas être écrasé. Choisissez un nouvel identifiant.`,
+      };
+    }
+
+    // Protocole docimologique KLF en 12 verrous AVANT toute écriture en base
+    const validation = validateAndPrepareNewQuizKlf(parsed.questions);
+    if (!validation.valid) {
+      return {
+        success: false,
+        error: `Rejet docimologique KLF (${validation.errors.length} anomalie(s)) : ${validation.errors.slice(0, 3).join(' | ')}`,
+      };
+    }
+
+    const { normalizedQuestions, balancedOptions, distributionAudit } = validation;
 
     // Insertion du Quiz
     const { error: qErr } = await supabaseServer
       .from('sf_quizzes')
       .upsert({
         id: quizId,
-        titre: parsed.title,
-        description: parsed.description || 'Évaluation importée via le cockpit KLF.',
-        palier: parsed.palier || 'Palier 0',
+        titre: sanitizePlainText(String(parsed.title)),
+        description: sanitizePlainText(
+          String(parsed.description || 'Évaluation importée via le cockpit KLF.')
+        ),
+        palier: parsed.palier || 'Palier 1',
         seuil_validation: parsed.seuil_validation || 75,
         points_recompense: parsed.points_recompense || 200,
         duree_minutes: parsed.duree_minutes || 30,
@@ -843,44 +972,29 @@ export async function importQuizJsonAction(jsonString: string) {
 
     if (qErr) return { success: false, error: qErr.message };
 
-    // Nettoyer questions existantes si écrasement
+    // Nettoyer questions existantes si brouillon sans copies
     await supabaseServer.from('sf_quiz_questions').delete().eq('quiz_id', quizId);
 
-    // Insertion questions et options
-    for (let i = 0; i < parsed.questions.length; i++) {
-      const q = parsed.questions[i];
+    // Insertion questions et options équilibrées
+    for (let i = 0; i < normalizedQuestions.length; i++) {
+      const q = normalizedQuestions[i];
       const { data: qRow, error: questErr } = await supabaseServer
         .from('sf_quiz_questions')
         .insert({
           quiz_id: quizId,
           ordre: i + 1,
-          theme: q.theme || 'Général',
-          enonce: q.question || q.enonce || `Question ${i + 1}`,
-          points: q.points || 1
+          theme: q.theme,
+          enonce: q.enonce,
+          points: q.points
         })
         .select()
         .single();
 
       if (questErr || !qRow) continue;
 
-      // Verrou 3 (Distribution Guard & Auto-Shuffle) : Mélange obligatoire des options à l'insertion
-      const rawOptions = (q.options || []).map((optText: string, oIdx: number) => ({
-        texte: optText,
-        is_correct: oIdx === q.correct,
-        dsi_explanation: oIdx === q.correct
-          ? (q.feedback || 'Bonne réponse.')
-          : `Incorrect. ${q.feedback || ''}`
-      }));
-
-      // Mélange Fisher-Yates pour casser tout biais de positionnement
-      for (let j = rawOptions.length - 1; j > 0; j--) {
-        const k = Math.floor(Math.random() * (j + 1));
-        [rawOptions[j], rawOptions[k]] = [rawOptions[k], rawOptions[j]];
-      }
-
-      const opts = rawOptions.map((opt: any, oIdx: number) => ({
+      const opts = (balancedOptions[i] || []).map((opt) => ({
         question_id: qRow.id,
-        lettre: letters[oIdx] || 'A',
+        lettre: opt.lettre,
         texte: opt.texte,
         is_correct: opt.is_correct,
         dsi_explanation: opt.dsi_explanation
@@ -893,8 +1007,9 @@ export async function importQuizJsonAction(jsonString: string) {
     return { 
       success: true, 
       quizId, 
-      count: parsed.questions.length,
-      message: `✅ Quiz importé avec succès (${parsed.questions.length} questions). Verrou anti-pattern actif : options re-brassées équitablement.` 
+      count: normalizedQuestions.length,
+      distribution: distributionAudit.percentages,
+      message: `✅ Quiz importé (${normalizedQuestions.length} questions). Protocole KLF 12 verrous validé — distribution : ${distributionAudit.summaryText}.` 
     };
   } catch (err: any) {
     return { success: false, error: 'JSON non parsable : ' + (err.message || String(err)) };

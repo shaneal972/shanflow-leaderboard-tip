@@ -3,6 +3,8 @@
 import { z } from 'zod';
 import { supabaseServer } from '../../supabase/server';
 import { revalidatePath } from 'next/cache';
+import { isAdminAuthenticated } from '@/lib/adminAuth';
+import { getActiveTechnicianId, isStudentAuthenticated } from '@/lib/studentAuth';
 
 // Utilitaire de sanitisation anti-XSS
 function sanitizeString(input: string): string {
@@ -40,6 +42,18 @@ export async function updateDPSuiviAction(formData: {
   }
 
   const { apprenantId, rubrique_1, rubrique_2, rubrique_3, rubrique_4, rubrique_5, statut_dp } = parsed.data;
+
+  const isFormateur = await isAdminAuthenticated();
+  const activeTechId = await getActiveTechnicianId();
+  const isPassportAuth = await isStudentAuthenticated(apprenantId);
+
+  if (!isFormateur && activeTechId !== apprenantId && !isPassportAuth) {
+    return { success: false, error: 'Session expirée ou non autorisée.' };
+  }
+
+  if (!isFormateur && statut_dp === 'valide_jury') {
+    return { success: false, error: 'Seul le formateur référent peut homologuer le statut jury.' };
+  }
 
   try {
     const { error } = await supabaseServer

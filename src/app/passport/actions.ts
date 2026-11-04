@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { supabaseServer } from '../../../supabase/server';
-import { setStudentSession, clearStudentSession } from '@/lib/studentAuth';
+import { setTechnicianSession, clearStudentSession, clearTechnicianSession, getActiveTechnicianId } from '@/lib/studentAuth';
 
 const unlockSchema = z.object({
   studentId: z.string().uuid('Identifiant apprenant invalide.'),
@@ -60,11 +60,12 @@ export async function unlockPassportAction(
       };
     }
 
-    // 4. Dépôt du cookie HttpOnly sécurisé (30 jours)
-    await setStudentSession(studentId);
+    // 4. Dépôt du cookie HttpOnly sécurisé (Passeport + Session Technicien Helpdesk/Quiz unifiée sur 30 jours)
+    await setTechnicianSession(studentId);
 
-    // 5. Rafraîchissement de la page cible
+    // 5. Rafraîchissement des espaces liés
     revalidatePath(`/passport/${studentId}`);
+    revalidatePath('/tickets');
 
     return { success: true };
   } catch (err: any) {
@@ -82,7 +83,12 @@ export async function unlockPassportAction(
 export async function lockPassportAction(studentId: string): Promise<UnlockResult> {
   try {
     await clearStudentSession(studentId);
+    const activeTechId = await getActiveTechnicianId();
+    if (activeTechId === studentId) {
+      await clearTechnicianSession();
+    }
     revalidatePath(`/passport/${studentId}`);
+    revalidatePath('/tickets');
     return { success: true };
   } catch (err: any) {
     console.error('[lockPassportAction] Exception:', err);

@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Apprenant, Badge, DPSuivi, Quiz, QuizSubmission } from '@/types/tip';
+import { PALIERS_KLF } from '@/core/domain/gamification';
 import { BadgeGrid } from './BadgeGrid';
 import { 
   ArrowLeft, 
@@ -34,13 +35,7 @@ export const StudentPassport: React.FC<StudentPassportProps> = ({
   dpSuivi,
   quizzes = [],
 }) => {
-  const paliers = [
-    { id: 'Palier 0', name: 'Palier 0 : Raccourcis & Hygiène', desc: 'RAN & Standards clavier', minPoints: 0 },
-    { id: 'Palier 1', name: 'Palier 1 : Standard DSI & Parc', desc: 'Mise en page & Nettoyage Tableur', minPoints: 200 },
-    { id: 'Palier 2', name: 'Palier 2 : Helpdesk Hero', desc: 'Dépannage Facturation & Quai REAC', minPoints: 400 },
-    { id: 'Palier 3', name: 'Palier 3 : TIP Augmenté', desc: 'Prompt Engineering & Copilote IA', minPoints: 700 },
-    { id: 'Palier 4', name: 'Palier 4 : NetOps & Automation', desc: 'Workflows n8n & Alertes Helpdesk', minPoints: 1000 },
-  ];
+  const paliers = PALIERS_KLF;
 
   const unlockedBadges = badges.filter((b) => b.unlocked);
   const totalPossiblePoints = badges.reduce((acc, b) => acc + b.points_requis, 0);

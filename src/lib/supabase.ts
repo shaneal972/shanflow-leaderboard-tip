@@ -32,7 +32,7 @@ export { supabase, supabaseServer };
  */
 export async function getLeaderboardData(): Promise<LeaderboardApprenant[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseServer
       .from('v_leaderboard_public')
       .select('*');
 
@@ -41,7 +41,7 @@ export async function getLeaderboardData(): Promise<LeaderboardApprenant[]> {
     }
 
     // Récupération du compte de badges pour chaque apprenant
-    const { data: achievements } = await supabase
+    const { data: achievements } = await supabaseServer
       .from('sf_achievements')
       .select('apprenant_id, badge_id');
 
@@ -90,7 +90,7 @@ export async function getApprenantById(id: string): Promise<Apprenant | null> {
  */
 export async function getBadgesWithStatus(apprenantId: string): Promise<Badge[]> {
   try {
-    const { data: badgesData, error: badgesError } = await supabase
+    const { data: badgesData, error: badgesError } = await supabaseServer
       .from('sf_badges')
       .select('*')
       .order('points_requis', { ascending: true });
@@ -99,7 +99,7 @@ export async function getBadgesWithStatus(apprenantId: string): Promise<Badge[]>
       ? badgesData 
       : MOCK_BADGES;
 
-    const { data: achievements, error: achError } = await supabase
+    const { data: achievements, error: achError } = await supabaseServer
       .from('sf_achievements')
       .select('badge_id, obtenu_le')
       .eq('apprenant_id', apprenantId);
@@ -195,7 +195,7 @@ export async function getAllTicketResolutionsAdmin(): Promise<TicketResolution[]
  */
 export async function getDPSuiviByApprenant(apprenantId: string): Promise<DPSuivi> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseServer
       .from('sf_dp_suivi')
       .select('*')
       .eq('apprenant_id', apprenantId)
@@ -342,15 +342,11 @@ export async function getQuizForExam(quizId: string): Promise<{ quiz: Quiz; ques
 
     const questionIds = questions.map(q => q.id);
 
-    // Si la correction n'est PAS publiée, on masque STRICTEMENT is_correct et dsi_explanation
-    const isCorrectionPublished = quiz.statut === 'correction_publiee';
-    const selectFields = isCorrectionPublished
-      ? 'id, question_id, lettre, texte, is_correct, dsi_explanation'
-      : 'id, question_id, lettre, texte';
-
+    // Mode ÉPREUVE / RATTRAPAGE : on masque STRICTEMENT is_correct et dsi_explanation
+    // Le corrigé complet n'est servi que via getQuizWithCorrection() après remise effective de la copie.
     const { data: options } = await supabaseServer
       .from('sf_quiz_options')
-      .select(selectFields)
+      .select('id, question_id, lettre, texte')
       .in('question_id', questionIds)
       .order('lettre', { ascending: true });
 
@@ -494,8 +490,11 @@ export async function getAllQuizzesAdmin(): Promise<QuizWithStats[]> {
       if (!submissionMap[s.quiz_id]) {
         submissionMap[s.quiz_id] = { total: 0, sumPercent: 0, submissions: [] };
       }
-      submissionMap[s.quiz_id].total += 1;
-      submissionMap[s.quiz_id].sumPercent += (s.score_pourcentage || 0);
+      const isFinalized = Boolean(s.closed_for_cheating || s.submitted_at);
+      if (isFinalized) {
+        submissionMap[s.quiz_id].total += 1;
+        submissionMap[s.quiz_id].sumPercent += (s.score_pourcentage || 0);
+      }
       submissionMap[s.quiz_id].submissions.push(s as any);
     });
 
@@ -582,18 +581,25 @@ export async function getQuizSupervisionAdmin(quizId: string) {
       submissionsByStudentId[s.apprenant_id] = s;
     });
 
-    const studentsProgress = students.map(st => ({
-      student: st,
-      submission: submissionsByStudentId[st.id] || null,
-      hasSubmitted: !!submissionsByStudentId[st.id]
-    }));
+    const finalizedSubmissions = submissions.filter(
+      (s) => Boolean(s.closed_for_cheating || s.submitted_at)
+    );
+
+    const studentsProgress = students.map(st => {
+      const sub = submissionsByStudentId[st.id] || null;
+      return {
+        student: st,
+        submission: sub,
+        hasSubmitted: Boolean(sub && (sub.closed_for_cheating || sub.submitted_at))
+      };
+    });
 
     return {
       quiz,
       studentsProgress,
       questionsAnalysis,
       totalStudents: students.length,
-      submittedCount: submissions.length
+      submittedCount: finalizedSubmissions.length
     };
   } catch (error) {
     console.error('Erreur getQuizSupervisionAdmin:', error);
@@ -608,21 +614,23 @@ export async function getApprenantQuizzesStatus(apprenantId: string): Promise<{
   quizzes: (Quiz & { submission: QuizSubmission | null })[];
 }> {
   try {
-    const { data: quizzes } = await supabase
+    const { data: quizzes } = await supabaseServer
       .from('sf_quizzes')
       .select('*')
       .order('created_at', { ascending: true });
 
     if (!quizzes) return { quizzes: [] };
 
-    const { data: submissions } = await supabase
+    const { data: submissions } = await supabaseServer
       .from('sf_quiz_submissions')
       .select('*')
       .eq('apprenant_id', apprenantId);
 
     const subMap: Record<string, QuizSubmission> = {};
     (submissions || []).forEach(s => {
-      subMap[s.quiz_id] = s;
+      if (s.closed_for_cheating || s.submitted_at) {
+        subMap[s.quiz_id] = s;
+      }
     });
 
     const enriched = quizzes.map(q => ({

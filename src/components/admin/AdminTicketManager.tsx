@@ -819,7 +819,7 @@ export const AdminTicketManager: React.FC<AdminTicketManagerProps> = ({
               </button>
             </div>
 
-            <form onSubmit={handleAwardTicket} className="space-y-4 text-xs">
+            <form onSubmit={handleAwardTicket} noValidate className="space-y-4 text-xs">
               <div className="p-3 rounded-lg bg-white/5 border border-white/5 space-y-1">
                 <div className="text-teal-400 font-mono font-bold">{awardingTicket.id}</div>
                 <div className="font-semibold text-white">{awardingTicket.titre}</div>

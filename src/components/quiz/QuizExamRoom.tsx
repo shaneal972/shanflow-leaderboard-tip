@@ -11,6 +11,7 @@ import {
   Apprenant 
 } from '@/types/tip';
 import { submitQuizAnswersAction, logQuizInfractionAction } from '@/app/quiz/actions';
+import { TechnicianLoginScreen } from '@/components/tickets/TechnicianLoginScreen';
 import { 
   CheckCircle2, 
   XCircle, 
@@ -42,6 +43,7 @@ interface QuizExamRoomProps {
   students: Apprenant[];
   initialApprenantId?: string;
   initialSubmission?: QuizSubmission | null;
+  isFormateur?: boolean;
 }
 
 // Générateur pseudo-aléatoire déterministe basé sur un seed string (MurmurHash/Mulberry32)
@@ -73,21 +75,16 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
   students,
   initialApprenantId,
   initialSubmission,
+  isFormateur = false,
 }) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // Apprenant actif (100% déterministe en SSR pour éradiquer tout Hydration Mismatch)
+  // Apprenant actif (100% déterministe en SSR et verrouillé par session HMAC côté serveur)
   const [studentId, setStudentId] = useState<string>(initialApprenantId || '');
 
-  // Synchronisation avec localStorage UNIQUEMENT après le montage client effectif
   useEffect(() => {
-    if (!initialApprenantId) {
-      const saved = localStorage.getItem('klf_active_student_id');
-      if (saved) {
-        setStudentId(saved);
-      }
-    }
+    setStudentId(initialApprenantId || '');
   }, [initialApprenantId]);
 
   const activeStudent = students.find((s) => s.id === studentId);
@@ -118,10 +115,15 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
     answersRef.current = answers;
   }, [answers]);
 
-  // Déterminer la phase
-  // 'exam' | 'waiting' | 'revealed' | 'closed'
+  // Déterminer la phase ('exam' | 'waiting' | 'revealed' | 'closed')
+  // Une copie n'est considérée comme remise que si submitted_at est scellé ou closed_for_cheating est actif
   const isRevealed = quiz.statut === 'correction_publiee';
-  const hasSubmitted = !!initialSubmission;
+  const hasSubmitted = Boolean(
+    initialSubmission && (initialSubmission.closed_for_cheating || initialSubmission.submitted_at)
+  );
+  const canCompose =
+    !hasSubmitted &&
+    (quiz.statut === 'session_ouverte' || quiz.statut === 'correction_publiee');
 
   /* ==========================================================================
      BOUCLIER ANTI-TRICHE KLF SENTINEL LOCK
@@ -177,7 +179,7 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
 
   // 2. Détection changement d'onglet & perte de focus (Page Visibility & Blur)
   useEffect(() => {
-    if (quiz.statut !== 'session_ouverte' || hasSubmitted || !hasEnteredFullscreen || isClosedForCheating) {
+    if (!canCompose || !hasEnteredFullscreen || isClosedForCheating) {
       return;
     }
 
@@ -242,11 +244,11 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('blur', handleBlur);
     };
-  }, [quiz.statut, hasSubmitted, hasEnteredFullscreen, isClosedForCheating, infractionsCount, studentId, quiz.id, answers, router]);
+  }, [canCompose, hasEnteredFullscreen, isClosedForCheating, infractionsCount, studentId, quiz.id, answers, router]);
 
   // 3. Neutralisation des raccourcis clavier suspects (Ctrl+C, Ctrl+V, Ctrl+U, F12, DevTools)
   useEffect(() => {
-    if (quiz.statut !== 'session_ouverte' || hasSubmitted || !hasEnteredFullscreen) {
+    if (!canCompose || !hasEnteredFullscreen) {
       return;
     }
 
@@ -269,7 +271,7 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [quiz.statut, hasSubmitted, hasEnteredFullscreen]);
+  }, [canCompose, hasEnteredFullscreen]);
 
   // Effet confettis si validé en mode correction
   useEffect(() => {
@@ -325,7 +327,7 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
 
   // Timer avec horodatage persistant (anti-triche au rechargement F5) & auto-soumission
   useEffect(() => {
-    if (quiz.statut !== 'session_ouverte' || hasSubmitted || isClosedForCheating) return;
+    if (!canCompose || isClosedForCheating) return;
     if (!studentId) return;
 
     const storageKey = `klf_quiz_endtime_${quiz.id}_${studentId}`;
@@ -363,7 +365,7 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [quiz.statut, hasSubmitted, isClosedForCheating, studentId, quiz.id, actualDurationMinutes, handleAutoSubmit]);
+  }, [canCompose, isClosedForCheating, studentId, quiz.id, actualDurationMinutes, handleAutoSubmit]);
 
   // Polling automatique si en attente
   useEffect(() => {
@@ -382,7 +384,7 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
   };
 
   const handleSelectOption = (questionId: string, optionId: string) => {
-    if (hasSubmitted || quiz.statut !== 'session_ouverte' || isClosedForCheating || isTimeExpired) return;
+    if (!canCompose || isClosedForCheating || isTimeExpired) return;
     setAnswers((prev) => ({
       ...prev,
       [questionId]: optionId,
@@ -518,7 +520,7 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
   /* --------------------------------------------------------------------------
      CAS 2 : SALLE D'ATTENTE SÉCURISÉE (Copie scellée, en attente de David)
      -------------------------------------------------------------------------- */
-  if (hasSubmitted && quiz.statut === 'session_ouverte') {
+  if (hasSubmitted && !isRevealed && initialSubmission) {
     return (
       <div className="max-w-2xl mx-auto py-12 px-4 space-y-6">
         <div className="p-8 rounded-3xl slate-glass border border-teal-500/30 text-center space-y-6 relative overflow-hidden shadow-2xl">
@@ -577,7 +579,7 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
   /* --------------------------------------------------------------------------
      CAS 3 : RÉVÉLATION DU CORRIGÉ (Statut = correction_publiee)
      -------------------------------------------------------------------------- */
-  if (isRevealed && hasSubmitted) {
+  if (isRevealed && hasSubmitted && initialSubmission) {
     const scorePourcentage = initialSubmission?.score_pourcentage ?? 0;
     const isValidated = initialSubmission?.is_validated ?? false;
     const rawScore20 = (scorePourcentage / 100) * 20;
@@ -780,6 +782,34 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
      CAS 4A : SAS D'ACCUEIL PLEIN ÉCRAN OBLIGATOIRE (SENTINEL LOCK)
      -------------------------------------------------------------------------- */
   if (!hasEnteredFullscreen) {
+    // Si aucun apprenant n'est connecté et qu'on n'est pas formateur : sas d'authentification PIN sécurisé
+    if (!isFormateur && !activeStudent) {
+      return (
+        <div className="max-w-xl mx-auto py-10 px-4 space-y-6">
+          <div className="p-6 rounded-3xl slate-glass border border-teal-500/30 space-y-5 shadow-2xl">
+            <div className="text-center space-y-2">
+              <span className="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-teal-500/10 text-teal-300 border border-teal-500/20">
+                Protocole d&apos;examen haute sécurité : KLF Sentinel Lock
+              </span>
+              <h1 className="text-xl font-bold text-white font-['Lexend']">
+                {quiz.titre}
+              </h1>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Identifiez-vous avec votre code PIN personnel DSI pour accéder à votre sujet d&apos;examen individuel ou à votre corrigé.
+              </p>
+            </div>
+            <TechnicianLoginScreen
+              compact
+              onSuccess={(loggedStudent) => {
+                setStudentId(loggedStudent.id);
+                router.refresh();
+              }}
+            />
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="max-w-3xl mx-auto py-12 px-4 space-y-6">
         <div className="p-8 rounded-3xl slate-glass border border-teal-500/30 space-y-6 text-center shadow-2xl relative overflow-hidden">
@@ -799,24 +829,42 @@ export const QuizExamRoom: React.FC<QuizExamRoomProps> = ({
             </p>
           </div>
 
-          {/* Sélecteur apprenant dans le sas */}
-          <div className="max-w-xs mx-auto p-3 rounded-2xl bg-white/[0.02] border border-white/10 text-left">
-            <label className="text-[11px] font-mono text-slate-400 block mb-1.5">
-              Confirmez votre identité d&apos;apprenant :
-            </label>
-            <select
-              value={studentId}
-              onChange={(e) => handleStudentSelect(e.target.value)}
-              className="w-full bg-slate-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono focus:border-teal-500 outline-none"
-            >
-              <option value="">-- Sélectionnez votre nom --</option>
-              {students.map((st) => (
-                <option key={st.id} value={st.id}>
-                  {st.prenom} {st.nom} ({st.equipe})
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Identité de l'apprenant : sélecteur réservé au formateur, carte verrouillée pour l'élève */}
+          {isFormateur ? (
+            <div className="max-w-xs mx-auto p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-left">
+              <label className="text-[11px] font-mono text-amber-300 block mb-1.5 font-semibold">
+                🛡️ Supervision formateur (inspecter un apprenant) :
+              </label>
+              <select
+                value={studentId}
+                onChange={(e) => handleStudentSelect(e.target.value)}
+                className="w-full bg-slate-900 border border-amber-500/30 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono focus:border-teal-500 outline-none"
+              >
+                <option value="">-- Sélectionnez un apprenant --</option>
+                {students.map((st) => (
+                  <option key={st.id} value={st.id}>
+                    {st.prenom} {st.nom} ({st.equipe})
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            activeStudent && (
+              <div className="max-w-xs mx-auto p-3.5 rounded-2xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center gap-3 text-left">
+                <div className="w-9 h-9 rounded-xl bg-teal-500/20 border border-teal-500/40 flex items-center justify-center font-bold text-teal-300 text-sm shrink-0">
+                  {activeStudent.prenom[0]}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-white font-['Lexend'] truncate">
+                    {activeStudent.prenom} {activeStudent.nom}
+                  </p>
+                  <p className="text-[11px] font-mono text-teal-300 truncate">
+                    Session PIN vérifiée • {activeStudent.equipe}
+                  </p>
+                </div>
+              </div>
+            )
+          )}
 
           {/* Règles de sécurité */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-left text-xs text-slate-300 max-w-xl mx-auto">

@@ -3,10 +3,14 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { supabaseServer } from '../../../supabase/server';
+import { isAdminAuthenticated } from '@/lib/adminAuth';
+import { getActiveTechnicianId, isStudentAuthenticated } from '@/lib/studentAuth';
+import { calculatePalierForPoints } from '@/core/domain/gamification';
+import { evaluateQuizSubmission } from '@/core/domain/quizEvaluation';
 
 const submitQuizSchema = z.object({
-  apprenantId: z.string().uuid("Identifiant apprenant invalide."),
-  quizId: z.string().min(1, "Identifiant du quiz requis."),
+  apprenantId: z.string().uuid('Identifiant apprenant invalide.'),
+  quizId: z.string().min(1, 'Identifiant du quiz requis.').max(60),
   answers: z.record(z.string()), // { [question_id]: option_id }
 });
 
@@ -17,14 +21,26 @@ export async function submitQuizAnswersAction(data: {
 }) {
   const parsed = submitQuizSchema.safeParse(data);
   if (!parsed.success) {
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: 'Données de soumission invalides.',
-      details: parsed.error.flatten().fieldErrors 
+      details: parsed.error.flatten().fieldErrors,
     };
   }
 
   const { apprenantId, quizId, answers } = parsed.data;
+
+  // Vérification stricte de session (Anti-usurpation d'identité)
+  const isFormateur = await isAdminAuthenticated();
+  const activeTechId = await getActiveTechnicianId();
+  const isPassportAuth = await isStudentAuthenticated(apprenantId);
+
+  if (!isFormateur && activeTechId !== apprenantId && !isPassportAuth) {
+    return {
+      success: false,
+      error: 'Session expirée ou non autorisée. Veuillez vous connecter avec votre code PIN DSI.',
+    };
+  }
 
   try {
     // 1. Vérifier l'existence et le statut du quiz
@@ -39,18 +55,40 @@ export async function submitQuizAnswersAction(data: {
     }
 
     if (quiz.statut === 'ferme') {
-      return { 
-        success: false, 
-        error: "L'épreuve est actuellement fermée par le formateur. Les soumissions ne sont pas acceptées." 
+      return {
+        success: false,
+        error: "L'épreuve est actuellement fermée par le formateur. Les soumissions ne sont pas acceptées.",
       };
     }
 
-    // 2. Enregistrer la copie scellée
-    // Si la correction est déjà publiée (ex: rattrapage en temps réel), on calcule le score directement
+    // 2. Vérifier s'il existe déjà une soumission scellée ou sanctionnée
+    const { data: existingSub } = await supabaseServer
+      .from('sf_quiz_submissions')
+      .select('*')
+      .eq('quiz_id', quizId)
+      .eq('apprenant_id', apprenantId)
+      .maybeSingle();
+
+    if (existingSub?.closed_for_cheating) {
+      return {
+        success: false,
+        error: 'Cette copie a été clôturée d’office suite à 3 infractions au protocole Sentinel Lock.',
+      };
+    }
+
+    if (existingSub?.submitted_at && !isFormateur) {
+      return {
+        success: false,
+        error: 'Votre copie a déjà été scellée et ne peut plus être modifiée.',
+      };
+    }
+
+    // 3. Enregistrer la copie scellée
+    // Si la correction est déjà publiée (ex: rattrapage autorisé), calcul immédiat via le Domaine pur
     let scoreObtenu = 0;
     let scorePourcentage = 0;
     let isValidated = false;
-    let pointsAttribues = 0;
+    let pointsAttribues = existingSub?.points_attribues || 0;
 
     if (quiz.statut === 'correction_publiee') {
       const { data: questions } = await supabaseServer
@@ -58,41 +96,49 @@ export async function submitQuizAnswersAction(data: {
         .select('id, points')
         .eq('quiz_id', quizId);
 
+      const questionIds = (questions || []).map((q) => q.id);
       const { data: options } = await supabaseServer
         .from('sf_quiz_options')
-        .select('id, question_id, is_correct');
+        .select('id, question_id, is_correct')
+        .in('question_id', questionIds.length > 0 ? questionIds : ['00000000-0000-0000-0000-000000000000']);
 
-      const correctSet = new Set(
-        (options || []).filter(o => o.is_correct).map(o => o.id)
-      );
+      const correctSet = new Set((options || []).filter((o) => o.is_correct).map((o) => o.id));
 
-      let totalPointsPossibles = 0;
-      (questions || []).forEach(q => {
-        totalPointsPossibles += (q.points || 1);
-        const chosen = answers[q.id];
-        if (chosen && correctSet.has(chosen)) {
-          scoreObtenu += (q.points || 1);
-        }
+      const outcome = evaluateQuizSubmission({
+        questions: questions || [],
+        correctOptionIds: correctSet,
+        answers,
+        seuilValidation: quiz.seuil_validation || 75,
+        pointsRecompense: quiz.points_recompense || 200,
+        closedForCheating: false,
       });
 
-      scorePourcentage = totalPointsPossibles > 0 
-        ? Math.round((scoreObtenu / totalPointsPossibles) * 100) 
-        : 0;
-      isValidated = scorePourcentage >= (quiz.seuil_validation || 75);
+      scoreObtenu = outcome.scoreObtenu;
+      scorePourcentage = outcome.scorePourcentage;
+      isValidated = outcome.isValidated;
 
-      if (isValidated) {
-        pointsAttribues = quiz.points_recompense || 200;
-        // Créditer les points à l'apprenant
+      if (isValidated && (existingSub?.points_attribues || 0) === 0) {
+        pointsAttribues = outcome.pointsAttribues;
+
+        // Créditer les points ET recalculer le palier de l'apprenant
         const { data: appData } = await supabaseServer
           .from('sf_apprenants')
-          .select('points_total')
+          .select('points_total, is_admin, palier_actuel')
           .eq('id', apprenantId)
           .single();
 
         if (appData) {
+          const newPointsTotal = (appData.points_total || 0) + pointsAttribues;
+          const newPalier = calculatePalierForPoints(newPointsTotal, {
+            isAdmin: appData.is_admin,
+            currentPalier: appData.palier_actuel,
+          });
           await supabaseServer
             .from('sf_apprenants')
-            .update({ points_total: (appData.points_total || 0) + pointsAttribues })
+            .update({
+              points_total: newPointsTotal,
+              palier_actuel: newPalier,
+            })
             .eq('id', apprenantId);
         }
 
@@ -100,27 +146,36 @@ export async function submitQuizAnswersAction(data: {
         if (quiz.badge_recompense) {
           await supabaseServer
             .from('sf_achievements')
-            .upsert({
-              apprenant_id: apprenantId,
-              badge_id: quiz.badge_recompense,
-              obtenu_le: new Date().toISOString()
-            }, { onConflict: 'apprenant_id,badge_id' });
+            .upsert(
+              {
+                apprenant_id: apprenantId,
+                badge_id: quiz.badge_recompense,
+                obtenu_le: new Date().toISOString(),
+              },
+              { onConflict: 'apprenant_id,badge_id' }
+            );
         }
       }
     }
 
     const { error: subErr } = await supabaseServer
       .from('sf_quiz_submissions')
-      .upsert({
-        quiz_id: quizId,
-        apprenant_id: apprenantId,
-        reponses_choisies: answers,
-        score_obtenu: scoreObtenu,
-        score_pourcentage: scorePourcentage,
-        is_validated: isValidated,
-        points_attribues: pointsAttribues,
-        submitted_at: new Date().toISOString()
-      }, { onConflict: 'quiz_id,apprenant_id' });
+      .upsert(
+        {
+          quiz_id: quizId,
+          apprenant_id: apprenantId,
+          reponses_choisies: answers,
+          score_obtenu: scoreObtenu,
+          score_pourcentage: scorePourcentage,
+          is_validated: isValidated,
+          points_attribues: pointsAttribues,
+          infractions_count: existingSub?.infractions_count || 0,
+          infractions_log: Array.isArray(existingSub?.infractions_log) ? existingSub.infractions_log : [],
+          closed_for_cheating: false,
+          submitted_at: new Date().toISOString(),
+        },
+        { onConflict: 'quiz_id,apprenant_id' }
+      );
 
     if (subErr) {
       console.error('Erreur insertion submission:', subErr);
@@ -136,7 +191,8 @@ export async function submitQuizAnswersAction(data: {
       return {
         success: true,
         status: 'en_attente',
-        message: '🔒 Copie enregistrée avec succès. En attente de la clôture de la session par David. Vos résultats et le corrigé détaillé seront débloqués simultanément pour toute la classe.'
+        message:
+          '🔒 Copie enregistrée avec succès. En attente de la clôture de la session par David. Vos résultats et le corrigé détaillé seront débloqués simultanément pour toute la classe.',
       };
     } else {
       return {
@@ -144,7 +200,7 @@ export async function submitQuizAnswersAction(data: {
         status: 'correction_publiee',
         score_pourcentage: scorePourcentage,
         is_validated: isValidated,
-        message: 'Résultats calculés et débloqués.'
+        message: 'Résultats calculés et débloqués.',
       };
     }
   } catch (err: any) {
@@ -154,10 +210,10 @@ export async function submitQuizAnswersAction(data: {
 }
 
 const logInfractionSchema = z.object({
-  quizId: z.string().min(1),
+  quizId: z.string().min(1).max(60),
   apprenantId: z.string().uuid(),
-  infractionType: z.string().min(1),
-  timestamp: z.string(),
+  infractionType: z.string().min(1).max(300),
+  timestamp: z.string().max(60),
   currentAnswers: z.record(z.string()).optional(),
 });
 
@@ -170,10 +226,19 @@ export async function logQuizInfractionAction(data: {
 }) {
   const parsed = logInfractionSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: 'Données d\'infraction invalides.' };
+    return { success: false, error: "Données d'infraction invalides." };
   }
 
   const { quizId, apprenantId, infractionType, timestamp, currentAnswers = {} } = parsed.data;
+
+  // Vérification stricte de session (empêche tout sabotage de la copie d'un autre apprenant)
+  const isFormateur = await isAdminAuthenticated();
+  const activeTechId = await getActiveTechnicianId();
+  const isPassportAuth = await isStudentAuthenticated(apprenantId);
+
+  if (!isFormateur && activeTechId !== apprenantId && !isPassportAuth) {
+    return { success: false, error: 'Session non autorisée.' };
+  }
 
   try {
     // 1. Récupérer ou initialiser la soumission
@@ -184,6 +249,16 @@ export async function logQuizInfractionAction(data: {
       .eq('apprenant_id', apprenantId)
       .maybeSingle();
 
+    // Si la copie est déjà scellée ou clôturée, ne plus incrémenter
+    if (existingSub?.submitted_at || existingSub?.closed_for_cheating) {
+      return {
+        success: true,
+        count: existingSub.infractions_count || 0,
+        closedForCheating: !!existingSub.closed_for_cheating,
+        message: 'Copie déjà scellée.',
+      };
+    }
+
     const currentCount = (existingSub?.infractions_count || 0) + 1;
     const existingLog = Array.isArray(existingSub?.infractions_log) ? existingSub.infractions_log : [];
     const newLog = [
@@ -191,26 +266,27 @@ export async function logQuizInfractionAction(data: {
       {
         type: infractionType,
         timestamp: timestamp || new Date().toISOString(),
-      }
+      },
     ];
 
     const isClosedForCheating = currentCount >= 3;
 
-    const upsertData: any = {
+    const upsertData: Record<string, any> = {
       quiz_id: quizId,
       apprenant_id: apprenantId,
-      reponses_choisies: existingSub?.reponses_choisies || currentAnswers,
+      reponses_choisies: currentAnswers,
       infractions_count: currentCount,
       infractions_log: newLog,
-      closed_for_cheating: isClosedForCheating || !!existingSub?.closed_for_cheating,
+      closed_for_cheating: isClosedForCheating,
+      // Tant que la copie n'est pas remise ni auto-clôturée (3 infractions), submitted_at reste null
+      submitted_at: isClosedForCheating ? new Date().toISOString() : null,
     };
 
-    // Si 3ème infraction : la copie est scellée immédiatement
     if (isClosedForCheating) {
       upsertData.score_obtenu = 0;
       upsertData.score_pourcentage = 0;
       upsertData.is_validated = false;
-      upsertData.submitted_at = new Date().toISOString();
+      upsertData.points_attribues = 0;
     }
 
     const { error: upsertErr } = await supabaseServer
@@ -223,19 +299,21 @@ export async function logQuizInfractionAction(data: {
     }
 
     revalidatePath('/admin');
-    revalidatePath(`/quiz/${quizId}`);
+    if (isClosedForCheating) {
+      revalidatePath(`/quiz/${quizId}`);
+      revalidatePath(`/passport/${apprenantId}`);
+    }
 
     return {
       success: true,
       count: currentCount,
       closedForCheating: isClosedForCheating,
       message: isClosedForCheating
-        ? 'Copie clôturée pour infractions répétées au protocole d\'examen.'
-        : `Infraction ${currentCount}/3 enregistrée.`
+        ? "Copie clôturée pour infractions répétées au protocole d'examen."
+        : `Infraction ${currentCount}/3 enregistrée.`,
     };
   } catch (err: any) {
     console.error('Erreur logQuizInfractionAction:', err);
     return { success: false, error: err.message || 'Erreur serveur.' };
   }
 }
-

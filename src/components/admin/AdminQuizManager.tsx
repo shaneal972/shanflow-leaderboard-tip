@@ -365,9 +365,9 @@ export const AdminQuizManager: React.FC<AdminQuizManagerProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {students.filter(s => !s.is_admin).map((st) => {
-                // Vérifier si cet apprenant a soumis
+                // Vérifier si cet apprenant a scellé sa copie (ou a des infractions en cours)
                 const submission = activeQuiz.submissions?.find(s => s.apprenant_id === st.id);
-                const hasSub = !!submission;
+                const hasSub = Boolean(submission && (submission.closed_for_cheating || submission.submitted_at));
 
                 return (
                   <div
@@ -443,9 +443,24 @@ export const AdminQuizManager: React.FC<AdminQuizManagerProps> = ({
                           </button>
                         </>
                       ) : (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20 flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-amber-400" /> En cours
-                        </span>
+                        <>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20 flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-amber-400" /> En cours
+                          </span>
+                          {(submission?.infractions_count || 0) > 0 && (
+                            <span
+                              className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-rose-500/10 text-rose-300 border border-rose-500/20 flex items-center gap-1 cursor-help"
+                              title={
+                                submission?.infractions_log
+                                  ?.map((l) => `${new Date(l.timestamp).toLocaleTimeString('fr-FR')}: ${l.type}`)
+                                  .join('\n') || 'Sortie(s) constatée(s)'
+                              }
+                            >
+                              <ShieldAlert className="w-3 h-3 text-rose-400" />
+                              {submission?.infractions_count}/3 sortie(s)
+                            </span>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
@@ -518,13 +533,13 @@ export const AdminQuizManager: React.FC<AdminQuizManagerProps> = ({
             </div>
 
             <p className="text-xs text-slate-400 leading-relaxed">
-              Collez la structure JSON du quiz (champs attendus : <code>title</code>, <code>palier</code>, <code>questions: [&#123; question, options, correct, feedback &#125;]</code>).
+              Collez la structure JSON du nouveau quiz (minimum 8 questions, 4 options d&apos;iso-gabarit ±25 % par question, corrigé <code>dsi_feedback</code> obligatoire). Le moteur KLF vérifie les 12 verrous docimologiques et équilibre automatiquement A/B/C/D entre 20 % et 35 %.
             </p>
 
             <textarea
               value={jsonInput}
               onChange={(e) => setJsonInput(e.target.value)}
-              placeholder={`{\n  "title": "Quiz Palier 1 : Standard DSI KLF",\n  "palier": "Palier 1",\n  "seuil_validation": 75,\n  "points_recompense": 200,\n  "questions": [\n    {\n      "question": "Énoncé...",\n      "options": ["Option A", "Option B", "Option C"],\n      "correct": 0,\n      "feedback": "Explication..."\n    }\n  ]\n}`}
+              placeholder={`{\n  "title": "Évaluation d'infrastructure réseau en agence",\n  "palier": "Palier 2",\n  "seuil_validation": 75,\n  "points_recompense": 200,\n  "questions": [\n    {\n      "theme": "Sécurité réseau",\n      "question": "Lors d'une suspicion de compromission sur un poste du VLAN de Jarry, quelle action préserve la RAM ?",\n      "options": [\n        "Isoler logiquement le port du switch ou l'agent EDR en maintenant le poste sous tension.",\n        "Forcer l'extinction électrique immédiate du poste avant de cloner le disque système NVMe.",\n        "Exécuter un nettoyage antivirus complet à chaud avant de débrancher le câble Ethernet.",\n        "Redémarrer la machine en mode sans échec hors réseau pour extraire les journaux locaux."\n      ],\n      "correct": 0,\n      "dsi_feedback": "L'isolation réseau à chaud coupe le canal C2 sans vider les preuves volatiles présentes en mémoire vive."\n    }\n  ]\n}`}
               rows={12}
               className="w-full p-4 rounded-xl bg-slate-950 border border-white/10 text-xs font-mono text-slate-200 focus:border-teal-500 outline-none resize-none leading-relaxed"
             />
