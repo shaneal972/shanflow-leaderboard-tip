@@ -174,24 +174,24 @@ function generateTpHtml(): string {
   <style>
     @page {
       size: A4 portrait;
-      margin: 9mm 11mm 9mm 11mm;
+      margin: 14mm 15mm 14mm 15mm;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
       color: #0f172a;
       background: #fff;
-      font-size: 10.9px;
-      line-height: 1.38;
+      font-size: 11.5pt;
+      line-height: 1.55;
     }
 
     .page {
       width: 100%;
-      height: 100%;
       page-break-after: always;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      min-height: 258mm;
     }
     .page:last-child {
       page-break-after: avoid;
@@ -201,77 +201,79 @@ function generateTpHtml(): string {
       width: 100%;
       border-collapse: collapse;
       border: 1.5px solid #0f172a;
-      margin-bottom: 6px;
+      margin-bottom: 10px;
     }
     .header-table td {
       border: 1.5px solid #0f172a;
-      padding: 5px 10px;
+      padding: 8px 12px;
       vertical-align: middle;
     }
     .logo-cell { width: 18%; text-align: center; }
-    .logo-cell img { max-height: 48px; display: block; margin: 0 auto; }
+    .logo-cell img { max-height: 56px; display: block; margin: 0 auto; }
     .title-cell {
       width: 60%;
       text-align: center;
-      line-height: 1.25;
+      line-height: 1.3;
     }
     .main-title {
-      font-size: 13.5px;
+      font-size: 15pt;
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 0.3px;
       color: #0f172a;
     }
     .sub-title {
-      font-size: 10px;
+      font-size: 11pt;
       color: #475569;
       font-weight: 700;
-      margin-top: 1px;
+      margin-top: 2px;
     }
     .tp-badge {
       display: inline-block;
       background: #0f172a;
       color: #fff;
-      font-size: 9.5px;
+      font-size: 10pt;
       font-weight: 800;
-      padding: 2px 8px;
-      border-radius: 3px;
-      margin-top: 2px;
+      padding: 3px 10px;
+      border-radius: 4px;
+      margin-top: 4px;
       text-transform: uppercase;
     }
     .ref-cell {
       width: 22%;
       text-align: right;
-      font-size: 9px;
-      line-height: 1.2;
+      font-size: 10pt;
+      line-height: 1.25;
     }
-    .ref-cell img { max-height: 38px; margin-top: 2px; display: inline-block; }
+    .ref-cell img { max-height: 44px; margin-top: 3px; display: inline-block; }
 
     .meta-bar {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 5px;
+      gap: 8px;
       background: #f8fafc;
       border: 1.2px solid #cbd5e1;
-      padding: 4px 8px;
-      border-radius: 4px;
-      margin-bottom: 6px;
-      font-size: 10px;
+      padding: 8px 12px;
+      border-radius: 5px;
+      margin-bottom: 12px;
+      font-size: 10.5pt;
     }
     .meta-item strong { color: #0f172a; }
 
     .callout {
-      padding: 5px 9px;
-      border-radius: 4px;
-      margin-bottom: 6px;
-      font-size: 10.2px;
-      line-height: 1.35;
+      padding: 10px 14px;
+      border-radius: 5px;
+      margin-bottom: 12px;
+      font-size: 11pt;
+      line-height: 1.5;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .callout-title {
       font-weight: 800;
       text-transform: uppercase;
-      margin-bottom: 2px;
-      font-size: 10.2px;
+      margin-bottom: 4px;
+      font-size: 11.5pt;
     }
     .callout-blue {
       background: #f8fafc;
@@ -297,47 +299,56 @@ function generateTpHtml(): string {
     .section-header {
       background: #0f172a;
       color: #fff;
-      font-size: 10.5px;
+      font-size: 12.5pt;
       font-weight: 800;
-      padding: 3.5px 8px;
-      border-radius: 3px;
+      padding: 8px 12px;
+      border-radius: 4px;
       text-transform: uppercase;
       letter-spacing: 0.3px;
-      margin: 6px 0 4px 0;
+      margin: 16px 0 10px 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      break-after: avoid;
+      page-break-after: avoid;
     }
     .section-header .tag {
       background: #334155;
-      font-size: 8.5px;
-      padding: 1px 4px;
-      border-radius: 2px;
+      font-size: 9.5pt;
+      padding: 2px 7px;
+      border-radius: 3px;
     }
 
     .notion-box {
       background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      border-radius: 3px;
-      padding: 4px 7px;
-      margin: 3px 0 4px 0;
-      font-size: 9.8px;
+      border: 1.2px solid #bfdbfe;
+      border-left: 4px solid #2563eb;
+      border-radius: 4px;
+      padding: 10px 14px;
+      margin: 8px 0 12px 0;
+      font-size: 11pt;
+      line-height: 1.5;
       color: #1e3a8a;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
-    .notion-box strong { color: #1d4ed8; }
+    .notion-box strong { color: #1d4ed8; font-size: 11.5pt; }
 
-    ul, ol { margin-left: 15px; margin-bottom: 4px; }
-    li { margin-bottom: 2.5px; font-size: 10.2px; line-height: 1.35; color: #1e293b; }
+    p { margin-bottom: 6px; font-size: 11.5pt; line-height: 1.55; }
+    ul, ol { margin-left: 20px; margin-bottom: 8px; }
+    li { margin-bottom: 6px; font-size: 11.5pt; line-height: 1.55; color: #1e293b; }
 
     .data-table {
       width: 100%;
       border-collapse: collapse;
-      margin: 5px 0;
-      font-size: 9.8px;
+      margin: 10px 0;
+      font-size: 10.5pt;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .data-table th, .data-table td {
-      border: 1px solid #cbd5e1;
-      padding: 3.5px 6px;
+      border: 1.2px solid #cbd5e1;
+      padding: 8px 10px;
       text-align: left;
     }
     .data-table th {
@@ -345,34 +356,49 @@ function generateTpHtml(): string {
       color: #0f172a;
       font-weight: 800;
       text-transform: uppercase;
-      font-size: 9px;
+      font-size: 10pt;
     }
     .formula-code {
       font-family: "Courier New", Courier, monospace;
       background: #f1f5f9;
       color: #0f172a;
       font-weight: 700;
-      font-size: 10px;
-      padding: 1px 4px;
-      border-radius: 2px;
+      font-size: 11pt;
+      padding: 3px 6px;
+      border-radius: 3px;
       border: 1px solid #cbd5e1;
       display: inline-block;
+    }
+
+    .code-box {
+      background: #0f172a;
+      color: #38bdf8;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 11pt;
+      padding: 10px 14px;
+      border-radius: 5px;
+      margin: 8px 0 10px 0;
+      border-left: 4px solid #38bdf8;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
 
     .eval-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 9px;
-      margin-top: 4px;
+      font-size: 10.5pt;
+      margin-top: 8px;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .eval-table th, .eval-table td {
-      border: 1px solid #cbd5e1;
-      padding: 3px 5px;
+      border: 1.2px solid #cbd5e1;
+      padding: 7px 9px;
     }
     .eval-table th {
       background: #0f172a;
       color: #fff;
-      font-size: 8.5px;
+      font-size: 10pt;
       text-transform: uppercase;
       font-weight: 700;
     }
@@ -380,29 +406,33 @@ function generateTpHtml(): string {
     .sign-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 5px;
-      border: 1px dashed #94a3b8;
-      border-radius: 3px;
+      margin-top: 10px;
+      border: 1.5px dashed #94a3b8;
+      border-radius: 5px;
+      font-size: 10.5pt;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .sign-table td {
-      padding: 4px 8px;
+      padding: 8px 12px;
       vertical-align: top;
-      font-size: 9px;
+      font-size: 10.5pt;
     }
 
     .footer-bar {
       border-top: 1px solid #cbd5e1;
-      padding-top: 3px;
+      padding-top: 6px;
+      margin-top: 12px;
       display: flex;
       justify-content: space-between;
-      font-size: 8.5px;
+      font-size: 9.5pt;
       color: #64748b;
     }
   </style>
 </head>
 <body>
 
-  <!-- ==================== PAGE 1 ==================== -->
+  <!-- ==================== PAGE 1 : CADRAGE & ÉTAPE 1 ==================== -->
   <div class="page">
     <div>
       <table class="header-table">
@@ -433,7 +463,7 @@ function generateTpHtml(): string {
 
       <div class="callout callout-red">
         <div class="callout-title">🚨 Urgence opérationnelle DSI (Incident P1 - Quai Jarry n°3)</div>
-        Corinne MONROSE (Facturation Portuaire) est en détresse : son classeur de suivi des arrivages maritimes affiche des <strong>erreurs <code>#N/A</code> en cascade</strong> sur les frais de transit, les codes postaux sont tronqués en 4 chiffres et les taxes douanières (Octroi de mer et TVA 8,5%) ne sont pas calculées. <strong>Conséquence :</strong> 10 conteneurs d'importation sont bloqués au terminal de Jarry avec risque de surestaries majeures avant la clôture douanière de 16h00.
+        Corinne MONROSE (Facturation Portuaire) est en détresse : son classeur de suivi des arrivages maritimes affiche des <strong>erreurs <code>#N/A</code> en cascade</strong> sur les frais de transit, les codes postaux sont tronqués en 4 chiffres et les taxes douanières (Octroi de mer et TVA 8,5 %) ne sont pas calculées. <strong>Conséquence immédiate :</strong> 10 conteneurs d'importation sont bloqués au terminal de Jarry avec risque majeur de pénalités de surestaries maritimes avant la clôture douanière de 16h00.
       </div>
 
       <div class="callout callout-blue">
@@ -446,7 +476,7 @@ function generateTpHtml(): string {
         <span class="tag">Jalon 1 • 20 pts</span>
       </div>
       <div class="notion-box">
-        <strong>💡 Comprendre la notion :</strong> Dans un tableur, un nombre (ex: <code>01234</code>) perd son zéro initial car mathématiquement <code>01234 = 1234</code>. Or, un code postal est un <em>identifiant textuel</em> (01 = Ain, 06 = Alpes-Maritimes, 971 = Guadeloupe). Il doit impérativement être typé en texte sur 5 caractères.
+        <strong>💡 Comprendre la notion :</strong> Dans un tableur, un nombre (ex: <code>01234</code>) perd son zéro initial car mathématiquement <code>01234 = 1234</code>. Or, un code postal est un <em>identifiant textuel</em> (01 = Ain, 06 = Alpes-Maritimes, 971 = Guadeloupe). Il doit impérativement être typé en texte sur 5 caractères pour être accepté par le système douanier.
       </div>
       <ol>
         <li>Ouvrez le classeur brut dans votre tableur (Excel ou Sheets) sur la feuille <code>Manifeste_Arrivages</code>.</li>
@@ -454,32 +484,80 @@ function generateTpHtml(): string {
         <li><strong>Méthode recommandée :</strong> Préfixez d'une apostrophe pour forcer le texte brut : <code>'01234</code> et <code>'06000</code>, ou appliquez le format de nombre personnalisé <code>00000</code> sur l'ensemble de la plage <code>E4:E13</code>.</li>
         <li><strong>Contrôle visuel :</strong> Vérifiez que 100% des 10 conteneurs affichent exactement 5 chiffres avec leurs zéros initiaux préservés.</li>
       </ol>
+    </div>
 
+    <div class="footer-bar">
+      <span>FORE Alternance Jarry • Titre Pro TIP • Palier 2 Tableur Avancé & Douane Antilles</span>
+      <span>Page 1 / 4</span>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 2 : ÉTAPE 2 (RECHERCHEV) ==================== -->
+  <div class="page">
+    <div>
       <div class="section-header">
         <span>Étape 2 : Résolution du #N/A via RECHERCHEV, SUPPRESPACE & SIERREUR</span>
         <span class="tag">Jalon 2 • 20 pts</span>
       </div>
       <div class="notion-box">
-        <strong>💡 Comprendre la notion :</strong> L'erreur <code>#N/A</code> ("Non Applicable") signifie qu'Excel ne trouve pas la valeur exacte dans la table de référence. Pourquoi ? Parce que la cellule <code>C4</code> contient <code>'CMA-CGM '</code> (8 caractères dont 1 espace invisible en fin de texte) alors que le catalogue <code>Tarifs_Transit</code> contient <code>'CMA-CGM'</code> (7 caractères). Pour l'ordinateur, l'égalité binaire est fausse !
+        <strong>💡 Comprendre la notion :</strong> L'erreur <code>#N/A</code> ("Non Applicable") signifie qu'Excel ne trouve pas la valeur exacte dans la table de référence. Pourquoi ? Parce que la cellule <code>C4</code> contient <code>'CMA-CGM '</code> (8 caractères dont 1 espace invisible en fin de texte) alors que le catalogue <code>Tarifs_Transit</code> contient <code>'CMA-CGM'</code> (7 caractères). Pour l'ordinateur, l'égalité binaire est fausse ! La fonction <code>SUPPRESPACE</code> (<code>TRIM</code>) élimine ces espaces superflus.
       </div>
-      <ol>
-        <li>Basculez sur la feuille <code>Tarifs_Transit</code> pour observer la grille officielle : <code>A3:B6</code> (CMA-CGM = 280 €, MSC = 310 €, Maersk = 295 €, Hapag-Lloyd = 340 €).</li>
-        <li>Dans la feuille <code>Manifeste_Arrivages</code>, placez-vous en cellule <code>G4</code> (colonne Frais Transit).</li>
-        <li>Saisissez la formule d'imbrication sécurisée :<br>
-          <span class="formula-code">=SIERREUR(RECHERCHEV(SUPPRESPACE(C4); Tarifs_Transit!$A$3:$B$6; 2; FAUX); 0)</span>
-          <br><em>(En version anglaise OpenXML : <code>=IFERROR(VLOOKUP(TRIM(C4),Tarifs_Transit!$A$3:$B$6,2,FALSE),0)</code>)</em>
-        </li>
-        <li>Étirez la formule de <code>G4</code> à <code>G13</code>. Vérifiez que 100% des erreurs <code>#N/A</code> disparaissent au profit des tarifs réels (G4 = 280,00 €, G5 = 310,00 €, G6 = 295,00 €, etc.).</li>
-      </ol>
+
+      <p><strong>1. Consultation de la grille tarifaire de transit :</strong></p>
+      <p>Basculez sur la feuille <code>Tarifs_Transit</code> pour observer le référentiel officiel (plage <code>A3:B6</code>) :</p>
+      <table class="data-table">
+        <tr>
+          <th>Code Armateur (Colonne A)</th>
+          <th>Forfait Transit (€) (Colonne B - Index 2)</th>
+        </tr>
+        <tr>
+          <td><strong>CMA-CGM</strong></td>
+          <td><strong>280,00 €</strong></td>
+        </tr>
+        <tr>
+          <td><strong>MSC</strong></td>
+          <td><strong>310,00 €</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Maersk</strong></td>
+          <td><strong>295,00 €</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Hapag-Lloyd</strong></td>
+          <td><strong>340,00 €</strong></td>
+        </tr>
+      </table>
+
+      <p style="margin-top: 10px;"><strong>2. Implémentation de la formule imbriquée :</strong></p>
+      <p>Dans la feuille <code>Manifeste_Arrivages</code>, placez-vous en cellule <code>G4</code> (colonne Frais Transit) et saisissez la formule sécurisée :</p>
+      
+      <div class="code-box">
+        =SIERREUR(RECHERCHEV(SUPPRESPACE(C4); Tarifs_Transit!$A$3:$B$6; 2; FAUX); 0)
+      </div>
+      <p style="font-size: 10.5pt; color: #475569; margin-bottom: 8px;">
+        <em>(Syntaxe en anglais OpenXML : <code>=IFERROR(VLOOKUP(TRIM(C4),Tarifs_Transit!$A$3:$B$6,2,FALSE),0)</code>)</em>
+      </p>
+
+      <p><strong>3. Décorticage des arguments :</strong></p>
+      <ul>
+        <li><code>SUPPRESPACE(C4)</code> : nettoie l'armateur en supprimant l'espace parasite final.</li>
+        <li><code>Tarifs_Transit!$A$3:$B$6</code> : plage du catalogue bloquée avec le signe dollar <code>$</code> via <code>F4</code>.</li>
+        <li><code>2</code> : numéro d'index de la colonne contenant le forfait transit (€).</li>
+        <li><code>FAUX</code> : recherche exacte obligatoire (aucune approximation tolérée en facturation/douane).</li>
+        <li><code>SIERREUR(..., 0)</code> : ceinture de sécurité affichant 0 en cas d'armateur non répertorié.</li>
+      </ul>
+
+      <p style="margin-top: 8px;"><strong>4. Étirement et vérification :</strong></p>
+      <p>Étirez la formule de <code>G4</code> à <code>G13</code>. Contrôlez que les 10 montants s'affichent sans aucun <code>#N/A</code> (G4 = 280,00 €, G5 = 310,00 €, G6 = 295,00 €, G7 = 340,00 €, etc.).</p>
     </div>
 
     <div class="footer-bar">
       <span>FORE Alternance Jarry • Titre Pro TIP • Palier 2 Tableur Avancé & Douane Antilles</span>
-      <span>Page 1 / 2</span>
+      <span>Page 2 / 4</span>
     </div>
   </div>
 
-  <!-- ==================== PAGE 2 ==================== -->
+  <!-- ==================== PAGE 3 : ÉTAPES 3 & 4 (FISCALITÉ & TOTAL) ==================== -->
   <div class="page">
     <div>
       <div class="section-header">
@@ -487,7 +565,7 @@ function generateTpHtml(): string {
         <span class="tag">Jalons 3 & 4 • 40 pts</span>
       </div>
       <div class="notion-box">
-        <strong>💡 Comprendre la notion :</strong> En Guadeloupe, l'Octroi de mer (taxe d'importation régionale) et la TVA locale s'élèvent tous deux au taux de <strong>8,5%</strong>. Ces taux réglementaires sont stockés en cellules d'en-tête <code>H2</code> (Octroi) et <code>I2</code> (TVA). Pour pouvoir étirer les formules sans décaler la ligne 2 vers le bas, vous <strong>DEVEZ bloquer la ligne avec le symbole $</strong> (référence absolue <code>$H$2</code> et <code>$I$2</code> via la touche <code>F4</code>).
+        <strong>💡 Comprendre la notion :</strong> En Guadeloupe, l'Octroi de mer (taxe d'importation régionale) et la TVA locale s'élèvent tous deux au taux normal de <strong>8,5%</strong>. Ces taux réglementaires sont stockés en cellules d'en-tête <code>H2</code> (Octroi) et <code>I2</code> (TVA). Pour pouvoir étirer les formules sans décaler la ligne 2 vers le bas, vous <strong>DEVEZ bloquer la ligne avec le symbole $</strong> (référence absolue <code>$H$2</code> et <code>$I$2</code> via la touche <code>F4</code>).
       </div>
       <ol>
         <li>En cellule <code>H4</code> (Octroi de mer), entrez la formule : <span class="formula-code">=F4*$H$2</span> (soit <code>12 500,00 € * 8,5% = 1 062,50 €</code>).</li>
@@ -506,21 +584,52 @@ function generateTpHtml(): string {
           <span class="formula-code">=F4+G4+H4+I4</span> <em>(Résultat ligne 4 : <code>14 905,00 €</code>)</em>. Étirez jusqu'en <code>J13</code>.
         </li>
         <li>En ligne 14 (TOTAL DU MANIFESTE), contrôlez les sommes avec <span class="formula-code">=SOMME(F4:F13)</span> sur chaque colonne F, G, H, I et J.
-          <br><em>Totaux généraux attendus : Base HT = 110 970,50 € • Transit = 3 040,00 € • Octroi = 9 432,49 € • TVA = 9 432,49 € • TTC = 132 875,48 €.</em>
         </li>
         <li><strong>Figeage des volets :</strong> Sélectionnez la ligne 4, rendez-vous dans le ruban <strong>Affichage &gt; Figer les volets &gt; Figer les volets</strong> afin que les en-têtes (Ligne 3) demeurent visibles lors du défilement vertical.</li>
       </ol>
 
+      <p style="margin-top: 8px;"><strong>Tableau des totaux généraux de contrôle (Ligne 14) :</strong></p>
+      <table class="data-table">
+        <tr>
+          <th>Base HT (€)</th>
+          <th>Frais Transit (€)</th>
+          <th>Octroi de mer (€)</th>
+          <th>TVA 8.5% (€)</th>
+          <th>Total TTC (€)</th>
+        </tr>
+        <tr>
+          <td><strong>110 970,50 €</strong></td>
+          <td><strong>3 040,00 €</strong></td>
+          <td><strong>9 432,49 €</strong></td>
+          <td><strong>9 432,49 €</strong></td>
+          <td><strong>132 875,48 €</strong></td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="footer-bar">
+      <span>FORE Alternance Jarry • Titre Pro TIP • Palier 2 Tableur Avancé & Douane Antilles</span>
+      <span>Page 3 / 4</span>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 4 : ITIL, GRILLE & SIGNATURE ==================== -->
+  <div class="page">
+    <div>
       <div class="section-header">
         <span>Étape 5 : Dépôt & Clôture Professionnelle du Ticket TCK-101 (Poste Technicien)</span>
         <span class="tag">Posture ITIL & REAC</span>
       </div>
       <div class="notion-box">
-        <strong>💡 Clôture de ticket dans KLF Tech Lab :</strong> Connectez-vous sur votre poste technicien (code PIN), soumettez votre fichier corrigé dans l'auditeur pour obtenir 100% (5/5) et rédigez votre carnet réflexif pour le Dossier Professionnel (CCP 1).
+        <strong>💡 Clôture de ticket dans KLF Tech Lab :</strong> Connectez-vous sur votre poste technicien (code PIN), soumettez votre fichier corrigé dans l'auditeur pour obtenir 100% (5/5 jalons) et rédigez votre carnet réflexif pour le Dossier Professionnel (CCP 1).
       </div>
       <ul>
-        <li><strong>Démarche technique rédigée au « Je » :</strong> <em>« J'ai analysé la corruption de la table de transit. J'ai normalisé les codes postaux en texte sur 5 caractères, résolu les ruptures #N/A via SUPPRESPACE et SIERREUR, automatisé le calcul fiscal (Octroi et TVA 8,5%) avec références bloquées $H$2 et $I$2, et figé les volets pour sécuriser la saisie. »</em></li>
-        <li><strong>Message usager à Corinne :</strong> <em>« Bonjour Corinne. Votre manifeste maritime est intégralement dépanné et fiabilisé. Les frais de transit et taxes douanières sont automatisés sans erreur, vous permettant de dédouaner les conteneurs à temps. »</em></li>
+        <li><strong>Démarche technique rédigée au « Je » :</strong><br>
+          <em>« J'ai analysé la corruption de la table de transit. J'ai normalisé les codes postaux en texte sur 5 caractères, résolu les ruptures #N/A via SUPPRESPACE et SIERREUR, automatisé le calcul fiscal (Octroi et TVA 8,5%) avec références bloquées $H$2 et $I$2, et figé les volets pour sécuriser la saisie. »</em>
+        </li>
+        <li style="margin-top: 6px;"><strong>Message usager bienveillant à Corinne :</strong><br>
+          <em>« Bonjour Corinne. Votre manifeste maritime est intégralement dépanné et fiabilisé. Les frais de transit et taxes douanières sont automatisés sans erreur, vous permettant de dédouaner les conteneurs à temps. »</em>
+        </li>
       </ul>
 
       <div class="section-header">
@@ -570,12 +679,12 @@ function generateTpHtml(): string {
         <tr>
           <td style="width: 50%;">
             <strong>Observations & Remédiation individualisée :</strong><br>
-            <div style="height: 18px; border-bottom: 1px dotted #cbd5e1; margin-top: 2px;"></div>
+            <div style="height: 28px; border-bottom: 1px dotted #cbd5e1; margin-top: 4px;"></div>
           </td>
           <td style="width: 50%; text-align: right;">
             <strong>Visa & Signature du Formateur Référent :</strong><br>
-            <div style="font-size: 9px; color: #475569; margin-top: 1px;">David JACQUA • DSI & Formateur Référent TIP</div>
-            <div style="height: 14px;"></div>
+            <div style="font-size: 10pt; color: #475569; margin-top: 2px;">David JACQUA • DSI & Formateur Référent TIP</div>
+            <div style="height: 20px;"></div>
           </td>
         </tr>
       </table>
@@ -583,7 +692,7 @@ function generateTpHtml(): string {
 
     <div class="footer-bar">
       <span>Titre Pro Technicien Informatique de Proximité (TIP) • Ministère du Travail • Qualiopi Ind. 11</span>
-      <span>Page 2 / 2</span>
+      <span>Page 4 / 4</span>
     </div>
   </div>
 
