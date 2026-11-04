@@ -191,7 +191,7 @@ function generateTpHtml(): string {
       color: #0f172a;
       background: #fff;
       font-size: 10.5pt;
-      line-height: 1.42;
+      line-height: 1.65;
     }
 
     .page {
@@ -276,19 +276,19 @@ function generateTpHtml(): string {
     .meta-item strong { color: #0f172a; }
 
     .callout {
-      padding: 8px 12px;
+      padding: 12px 16px;
       border-radius: 4px;
-      margin-bottom: 8px;
-      font-size: 10pt;
-      line-height: 1.4;
+      margin-bottom: 14px;
+      font-size: 10.2pt;
+      line-height: 1.6;
       break-inside: avoid;
       page-break-inside: avoid;
     }
     .callout-title {
       font-weight: 800;
       text-transform: uppercase;
-      margin-bottom: 3px;
-      font-size: 10.5pt;
+      margin-bottom: 5px;
+      font-size: 10.8pt;
       padding-left: 2px;
     }
     .callout-blue {
@@ -317,11 +317,11 @@ function generateTpHtml(): string {
       color: #fff;
       font-size: 11.5pt;
       font-weight: 800;
-      padding: 6px 12px;
+      padding: 8px 14px;
       border-radius: 4px;
       text-transform: uppercase;
       letter-spacing: 0.3px;
-      margin: 10px 0 6px 0;
+      margin: 14px 0 12px 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -331,7 +331,7 @@ function generateTpHtml(): string {
     .section-header .tag {
       background: #334155;
       font-size: 8.5pt;
-      padding: 1.5px 6px;
+      padding: 2px 7px;
       border-radius: 3px;
     }
 
@@ -340,32 +340,33 @@ function generateTpHtml(): string {
       border: 1.2px solid #bfdbfe;
       border-left: 4px solid #2563eb;
       border-radius: 4px;
-      padding: 8px 12px;
-      margin: 6px 0 8px 0;
-      font-size: 10pt;
-      line-height: 1.4;
+      padding: 12px 16px;
+      margin: 10px 0 14px 0;
+      font-size: 10.2pt;
+      line-height: 1.6;
       color: #1e3a8a;
       break-inside: avoid;
       page-break-inside: avoid;
     }
-    .notion-box strong { color: #1d4ed8; font-size: 10.5pt; }
+    .notion-box strong { color: #1d4ed8; font-size: 10.8pt; }
 
-    p { margin-bottom: 4px; font-size: 10.5pt; line-height: 1.42; }
-    ul, ol { margin-left: 18px; margin-bottom: 6px; }
-    li { margin-bottom: 4px; font-size: 10.5pt; line-height: 1.42; color: #1e293b; }
+    p { margin-bottom: 6px; font-size: 10.5pt; line-height: 1.65; }
+    ul, ol { margin-left: 20px; margin-bottom: 10px; }
+    li { margin-bottom: 8px; font-size: 10.5pt; line-height: 1.62; color: #1e293b; }
 
     .data-table {
       width: 100%;
       border-collapse: collapse;
-      margin: 6px 0;
+      margin: 10px 0;
       font-size: 9.5pt;
       break-inside: avoid;
       page-break-inside: avoid;
     }
     .data-table th, .data-table td {
       border: 1.2px solid #cbd5e1;
-      padding: 5px 8px;
+      padding: 9px 12px;
       text-align: left;
+      line-height: 1.5;
     }
     .data-table th {
       background: #f1f5f9;
@@ -381,7 +382,7 @@ function generateTpHtml(): string {
       color: #0f172a;
       font-weight: 700;
       font-size: 9.5pt;
-      padding: 2px 5px;
+      padding: 2px 6px;
       border-radius: 3px;
       border: 1px solid #cbd5e1;
       display: inline-block;
@@ -391,11 +392,12 @@ function generateTpHtml(): string {
       background: #0f172a;
       color: #38bdf8;
       font-family: "Courier New", Courier, monospace;
-      font-size: 10pt;
-      padding: 8px 12px;
+      font-size: 10.5pt;
+      padding: 12px 16px;
       border-radius: 4px;
-      margin: 6px 0 6px 0;
+      margin: 10px 0;
       border-left: 4px solid #38bdf8;
+      line-height: 1.55;
       break-inside: avoid;
       page-break-inside: avoid;
     }
@@ -403,19 +405,20 @@ function generateTpHtml(): string {
     .eval-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 9pt;
-      margin-top: 6px;
+      font-size: 9.5pt;
+      margin-top: 10px;
       break-inside: avoid;
       page-break-inside: avoid;
     }
     .eval-table th, .eval-table td {
       border: 1.2px solid #cbd5e1;
-      padding: 4px 6px;
+      padding: 9px 12px;
+      line-height: 1.5;
     }
     .eval-table th {
       background: #0f172a;
       color: #fff;
-      font-size: 8.5pt;
+      font-size: 9pt;
       text-transform: uppercase;
       font-weight: 700;
     }
@@ -423,22 +426,23 @@ function generateTpHtml(): string {
     .sign-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 6px;
+      margin-top: 12px;
       border: 1.5px dashed #94a3b8;
       border-radius: 4px;
-      font-size: 9pt;
+      font-size: 9.5pt;
       break-inside: avoid;
       page-break-inside: avoid;
     }
     .sign-table td {
-      padding: 5px 10px;
+      padding: 10px 14px;
       vertical-align: top;
-      font-size: 9pt;
+      font-size: 9.5pt;
+      line-height: 1.45;
     }
 
     .footer-bar {
       border-top: 1px solid #cbd5e1;
-      padding-top: 4px;
+      padding-top: 5px;
       margin-top: 6px;
       display: flex;
       justify-content: space-between;
@@ -696,12 +700,12 @@ function generateTpHtml(): string {
         <tr>
           <td style="width: 50%;">
             <strong>Observations & Remédiation individualisée :</strong><br>
-            <div style="height: 28px; border-bottom: 1px dotted #cbd5e1; margin-top: 4px;"></div>
+            <div style="height: 44px; border-bottom: 1px dotted #cbd5e1; margin-top: 6px;"></div>
           </td>
           <td style="width: 50%; text-align: right;">
             <strong>Visa & Signature du Formateur Référent :</strong><br>
-            <div style="font-size: 10pt; color: #475569; margin-top: 2px;">David JACQUA • DSI & Formateur Référent TIP</div>
-            <div style="height: 20px;"></div>
+            <div style="font-size: 10pt; color: #475569; margin-top: 3px;">David JACQUA • DSI & Formateur Référent TIP</div>
+            <div style="height: 32px;"></div>
           </td>
         </tr>
       </table>
