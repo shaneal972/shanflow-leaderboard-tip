@@ -98,7 +98,7 @@ export const PassportLockScreen: React.FC<PassportLockScreenProps> = ({
             )}
           </div>
 
-          {/* Encart de confidentialité stricte RGPD & Exclusivité */}
+          {/* Encart Authentification individuelle DSI */}
           <div className="mt-4 p-3.5 rounded-2xl bg-teal-500/10 border border-teal-500/25 text-left relative overflow-hidden">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-xl bg-teal-500/20 border border-teal-500/40 flex items-center justify-center shrink-0 text-teal-400 mt-0.5">
@@ -107,22 +107,18 @@ export const PassportLockScreen: React.FC<PassportLockScreenProps> = ({
               <div className="space-y-1 flex-1">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-teal-200 text-xs font-['Lexend']">
-                    Accès strictement personnel
+                    Authentification individuelle DSI
                   </span>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-teal-400/20 text-teal-300 border border-teal-400/30">
-                    RGPD
+                    PIN unique
                   </span>
                 </div>
                 <p className="text-slate-300 text-[11px] leading-relaxed">
-                  Ce passeport (évaluations, copies et suivi du dossier professionnel de <strong>{firstName}</strong>) est accessible exclusivement à son titulaire muni de son code PIN personnel et au formateur référent DSI.
+                  Saisissez votre code PIN personnel à 4 chiffres remis par votre formateur référent David JACQUA pour déverrouiller votre passeport et accéder à vos épreuves.
                 </p>
               </div>
             </div>
           </div>
-
-          <p className="text-xs text-slate-400 mt-3 leading-relaxed">
-            Saisissez votre code PIN ci-dessous pour déverrouiller votre passeport et accéder à vos épreuves.
-          </p>
 
           {/* Formulaire PIN avec noValidate obligatoire */}
           <form onSubmit={handleSubmit} noValidate className="mt-5 space-y-4">
