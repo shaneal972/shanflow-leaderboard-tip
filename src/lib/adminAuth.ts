@@ -5,22 +5,39 @@ const COOKIE_NAME = 'klf_admin_session';
 const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 heures
 
 function getSecretKey(): string {
-  return process.env.ADMIN_SESSION_SECRET || 'klf_secret_session_key_formateur_jarry_2026!';
+  if (process.env.ADMIN_SESSION_SECRET) {
+    return process.env.ADMIN_SESSION_SECRET;
+  }
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return crypto
+      .createHmac('sha256', process.env.SUPABASE_SERVICE_ROLE_KEY)
+      .update('klf-tip-admin-session-v1')
+      .digest('hex');
+  }
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Configuration critique manquante : ADMIN_SESSION_SECRET requis en production.');
+  }
+  return 'dev_only_local_klf_admin_secret';
 }
 
 function getExpectedPassword(): string {
-  return process.env.ADMIN_PASSWORD || 'klf_admin_2026';
+  if (process.env.ADMIN_PASSWORD) {
+    return process.env.ADMIN_PASSWORD;
+  }
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Configuration critique manquante : ADMIN_PASSWORD requis en production.');
+  }
+  return 'klf_admin_2026';
 }
 
 /**
- * Valide le mot de passe formateur en temps constant (anti timing-attacks).
+ * Valide le mot de passe formateur en temps constant via empreinte SHA-256 (anti timing-attacks & zéro fuite de longueur).
  */
 export function validateAdminPassword(password: string): boolean {
   const expected = getExpectedPassword();
-  if (password.length !== expected.length) {
-    return false;
-  }
-  return crypto.timingSafeEqual(Buffer.from(password), Buffer.from(expected));
+  const hashEntered = crypto.createHash('sha256').update(password).digest();
+  const hashExpected = crypto.createHash('sha256').update(expected).digest();
+  return crypto.timingSafeEqual(hashEntered, hashExpected);
 }
 
 /**

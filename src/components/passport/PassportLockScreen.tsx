@@ -4,7 +4,7 @@ import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Lock, ShieldAlert, ArrowLeft, KeyRound, Loader2, Sparkles } from 'lucide-react';
+import { Lock, ShieldAlert, ArrowLeft, KeyRound, Loader2, ShieldCheck } from 'lucide-react';
 import { unlockPassportAction } from '@/app/passport/actions';
 
 interface PassportLockScreenProps {
@@ -98,40 +98,24 @@ export const PassportLockScreen: React.FC<PassportLockScreenProps> = ({
             )}
           </div>
 
-          {/* Bannière d'accueil & Code de rentrée officiel TIP2 */}
+          {/* Encart de confidentialité stricte RGPD & Exclusivité */}
           <div className="mt-4 p-3.5 rounded-2xl bg-teal-500/10 border border-teal-500/25 text-left relative overflow-hidden">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-xl bg-teal-500/20 border border-teal-500/40 flex items-center justify-center shrink-0 text-teal-400 mt-0.5">
-                <Sparkles className="w-4 h-4" />
+                <ShieldCheck className="w-4 h-4" />
               </div>
-              <div className="space-y-1.5 flex-1">
+              <div className="space-y-1 flex-1">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-teal-200 text-xs font-['Lexend']">
-                    Rentrée officielle TIP2
+                    Accès strictement personnel
                   </span>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-teal-400/20 text-teal-300 border border-teal-400/30">
-                    Session 2026
+                    RGPD
                   </span>
                 </div>
                 <p className="text-slate-300 text-[11px] leading-relaxed">
-                  Bonjour <strong>{firstName}</strong> ! Pour votre première connexion et les évaluations de rentrée, votre code PIN d&apos;accès temporaire est :
+                  Ce passeport (évaluations, copies et suivi du dossier professionnel de <strong>{firstName}</strong>) est accessible exclusivement à son titulaire muni de son code PIN personnel et au formateur référent DSI.
                 </p>
-                <div className="flex items-center gap-2 pt-0.5">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPin('2026');
-                      if (error) setError(null);
-                    }}
-                    title="Cliquer pour pré-remplir 2026"
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-teal-400/20 hover:bg-teal-400/30 border border-teal-400/40 text-teal-200 font-mono font-bold text-sm tracking-widest transition-all cursor-pointer group"
-                  >
-                    <span>2026</span>
-                    <span className="text-[10px] font-normal tracking-normal text-teal-300/80 group-hover:text-teal-200 ml-1">
-                      (cliquer pour insérer)
-                    </span>
-                  </button>
-                </div>
               </div>
             </div>
           </div>

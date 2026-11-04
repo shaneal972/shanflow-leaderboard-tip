@@ -1,9 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Apprenant, Badge, DPSuivi, Quiz, QuizSubmission } from '@/types/tip';
 import { PALIERS_KLF } from '@/core/domain/gamification';
+import { lockPassportAction, updateOwnPassportPinAction } from '@/app/passport/actions';
 import { BadgeGrid } from './BadgeGrid';
 import { 
   ArrowLeft, 
@@ -19,7 +21,11 @@ import {
   Clock,
   Sparkles,
   AlertCircle,
-  Download
+  Download,
+  KeyRound,
+  LogOut,
+  Loader2,
+  ShieldAlert
 } from 'lucide-react';
 
 interface StudentPassportProps {
@@ -27,6 +33,8 @@ interface StudentPassportProps {
   badges: Badge[];
   dpSuivi?: DPSuivi;
   quizzes?: (Quiz & { submission: QuizSubmission | null })[];
+  hasDefaultPin?: boolean;
+  isFormateur?: boolean;
 }
 
 export const StudentPassport: React.FC<StudentPassportProps> = ({
@@ -34,7 +42,16 @@ export const StudentPassport: React.FC<StudentPassportProps> = ({
   badges,
   dpSuivi,
   quizzes = [],
+  hasDefaultPin = false,
+  isFormateur = false,
 }) => {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [isPinPanelOpen, setIsPinPanelOpen] = useState<boolean>(hasDefaultPin && !isFormateur);
+  const [currentPin, setCurrentPin] = useState<string>('');
+  const [newPin, setNewPin] = useState<string>('');
+  const [pinFeedback, setPinFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   const paliers = PALIERS_KLF;
 
   const unlockedBadges = badges.filter((b) => b.unlocked);
@@ -46,11 +63,50 @@ export const StudentPassport: React.FC<StudentPassportProps> = ({
     ? [dpSuivi.rubrique_1, dpSuivi.rubrique_2, dpSuivi.rubrique_3, dpSuivi.rubrique_4, dpSuivi.rubrique_5].filter(Boolean).length
     : 0;
 
+  const handleLockPassport = () => {
+    startTransition(async () => {
+      await lockPassportAction(apprenant.id);
+      localStorage.removeItem('klf_active_student_id');
+      router.refresh();
+    });
+  };
+
+  const handlePinChangeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPinFeedback(null);
+
+    startTransition(async () => {
+      const res = await updateOwnPassportPinAction({
+        studentId: apprenant.id,
+        currentPin,
+        newPin,
+      });
+
+      if (res.success) {
+        setPinFeedback({
+          type: 'success',
+          text: 'Code PIN personnel activé ! Votre passeport est désormais strictement verrouillé.',
+        });
+        setCurrentPin('');
+        setNewPin('');
+        setTimeout(() => {
+          setIsPinPanelOpen(false);
+          router.refresh();
+        }, 1500);
+      } else {
+        setPinFeedback({
+          type: 'error',
+          text: res.error || 'Erreur lors de la mise à jour du code PIN.',
+        });
+      }
+    });
+  };
+
   return (
     <div className="w-full space-y-6">
       
-      {/* Barre de retour et partage */}
-      <div className="flex items-center justify-between">
+      {/* Barre de retour, sécurité PIN et verrouillage */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <Link
           href="/"
           className="inline-flex items-center gap-2 text-xs font-mono text-slate-400 hover:text-teal-400 transition-colors"
@@ -59,18 +115,134 @@ export const StudentPassport: React.FC<StudentPassportProps> = ({
           <span>Retour au leaderboard promo</span>
         </Link>
 
-        <button
-          type="button"
-          onClick={() => {
-            navigator.clipboard?.writeText(window.location.href);
-            alert('Lien du passeport copié dans le presse-papier !');
-          }}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono text-slate-300 bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
-        >
-          <Share2 className="w-3.5 h-3.5 text-teal-400" />
-          <span>Copier le lien</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setIsPinPanelOpen((prev) => !prev);
+              setPinFeedback(null);
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono text-teal-300 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 transition-colors cursor-pointer"
+          >
+            <KeyRound className="w-3.5 h-3.5 text-teal-400" />
+            <span>{hasDefaultPin ? 'Personnaliser mon PIN' : 'Modifier mon PIN'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard?.writeText(window.location.href);
+              alert('Lien du passeport copié dans le presse-papier !');
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono text-slate-300 bg-white/5 hover:bg-white/10 border border-white/10 transition-colors cursor-pointer"
+          >
+            <Share2 className="w-3.5 h-3.5 text-teal-400" />
+            <span>Copier le lien</span>
+          </button>
+
+          {!isFormateur && (
+            <button
+              type="button"
+              onClick={handleLockPassport}
+              disabled={isPending}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 transition-colors cursor-pointer disabled:opacity-50"
+              title="Refermer le passeport sur ce poste"
+            >
+              <LogOut className="w-3.5 h-3.5 text-rose-400" />
+              <span>Verrouiller</span>
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Panneau de sécurisation du code PIN personnel */}
+      {isPinPanelOpen && (
+        <div className={`p-5 rounded-2xl border space-y-4 ${
+          hasDefaultPin
+            ? 'bg-amber-500/10 border-amber-500/35'
+            : 'slate-glass border-teal-500/30'
+        }`}>
+          <div className="flex items-start gap-3">
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
+              hasDefaultPin
+                ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
+                : 'bg-teal-500/20 border-teal-500/40 text-teal-300'
+            }`}>
+              <ShieldAlert className="w-4 h-4" />
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-sm font-bold text-white font-['Lexend']">
+                {hasDefaultPin
+                  ? 'Sécurisez votre passeport avec un code PIN personnel'
+                  : 'Modifier mon code PIN confidentiel'}
+              </h2>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                {hasDefaultPin
+                  ? 'Votre passeport utilise encore le code initial de rentrée. Choisissez un code secret de 4 à 6 chiffres connu uniquement de vous (et supervisable par David JACQUA en cas d’oubli) pour garantir un accès 100 % exclusif.'
+                  : 'Définissez un nouveau code PIN numérique (4 à 6 chiffres) pour protéger l’accès à votre passeport, vos tickets et vos ateliers.'}
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handlePinChangeSubmit} noValidate className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+            {!isFormateur && (
+              <div className="space-y-1">
+                <label htmlFor="current-pin" className="block text-[11px] font-mono text-slate-300">
+                  Code PIN actuel
+                </label>
+                <input
+                  id="current-pin"
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={currentPin}
+                  onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, ''))}
+                  placeholder="••••"
+                  disabled={isPending}
+                  className="w-full px-3 py-2 rounded-xl bg-[#070F1E] border border-white/15 text-sm font-mono tracking-widest text-white focus:outline-none focus:border-teal-400"
+                />
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <label htmlFor="new-pin" className="block text-[11px] font-mono text-slate-300">
+                Nouveau PIN secret (4 à 6 chiffres)
+              </label>
+              <input
+                id="new-pin"
+                type="password"
+                inputMode="numeric"
+                maxLength={6}
+                value={newPin}
+                onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))}
+                placeholder="Ex: 4829"
+                disabled={isPending}
+                className="w-full px-3 py-2 rounded-xl bg-[#070F1E] border border-white/15 text-sm font-mono tracking-widest text-white focus:outline-none focus:border-teal-400"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isPending || newPin.length < 4 || (!isFormateur && currentPin.length < 4)}
+              className="py-2.5 px-4 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs inline-flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+            >
+              {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Lock className="w-3.5 h-3.5" />}
+              <span>Enregistrer mon PIN</span>
+            </button>
+          </form>
+
+          {pinFeedback && (
+            <div className={`p-3 rounded-xl text-xs font-mono flex items-center gap-2 border ${
+              pinFeedback.type === 'success'
+                ? 'bg-emerald-500/15 border-emerald-500/35 text-emerald-200'
+                : 'bg-rose-500/15 border-rose-500/35 text-rose-200'
+            }`}>
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{pinFeedback.text}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Carte d'identité Technicien TIP (Vue Privilégiée du Passeport) */}
       <div className="p-6 rounded-2xl slate-glass relative overflow-hidden">

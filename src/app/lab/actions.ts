@@ -5,6 +5,8 @@ import { z } from 'zod';
 import { supabaseServer } from '@/lib/supabase';
 import { getLabById } from '@/lib/lab/labData';
 import { isAdminAuthenticated } from '@/lib/adminAuth';
+import { getActiveTechnicianId, isStudentAuthenticated } from '@/lib/studentAuth';
+import { calculatePalierForPoints } from '@/core/domain/gamification';
 import { LabAuditSummary, LabSubmission } from '@/types/tip';
 
 // Sanitisation anti-XSS stricte
@@ -49,6 +51,18 @@ export async function saveLabProgressAction(formData: {
       reponseEnseignements,
       isDraft,
     } = parsed.data;
+
+    // Garde d'autorisation strict anti-IDOR : titulaire connecté ou formateur DSI uniquement
+    const isFormateur = await isAdminAuthenticated();
+    const activeTechId = await getActiveTechnicianId();
+    const isPassportOwner = await isStudentAuthenticated(studentId);
+
+    if (!isFormateur && activeTechId !== studentId && !isPassportOwner) {
+      return {
+        success: false,
+        error: 'Accès non autorisé : votre session personnelle ne correspond pas à cet apprenant.',
+      };
+    }
 
     const lab = getLabById(labId);
     if (!lab) {
@@ -99,19 +113,23 @@ export async function saveLabProgressAction(formData: {
       console.warn('Erreur upsert sf_lab_submissions (table peut-être en attente de DDL):', upsertError);
     }
 
-    // 3. Crédit immédiat des points sur le profil apprenant
+    // 3. Crédit immédiat des points et recalcul du palier sur le profil apprenant
     if (pointsToAdd > 0) {
       const { data: student } = await supabaseServer
         .from('sf_apprenants')
-        .select('points_total')
+        .select('points_total, is_admin, palier_actuel')
         .eq('id', studentId)
         .single();
 
       if (student) {
         const newTotal = (student.points_total || 0) + pointsToAdd;
+        const newPalier = calculatePalierForPoints(newTotal, {
+          isAdmin: student.is_admin,
+          currentPalier: student.palier_actuel,
+        });
         await supabaseServer
           .from('sf_apprenants')
-          .update({ points_total: newTotal })
+          .update({ points_total: newTotal, palier_actuel: newPalier })
           .eq('id', studentId);
       }
     }

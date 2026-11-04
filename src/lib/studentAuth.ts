@@ -1,17 +1,94 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import crypto from 'crypto';
 
 const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 jours
+const STUDENT_COOKIE_PREFIX = 'tip_student_session_';
+
+// Garde anti-brute-force léger côté serveur (par couple IP + cible)
+const PIN_MAX_ATTEMPTS = 5;
+const PIN_LOCKOUT_MS = 5 * 60 * 1000; // 5 minutes
+const pinAttemptsStore = new Map<string, { count: number; lockedUntil: number }>();
 
 function getStudentSessionSecret(): string {
-  return process.env.STUDENT_SESSION_SECRET || 'klf_student_pin_secret_key_antilles_2026!';
+  if (process.env.STUDENT_SESSION_SECRET) {
+    return process.env.STUDENT_SESSION_SECRET;
+  }
+  // Dérivation cryptographique stricte depuis un secret serveur existant (jamais une chaîne publique Git en prod)
+  const masterSeed =
+    process.env.ADMIN_SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (masterSeed) {
+    return crypto
+      .createHmac('sha256', masterSeed)
+      .update('klf-tip-student-session-v1')
+      .digest('hex');
+  }
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Configuration critique manquante : STUDENT_SESSION_SECRET requis en production.');
+  }
+  return 'dev_only_local_klf_student_secret';
+}
+
+/**
+ * Compare deux codes PIN en temps constant (SHA-256 + timingSafeEqual) pour éviter toute fuite temporelle.
+ */
+export function verifyPinTimingSafe(enteredPin: string, expectedPin: string): boolean {
+  const hashEntered = crypto.createHash('sha256').update(enteredPin.trim()).digest();
+  const hashExpected = crypto.createHash('sha256').update(expectedPin.trim()).digest();
+  return crypto.timingSafeEqual(hashEntered, hashExpected);
+}
+
+/**
+ * Extrait une empreinte IP client pour le rate-limiting des tentatives de code PIN.
+ */
+export async function getClientRateLimitKey(targetScope: string): Promise<string> {
+  try {
+    const hdrs = await headers();
+    const forwarded = hdrs.get('x-forwarded-for')?.split(',')[0]?.trim();
+    const realIp = hdrs.get('x-real-ip')?.trim();
+    const ip = forwarded || realIp || 'local';
+    return `${ip}:${targetScope}`;
+  } catch {
+    return `local:${targetScope}`;
+  }
+}
+
+export function checkPinRateLimit(key: string): { allowed: boolean; retryAfterSeconds?: number } {
+  const now = Date.now();
+  const entry = pinAttemptsStore.get(key);
+  if (!entry) return { allowed: true };
+
+  if (entry.lockedUntil > now) {
+    return {
+      allowed: false,
+      retryAfterSeconds: Math.max(1, Math.ceil((entry.lockedUntil - now) / 1000)),
+    };
+  }
+
+  if (entry.lockedUntil !== 0 && entry.lockedUntil <= now) {
+    pinAttemptsStore.delete(key);
+  }
+  return { allowed: true };
+}
+
+export function recordPinFailure(key: string): void {
+  const now = Date.now();
+  const current = pinAttemptsStore.get(key);
+  const nextCount = (current && current.lockedUntil <= now ? current.count : 0) + 1;
+  pinAttemptsStore.set(key, {
+    count: nextCount,
+    lockedUntil: nextCount >= PIN_MAX_ATTEMPTS ? now + PIN_LOCKOUT_MS : 0,
+  });
+}
+
+export function resetPinFailures(key: string): void {
+  pinAttemptsStore.delete(key);
 }
 
 /**
  * Nom standardisé du cookie de session d'un apprenant.
  */
 export function getStudentCookieName(studentId: string): string {
-  return `tip_student_session_${studentId}`;
+  return `${STUDENT_COOKIE_PREFIX}${studentId}`;
 }
 
 /**
@@ -108,10 +185,21 @@ export function getTechnicianCookieName(): string {
 
 /**
  * Dépose le cookie de session du technicien connecté sur le poste (30 jours).
- * Active également la session passeport associée pour une UX fluide.
+ * Purge au préalable toute session passeport résiduelle d'un autre apprenant sur un poste partagé.
  */
 export async function setTechnicianSession(studentId: string): Promise<void> {
   const cookieStore = await cookies();
+
+  // Purger tout cookie de passeport appartenant à un autre apprenant (sécurité salle informatique)
+  for (const existingCookie of cookieStore.getAll()) {
+    if (
+      existingCookie.name.startsWith(STUDENT_COOKIE_PREFIX) &&
+      existingCookie.name !== getStudentCookieName(studentId)
+    ) {
+      cookieStore.delete(existingCookie.name);
+    }
+  }
+
   const timestamp = Date.now().toString();
   const secret = getStudentSessionSecret();
   const signature = crypto
@@ -173,9 +261,15 @@ export async function getActiveTechnicianId(): Promise<string | null> {
 }
 
 /**
- * Clôture la prise de poste du technicien et supprime le cookie.
+ * Clôture la prise de poste du technicien et supprime à la fois le cookie global
+ * et tout cookie de passeport individuel ouvert sur ce navigateur (sécurité salle informatique).
  */
 export async function clearTechnicianSession(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(TECHNICIAN_COOKIE_NAME);
+  for (const existingCookie of cookieStore.getAll()) {
+    if (existingCookie.name.startsWith(STUDENT_COOKIE_PREFIX)) {
+      cookieStore.delete(existingCookie.name);
+    }
+  }
 }

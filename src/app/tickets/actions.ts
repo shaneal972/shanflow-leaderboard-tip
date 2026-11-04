@@ -6,7 +6,12 @@ import { supabaseServer } from '../../../supabase/server';
 import { 
   setTechnicianSession, 
   clearTechnicianSession, 
-  getActiveTechnicianId 
+  getActiveTechnicianId,
+  verifyPinTimingSafe,
+  getClientRateLimitKey,
+  checkPinRateLimit,
+  recordPinFailure,
+  resetPinFailures,
 } from '@/lib/studentAuth';
 import { isAdminAuthenticated } from '@/lib/adminAuth';
 import { getTicketResolutionsForStudent } from '@/lib/supabase';
@@ -59,6 +64,16 @@ export async function loginTechnicianAction(
       };
     }
 
+    // Protection anti-brute-force globale par IP sur la prise de poste
+    const rateKey = await getClientRateLimitKey('tech-login');
+    const limitStatus = checkPinRateLimit(rateKey);
+    if (!limitStatus.allowed) {
+      return {
+        success: false,
+        error: `Trop de tentatives erronées. Veuillez patienter ${limitStatus.retryAfterSeconds} s.`,
+      };
+    }
+
     // Recherche de l'apprenant dans Supabase (Schéma tip)
     const { data: students, error } = await supabaseServer
       .from('sf_apprenants')
@@ -73,37 +88,54 @@ export async function loginTechnicianAction(
 
     const cleanInput = normalizeStr(parsed.data.identifier);
 
-    // Correspondance flexible (e-mail, prénom + nom, ou prénom/nom seul)
-    const matched = students.find((s) => {
+    // 1. Recherche exacte non ambiguë (e-mail ou nom complet)
+    const exactMatches = students.filter((s) => {
       const emailNorm = normalizeStr(s.email || '');
       const fullNameNorm = normalizeStr(`${s.prenom} ${s.nom}`);
       const reverseNameNorm = normalizeStr(`${s.nom} ${s.prenom}`);
-      const prenomNorm = normalizeStr(s.prenom || '');
-      const nomNorm = normalizeStr(s.nom || '');
-
       return (
         emailNorm === cleanInput ||
         fullNameNorm === cleanInput ||
-        reverseNameNorm === cleanInput ||
-        prenomNorm === cleanInput ||
-        nomNorm === cleanInput
+        reverseNameNorm === cleanInput
       );
     });
 
-    if (!matched) {
+    // 2. Sinon recherche partielle sur prénom seul ou nom seul (bloquée en cas d'homonymes, ex: 3 "Thomas")
+    const candidates =
+      exactMatches.length > 0
+        ? exactMatches
+        : students.filter((s) => {
+            const prenomNorm = normalizeStr(s.prenom || '');
+            const nomNorm = normalizeStr(s.nom || '');
+            return prenomNorm === cleanInput || nomNorm === cleanInput;
+          });
+
+    if (candidates.length === 0) {
+      recordPinFailure(rateKey);
       return {
         success: false,
-        error: "Identifiant agent introuvable. Indiquez votre prénom, nom ou e-mail KLF.",
+        error: "Identifiant agent introuvable. Indiquez votre Prénom + Nom ou votre e-mail KLF.",
       };
     }
 
+    if (candidates.length > 1) {
+      return {
+        success: false,
+        error: 'Plusieurs techniciens portent ce prénom. Saisissez votre Prénom + Nom complet ou votre e-mail.',
+      };
+    }
+
+    const matched = candidates[0];
     const expectedPin = (matched.pin_code || '2026').trim();
-    if (parsed.data.pin.trim() !== expectedPin) {
+    if (!verifyPinTimingSafe(parsed.data.pin, expectedPin)) {
+      recordPinFailure(rateKey);
       return {
         success: false,
         error: "Code PIN DSI incorrect. Rapprochez-vous de David JACQUA en cas d'oubli.",
       };
     }
+
+    resetPinFailures(rateKey);
 
     // Dépôt du cookie de session technicien sécurisé (30 jours)
     await setTechnicianSession(matched.id);

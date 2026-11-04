@@ -40,13 +40,14 @@ export default async function PassportPage({ params }: PassportPageProps) {
     isAuthorized = await isStudentAuthenticated(id);
   }
 
-  // 3. Verrouillage strict si non autorisé : affichage de l'écran PIN
+  // 3. Verrouillage strict si non autorisé : affichage de l'écran PIN (nom pseudo-anonymisé RGPD)
   if (!isAuthorized) {
+    const publicName = `${apprenant.prenom} ${apprenant.nom ? `${apprenant.nom.charAt(0)}.` : ''}`.trim();
     return (
       <div className="w-full">
         <PassportLockScreen
           studentId={id}
-          studentName={`${apprenant.prenom} ${apprenant.nom}`}
+          studentName={publicName}
           avatarUrl={apprenant.avatar_url}
           equipe={apprenant.equipe}
         />
@@ -54,12 +55,15 @@ export default async function PassportPage({ params }: PassportPageProps) {
     );
   }
 
-  // 4. Si autorisé : chargement des données complètes
+  // 4. Si autorisé : chargement des données complètes sans exposer le pin_code brut au bundle client
   const [badges, dpSuivi, quizRes] = await Promise.all([
     getBadgesWithStatus(id),
     getDPSuiviByApprenant(id),
     getApprenantQuizzesStatus(id)
   ]);
+
+  const hasDefaultPin = !apprenant.pin_code || apprenant.pin_code === '2026';
+  const safeApprenant = { ...apprenant, pin_code: undefined };
 
   return (
     <div className="w-full">
@@ -92,10 +96,12 @@ export default async function PassportPage({ params }: PassportPageProps) {
       )}
 
       <StudentPassport
-        apprenant={apprenant}
+        apprenant={safeApprenant}
         badges={badges}
         dpSuivi={dpSuivi}
         quizzes={quizRes.quizzes}
+        hasDefaultPin={hasDefaultPin}
+        isFormateur={isFormateur}
       />
     </div>
   );
