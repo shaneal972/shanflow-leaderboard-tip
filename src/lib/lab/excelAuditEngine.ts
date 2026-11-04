@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import { LabAuditSummary, LabAuditDetail } from '@/types/tip';
+import type { LabAuditSummary, LabAuditDetail } from '@/types/tip';
 
 /**
  * Moteur d'audit 100% Client-Side pour le Lab TP-BUR-01 (Manifeste Corinne & Fiscalité Antilles).
@@ -62,7 +62,30 @@ export async function auditCorinneManifesteExcel(
     const colTva = findCol(['tva']);
     const colTtc = findCol(['ttc', 'total']);
 
-    const dataRows = rawData.slice(headerRowIndex + 1).filter((r) => r && r.length > 0 && String(r[0] || '').trim() !== '');
+    // Extraction et filtrage strict : conteneurs uniquement (exclure lignes vides et ligne TOTAL)
+    interface DataRowInfo {
+      row: any[];
+      excelRow: number;
+    }
+
+    const dataRowsInfo: DataRowInfo[] = [];
+    for (let i = headerRowIndex + 1; i < rawData.length; i++) {
+      const r = rawData[i];
+      if (!r || r.length === 0) continue;
+      const firstCol = String(r[0] || '').trim();
+      if (!firstCol || firstCol.toLowerCase().includes('total')) continue;
+      dataRowsInfo.push({ row: r, excelRow: i + 1 });
+    }
+
+    const dataRows = dataRowsInfo.map((d) => d.row);
+
+    // Lettres de colonnes clés
+    const cpColLetter = colCp !== -1 ? XLSX.utils.encode_col(colCp) : 'E';
+    const baseColLetter = colBaseHt !== -1 ? XLSX.utils.encode_col(colBaseHt) : 'F';
+    const transitColLetter = colTransit !== -1 ? XLSX.utils.encode_col(colTransit) : 'G';
+    const octroiColLetter = colOctroi !== -1 ? XLSX.utils.encode_col(colOctroi) : 'H';
+    const tvaColLetter = colTva !== -1 ? XLSX.utils.encode_col(colTva) : 'I';
+    const ttcColLetter = colTtc !== -1 ? XLSX.utils.encode_col(colTtc) : 'J';
 
     // -------------------------------------------------------------------------
     // RÈGLE 1 : Intégrité des codes postaux (5 caractères textuels)
@@ -71,23 +94,50 @@ export async function auditCorinneManifesteExcel(
     let checkedCpCount = 0;
     const cpIndex = colCp !== -1 ? colCp : 4; // Colonne E par défaut
 
-    dataRows.forEach((row) => {
-      const val = String(row[cpIndex] || '').trim();
-      if (val && !val.toLowerCase().includes('total')) {
-        checkedCpCount++;
-        // Doit comporter 5 caractères (chiffres ou format DOM 971xx)
-        if (val.length === 5 && /^[0-9]{5}$/.test(val)) {
-          validCpCount++;
+    dataRowsInfo.forEach((d) => {
+      checkedCpCount++;
+      const cellKey = `${cpColLetter}${d.excelRow}`;
+      const cell = sheet[cellKey];
+      let isCpValid = false;
+
+      // 1. Chaîne directe depuis rawData (ex: si texte ou cell.w déjà formaté sur 5 chiffres)
+      const rawVal = String(d.row[cpIndex] !== undefined && d.row[cpIndex] !== null ? d.row[cpIndex] : '').trim();
+      if (/^[0-9]{5}$/.test(rawVal)) {
+        isCpValid = true;
+      }
+
+      // 2. Inspection de la cellule SheetJS (format personnalisé 00000 ou formule TEXT)
+      if (!isCpValid && cell) {
+        const cellValStr = String(cell.v !== undefined && cell.v !== null ? cell.v : '').trim();
+        const cellWStr = String(cell.w || '').trim();
+
+        if (/^[0-9]{5}$/.test(cellValStr) || /^[0-9]{5}$/.test(cellWStr)) {
+          isCpValid = true;
+        } else {
+          const formatStr = String(cell.z || '').toLowerCase();
+          const formulaStr = String(cell.f || '').toUpperCase();
+          const has00000Pattern =
+            formatStr.includes('00000') || formulaStr.includes('00000') || formulaStr.includes('TEXT');
+          if (has00000Pattern) {
+            const padded = cellValStr.padStart(5, '0');
+            if (/^[0-9]{5}$/.test(padded)) {
+              isCpValid = true;
+            }
+          }
         }
+      }
+
+      if (isCpValid) {
+        validCpCount++;
       }
     });
 
-    const cpRatio = checkedCpCount > 0 ? (validCpCount / checkedCpCount) : 0;
-    if (cpRatio >= 0.85) {
+    const isCpAllValid = checkedCpCount >= 5 && validCpCount === checkedCpCount;
+    if (isCpAllValid) {
       details.push({
         milestoneId: 'm1_postal_codes',
         status: 'valide',
-        message: 'Codes postaux normalisés avec succès sur 5 positions (format texte).',
+        message: 'Codes postaux normalisés avec succès sur 5 positions (format texte / masque 00000).',
         details: `${validCpCount}/${checkedCpCount} codes postaux vérifiés conformes avec zéros initiaux préservés.`,
       });
     } else {
@@ -95,7 +145,7 @@ export async function auditCorinneManifesteExcel(
         milestoneId: 'm1_postal_codes',
         status: 'non_conforme',
         message: 'Anomalie de format : certains codes postaux sont tronqués ou incomplets.',
-        details: `Seulement ${validCpCount}/${checkedCpCount} codes postaux font 5 chiffres. Astuce : utilisez =TEXTE(cellule; "00000") ou préfixez d'un format texte pour ne pas perdre les zéros.`,
+        details: `Seulement ${validCpCount}/${checkedCpCount} codes postaux font 5 chiffres. Astuce : utilisez =TEXTE(cellule; "00000"), le format personnalisé 00000, ou préfixez d'un format texte pour ne pas perdre les zéros.`,
       });
     }
 
@@ -104,39 +154,81 @@ export async function auditCorinneManifesteExcel(
     // -------------------------------------------------------------------------
     let naErrorCount = 0;
     let formulaCleanCount = 0;
-    const transitColLetter = colTransit !== -1 ? XLSX.utils.encode_col(colTransit) : 'G';
 
-    // Scan de l'ensemble des cellules de la feuille pour traquer #N/A
+    // Scan de l'ensemble des cellules de la feuille pour traquer #N/A et erreurs OpenXML
     Object.keys(sheet).forEach((cellKey) => {
       if (cellKey.startsWith('!')) return;
       const cell = sheet[cellKey];
-      if (cell && (cell.w === '#N/A' || cell.v === '#N/A' || String(cell.v || '').includes('#N/A') || cell.t === 'e')) {
+      if (!cell) return;
+
+      const wStr = String(cell.w || '');
+      const vStr = String(cell.v || '');
+      if (
+        cell.t === 'e' ||
+        wStr.includes('#N/A') ||
+        vStr.includes('#N/A') ||
+        wStr.includes('#VALEUR!') ||
+        wStr.includes('#VALUE!') ||
+        wStr.includes('#REF!')
+      ) {
         naErrorCount++;
       }
 
       // Vérifie si la colonne transit utilise SUPPRESPACE ou TRIM ou SIERREUR / IFERROR
-      if (cellKey.startsWith(transitColLetter) && cell && cell.f) {
+      if (cellKey.startsWith(transitColLetter) && cell.f) {
         const fUpper = cell.f.toUpperCase();
-        if (fUpper.includes('TRIM') || fUpper.includes('SUPPRESPACE') || fUpper.includes('SIERREUR') || fUpper.includes('IFERROR')) {
+        if (
+          fUpper.includes('TRIM') ||
+          fUpper.includes('SUPPRESPACE') ||
+          fUpper.includes('SIERREUR') ||
+          fUpper.includes('IFERROR') ||
+          fUpper.includes('CLEAN') ||
+          fUpper.includes('EPURAGE')
+        ) {
           formulaCleanCount++;
         }
       }
     });
 
-    if (naErrorCount === 0) {
+    // Vérification qu'au moins 8 lignes de la colonne Frais Transit contiennent une valeur numérique valide (> 0)
+    let validTransitCount = 0;
+    dataRowsInfo.forEach((d) => {
+      const cellKey = `${transitColLetter}${d.excelRow}`;
+      const cell = sheet[cellKey];
+      let transitVal = NaN;
+
+      if (cell && cell.t !== 'e') {
+        transitVal = parseFloat(String(cell.v !== undefined ? cell.v : '').replace(',', '.'));
+      }
+      if (isNaN(transitVal)) {
+        const rawTransit = d.row[colTransit !== -1 ? colTransit : 6];
+        transitVal = parseFloat(String(rawTransit || '').replace(',', '.'));
+      }
+
+      if (!isNaN(transitVal) && transitVal > 0) {
+        validTransitCount++;
+      }
+    });
+
+    const isTransitMilestoneValid = naErrorCount === 0 && validTransitCount >= Math.min(8, dataRowsInfo.length);
+
+    if (isTransitMilestoneValid) {
       details.push({
         milestoneId: 'm2_supprespace_na',
         status: 'valide',
-        message: 'Zéro erreur #N/A constatée sur l\'ensemble du manifeste.',
+        message: 'Zéro erreur #N/A constatée et frais de transit intégralement résolus.',
         details: formulaCleanCount > 0
-          ? `Fonctions de nettoyage d'espaces (SUPPRESPACE) et sécurisation (SIERREUR) bien identifiées.`
-          : `Les correspondances de frais de transit sont 100% résolues sans rupture.`,
+          ? `${validTransitCount}/${dataRowsInfo.length} frais de transit calculés avec succès (fonctions SUPPRESPACE / SIERREUR identifiées).`
+          : `${validTransitCount}/${dataRowsInfo.length} correspondances de frais de transit résolues sans rupture.`,
       });
     } else {
       details.push({
         milestoneId: 'm2_supprespace_na',
         status: 'non_conforme',
-        message: `${naErrorCount} erreur(s) #N/A encore présente(s) dans le classeur.`,
+        message:
+          naErrorCount > 0
+            ? `${naErrorCount} erreur(s) #N/A encore présente(s) dans le classeur.`
+            : `Colonne Frais Transit incomplète (${validTransitCount}/${dataRowsInfo.length} valeurs valides).`,
         details: `Les espaces superflus en fin de référence bloquent la recherche matricielle. Encapsulez la cellule de recherche dans SUPPRESPACE(...) et sécurisez avec SIERREUR(...; 0).`,
       });
     }
@@ -146,33 +238,57 @@ export async function auditCorinneManifesteExcel(
     // -------------------------------------------------------------------------
     let octroiFormulaCount = 0;
     let octroiExactMathCount = 0;
-    const octroiColLetter = colOctroi !== -1 ? XLSX.utils.encode_col(colOctroi) : 'H';
-    const baseColLetter = colBaseHt !== -1 ? XLSX.utils.encode_col(colBaseHt) : 'F';
 
-    dataRows.forEach((row, idx) => {
-      const rowIndex = headerRowIndex + 2 + idx;
-      const cellKey = `${octroiColLetter}${rowIndex}`;
+    dataRowsInfo.forEach((d) => {
+      const cellKey = `${octroiColLetter}${d.excelRow}`;
       const cell = sheet[cellKey];
       if (cell) {
         if (cell.f) {
           const f = cell.f.toUpperCase();
-          if (f.includes('0.085') || f.includes('8.5%') || f.includes('$H$2') || f.includes('H$2') || f.includes('H2') || f.includes('$2')) {
+          if (
+            f.includes('0.085') ||
+            f.includes('8.5%') ||
+            f.includes('$H$2') ||
+            f.includes('H$2') ||
+            f.includes('H2') ||
+            f.includes('$F$2') ||
+            f.includes('F$2') ||
+            f.includes('$2')
+          ) {
             octroiFormulaCount++;
           }
         }
-        const val = parseFloat(String(cell.v || '').replace(',', '.'));
-        const baseVal = parseFloat(String(row[colBaseHt !== -1 ? colBaseHt : 5] || '').replace(',', '.'));
+        const val = parseFloat(String(cell.v !== undefined ? cell.v : '').replace(',', '.'));
+        const baseCell = sheet[`${baseColLetter}${d.excelRow}`];
+        const baseVal = parseFloat(
+          String(baseCell?.v !== undefined ? baseCell.v : d.row[colBaseHt !== -1 ? colBaseHt : 5] || '').replace(
+            ',',
+            '.'
+          )
+        );
+
+        const transitCell = sheet[`${transitColLetter}${d.excelRow}`];
+        const transitVal =
+          parseFloat(
+            String(transitCell?.v !== undefined ? transitCell.v : d.row[colTransit !== -1 ? colTransit : 6] || '0').replace(
+              ',',
+              '.'
+            )
+          ) || 0;
+
         if (!isNaN(val) && !isNaN(baseVal) && baseVal > 0) {
-          const expected = baseVal * 0.085;
-          if (Math.abs(val - expected) < 0.2) {
+          const expectedBaseOnly = baseVal * 0.085;
+          const expectedWithTransit = (baseVal + transitVal) * 0.085;
+          if (Math.abs(val - expectedBaseOnly) < 0.25 || Math.abs(val - expectedWithTransit) < 0.25) {
             octroiExactMathCount++;
           }
         }
       }
     });
 
-    const isOctroiFormulaValid = octroiFormulaCount >= 3 || (octroiFormulaCount > 0 && octroiFormulaCount >= dataRows.length * 0.5);
-    const isOctroiMathValid = octroiExactMathCount >= Math.min(5, dataRows.length);
+    const isOctroiFormulaValid =
+      octroiFormulaCount >= 3 || (octroiFormulaCount > 0 && octroiFormulaCount >= dataRowsInfo.length * 0.5);
+    const isOctroiMathValid = octroiExactMathCount >= Math.min(5, dataRowsInfo.length);
 
     if (isOctroiFormulaValid && isOctroiMathValid) {
       details.push({
@@ -202,39 +318,85 @@ export async function auditCorinneManifesteExcel(
     // -------------------------------------------------------------------------
     let tvaFormulaCount = 0;
     let tvaExactMathCount = 0;
-    const tvaColLetter = colTva !== -1 ? XLSX.utils.encode_col(colTva) : 'I';
 
-    dataRows.forEach((row, idx) => {
-      const rowIndex = headerRowIndex + 2 + idx;
-      const cellKey = `${tvaColLetter}${rowIndex}`;
+    dataRowsInfo.forEach((d) => {
+      const cellKey = `${tvaColLetter}${d.excelRow}`;
       const cell = sheet[cellKey];
       if (cell) {
         if (cell.f) {
           const f = cell.f.toUpperCase();
-          if (f.includes('0.085') || f.includes('8.5%') || f.includes('$I$2') || f.includes('I$2') || f.includes('I2') || f.includes('$2')) {
+          if (
+            f.includes('0.085') ||
+            f.includes('8.5%') ||
+            f.includes('$I$2') ||
+            f.includes('I$2') ||
+            f.includes('I2') ||
+            f.includes('$H$2') ||
+            f.includes('H$2') ||
+            f.includes('$2')
+          ) {
             tvaFormulaCount++;
           }
         }
-        const val = parseFloat(String(cell.v || '').replace(',', '.'));
-        const baseVal = parseFloat(String(row[colBaseHt !== -1 ? colBaseHt : 5] || '').replace(',', '.'));
+        const val = parseFloat(String(cell.v !== undefined ? cell.v : '').replace(',', '.'));
+        const baseCell = sheet[`${baseColLetter}${d.excelRow}`];
+        const baseVal = parseFloat(
+          String(baseCell?.v !== undefined ? baseCell.v : d.row[colBaseHt !== -1 ? colBaseHt : 5] || '').replace(
+            ',',
+            '.'
+          )
+        );
+
+        const octroiCell = sheet[`${octroiColLetter}${d.excelRow}`];
+        const octroiVal =
+          parseFloat(
+            String(octroiCell?.v !== undefined ? octroiCell.v : d.row[colOctroi !== -1 ? colOctroi : 7] || '0').replace(
+              ',',
+              '.'
+            )
+          ) || baseVal * 0.085;
+
+        const transitCell = sheet[`${transitColLetter}${d.excelRow}`];
+        const transitVal =
+          parseFloat(
+            String(transitCell?.v !== undefined ? transitCell.v : d.row[colTransit !== -1 ? colTransit : 6] || '0').replace(
+              ',',
+              '.'
+            )
+          ) || 0;
+
         if (!isNaN(val) && !isNaN(baseVal) && baseVal > 0) {
-          const expected = baseVal * 0.085;
-          if (Math.abs(val - expected) < 0.2) {
+          // 1. Calcul direct sur Base HT : baseVal * 0.085
+          const exp1 = baseVal * 0.085;
+          // 2. Assiette douanière Antilles : (Base HT + Octroi) * 0.085
+          const exp2 = (baseVal + octroiVal) * 0.085;
+          // 3. Assiette douanière complète : (Base HT + Transit + Octroi) * 0.085
+          const exp3 = (baseVal + transitVal + octroiVal) * 0.085;
+          // 4. Base HT + Transit : (Base HT + Transit) * 0.085
+          const exp4 = (baseVal + transitVal) * 0.085;
+
+          if (
+            Math.abs(val - exp1) < 0.25 ||
+            Math.abs(val - exp2) < 0.25 ||
+            Math.abs(val - exp3) < 0.25 ||
+            Math.abs(val - exp4) < 0.25
+          ) {
             tvaExactMathCount++;
           }
         }
       }
     });
 
-    const isTvaFormulaValid = tvaFormulaCount >= 3 || (tvaFormulaCount > 0 && tvaFormulaCount >= dataRows.length * 0.5);
-    const isTvaMathValid = tvaExactMathCount >= Math.min(5, dataRows.length);
+    const isTvaFormulaValid =
+      tvaFormulaCount >= 3 || (tvaFormulaCount > 0 && tvaFormulaCount >= dataRowsInfo.length * 0.5);
+    const isTvaMathValid = tvaExactMathCount >= Math.min(5, dataRowsInfo.length);
 
     if (isTvaFormulaValid && isTvaMathValid) {
       details.push({
         milestoneId: 'm4_tva_guadeloupe',
         status: 'valide',
         message: 'Formules dynamiques de TVA locale (8.5%) conformes.',
-        details: `Calcul automatisé de la TVA Guadeloupe avec références bloquées vérifié sur les arrivages.`,
+        details: `Calcul automatisé de la TVA Guadeloupe avec références bloquées vérifié sur les arrivages (assiette standard ou douanière acceptée).`,
       });
     } else if (isTvaMathValid && !isTvaFormulaValid) {
       details.push({
@@ -255,30 +417,79 @@ export async function auditCorinneManifesteExcel(
     // -------------------------------------------------------------------------
     // RÈGLE 5 : Figeage des volets & Total TTC douanier
     // -------------------------------------------------------------------------
-    // Vérification de la présence d'une formule de somme TTC ou total cohérent
     let ttcFormulaCount = 0;
-    const ttcColLetter = colTtc !== -1 ? XLSX.utils.encode_col(colTtc) : 'J';
+    let ttcMathCount = 0;
 
-    dataRows.forEach((row, idx) => {
-      const rowIndex = headerRowIndex + 2 + idx;
-      const cellKey = `${ttcColLetter}${rowIndex}`;
+    dataRowsInfo.forEach((d) => {
+      const cellKey = `${ttcColLetter}${d.excelRow}`;
       const cell = sheet[cellKey];
-      if (cell && cell.f) {
-        ttcFormulaCount++;
+      if (cell) {
+        if (cell.f) {
+          ttcFormulaCount++;
+        }
+        const val = parseFloat(String(cell.v !== undefined ? cell.v : '').replace(',', '.'));
+        const baseCell = sheet[`${baseColLetter}${d.excelRow}`];
+        const baseVal = parseFloat(
+          String(baseCell?.v !== undefined ? baseCell.v : d.row[colBaseHt !== -1 ? colBaseHt : 5] || '').replace(
+            ',',
+            '.'
+          )
+        );
+
+        const octroiCell = sheet[`${octroiColLetter}${d.excelRow}`];
+        const octroiVal =
+          parseFloat(
+            String(octroiCell?.v !== undefined ? octroiCell.v : d.row[colOctroi !== -1 ? colOctroi : 7] || '0').replace(
+              ',',
+              '.'
+            )
+          ) || baseVal * 0.085;
+
+        const tvaCell = sheet[`${tvaColLetter}${d.excelRow}`];
+        const tvaVal =
+          parseFloat(
+            String(tvaCell?.v !== undefined ? tvaCell.v : d.row[colTva !== -1 ? colTva : 8] || '0').replace(
+              ',',
+              '.'
+            )
+          ) || baseVal * 0.085;
+
+        const transitCell = sheet[`${transitColLetter}${d.excelRow}`];
+        const transitVal =
+          parseFloat(
+            String(transitCell?.v !== undefined ? transitCell.v : d.row[colTransit !== -1 ? colTransit : 6] || '0').replace(
+              ',',
+              '.'
+            )
+          ) || 0;
+
+        if (!isNaN(val) && !isNaN(baseVal) && baseVal > 0) {
+          // Option A: Base HT + Octroi + TVA
+          const expA = baseVal + octroiVal + tvaVal;
+          // Option B: Base HT + Frais Transit + Octroi + TVA
+          const expB = baseVal + transitVal + octroiVal + tvaVal;
+
+          if (Math.abs(val - expA) < 0.5 || Math.abs(val - expB) < 0.5) {
+            ttcMathCount++;
+          }
+        }
       }
     });
+
+    const isTtcFormulaValid = ttcFormulaCount >= Math.min(3, dataRowsInfo.length);
+    const isTtcMathValid = ttcMathCount >= Math.min(3, dataRowsInfo.length);
 
     // Détection de volets figés dans les métadonnées SheetJS
     const sheetViews = (sheet as any)['!views'] || (sheet as any)['!freeze'];
     const hasFreezeView = !!sheetViews;
 
-    if (ttcFormulaCount >= Math.min(3, dataRows.length)) {
+    if (isTtcFormulaValid && (isTtcMathValid || ttcFormulaCount >= 5)) {
       details.push({
         milestoneId: 'm5_freeze_total',
         status: 'valide',
         message: 'Formules de Total TTC douanier vérifiées et opérationnelles.',
         details: hasFreezeView
-          ? `Ligne d'en-tête figée détectée avec succès (Freeze Panes).`
+          ? `Ligne d'en-tête figée détectée avec succès (Freeze Panes). Total TTC calculé dynamiquement.`
           : `Total TTC dynamiquement calculé sur chaque conteneur (= Base HT + Octroi de mer + TVA).`,
       });
     } else {
@@ -286,7 +497,7 @@ export async function auditCorinneManifesteExcel(
         milestoneId: 'm5_freeze_total',
         status: 'non_conforme',
         message: 'Colonne Total TTC incomplète ou non dynamisée.',
-        details: `La colonne Total TTC doit additionner la Base HT, l'Octroi de mer et la TVA (=F4+H4+I4 ou =SOMME(F4;H4;I4)). N'oubliez pas également de figer la ligne supérieure dans l'onglet Affichage.`,
+        details: `La colonne Total TTC doit additionner la Base HT (et les frais de transit éventuels), l'Octroi de mer et la TVA (=F4+H4+I4 ou =SOMME(F4:I4)). N'oubliez pas également de figer la ligne d'en-tête dans l'onglet Affichage.`,
       });
     }
 

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase';
+import { isAdminAuthenticated } from '@/lib/adminAuth';
+import { getActiveTechnicianId, isStudentAuthenticated } from '@/lib/studentAuth';
 import { MOCK_APPRENANTS } from '@/data/mockData';
 import { getLabById } from '@/lib/lab/labData';
 import { generateLabReportPdfHtml } from '@/lib/templates/labReportPdfTemplate';
@@ -18,6 +20,18 @@ export async function GET(request: NextRequest) {
       status: 400,
       headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });
+  }
+
+  // Vérification stricte de session (Formateur ou Apprenant propriétaire authentifié par code PIN)
+  const isFormateur = await isAdminAuthenticated();
+  const activeTechId = await getActiveTechnicianId();
+  const isPassportAuth = await isStudentAuthenticated(studentId);
+
+  if (!isFormateur && activeTechId !== studentId && !isPassportAuth) {
+    return new NextResponse(
+      'Accès refusé : veuillez déverrouiller votre passeport ou votre poste technicien avec votre code PIN.',
+      { status: 401, headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
+    );
   }
 
   try {
