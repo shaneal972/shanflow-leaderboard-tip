@@ -31,6 +31,15 @@ async function compilePdf(html: string, filename: string): Promise<Buffer> {
 }
 
 /**
+ * Analyse le binaire PDF pour compter strictement le nombre de pages physiques
+ */
+function getPdfPageCount(pdfBuffer: Buffer): number {
+  const content = pdfBuffer.toString('binary');
+  const matches = content.match(/\/Type\s*\/Page\b/g);
+  return matches ? matches.length : 0;
+}
+
+/**
  * Génération du classeur corrigé DSI avec 100% de formules OpenXML actives (Standard Zéro Chiffre Brut)
  */
 function buildTeacherCorrigéWorkbook(): XLSX.WorkBook {
@@ -174,56 +183,61 @@ function generateTpHtml(): string {
   <style>
     @page {
       size: A4 portrait;
-      margin: 14mm 15mm 14mm 15mm;
+      margin: 10mm 14mm 10mm 14mm;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
       color: #0f172a;
       background: #fff;
-      font-size: 11.5pt;
-      line-height: 1.55;
+      font-size: 10.5pt;
+      line-height: 1.42;
     }
 
     .page {
       width: 100%;
-      page-break-after: always;
+      height: 276mm;
+      max-height: 276mm;
+      box-sizing: border-box;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      min-height: 258mm;
+      overflow: hidden;
+      page-break-after: always;
+      break-after: page;
     }
     .page:last-child {
-      page-break-after: avoid;
+      page-break-after: auto;
+      break-after: auto;
     }
 
     .header-table {
       width: 100%;
       border-collapse: collapse;
       border: 1.5px solid #0f172a;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     .header-table td {
       border: 1.5px solid #0f172a;
-      padding: 8px 12px;
+      padding: 6px 10px;
       vertical-align: middle;
     }
     .logo-cell { width: 18%; text-align: center; }
-    .logo-cell img { max-height: 56px; display: block; margin: 0 auto; }
+    .logo-cell img { max-height: 48px; display: block; margin: 0 auto; }
     .title-cell {
       width: 60%;
       text-align: center;
-      line-height: 1.3;
+      line-height: 1.25;
     }
     .main-title {
-      font-size: 15pt;
+      font-size: 14pt;
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 0.3px;
       color: #0f172a;
     }
     .sub-title {
-      font-size: 11pt;
+      font-size: 10pt;
       color: #475569;
       font-weight: 700;
       margin-top: 2px;
@@ -232,48 +246,50 @@ function generateTpHtml(): string {
       display: inline-block;
       background: #0f172a;
       color: #fff;
-      font-size: 10pt;
+      font-size: 8.5pt;
       font-weight: 800;
-      padding: 3px 10px;
+      padding: 2.5px 8px;
       border-radius: 4px;
-      margin-top: 4px;
+      margin-top: 3px;
       text-transform: uppercase;
+      white-space: nowrap;
     }
     .ref-cell {
       width: 22%;
       text-align: right;
-      font-size: 10pt;
+      font-size: 9pt;
       line-height: 1.25;
     }
-    .ref-cell img { max-height: 44px; margin-top: 3px; display: inline-block; }
+    .ref-cell img { max-height: 40px; margin-top: 3px; display: inline-block; }
 
     .meta-bar {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
+      gap: 6px;
       background: #f8fafc;
       border: 1.2px solid #cbd5e1;
-      padding: 8px 12px;
-      border-radius: 5px;
-      margin-bottom: 12px;
-      font-size: 10.5pt;
+      padding: 6px 10px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      font-size: 9.5pt;
     }
     .meta-item strong { color: #0f172a; }
 
     .callout {
-      padding: 10px 14px;
-      border-radius: 5px;
-      margin-bottom: 12px;
-      font-size: 11pt;
-      line-height: 1.5;
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      font-size: 10pt;
+      line-height: 1.4;
       break-inside: avoid;
       page-break-inside: avoid;
     }
     .callout-title {
       font-weight: 800;
       text-transform: uppercase;
-      margin-bottom: 4px;
-      font-size: 11.5pt;
+      margin-bottom: 3px;
+      font-size: 10.5pt;
+      padding-left: 2px;
     }
     .callout-blue {
       background: #f8fafc;
@@ -299,13 +315,13 @@ function generateTpHtml(): string {
     .section-header {
       background: #0f172a;
       color: #fff;
-      font-size: 12.5pt;
+      font-size: 11.5pt;
       font-weight: 800;
-      padding: 8px 12px;
+      padding: 6px 12px;
       border-radius: 4px;
       text-transform: uppercase;
       letter-spacing: 0.3px;
-      margin: 16px 0 10px 0;
+      margin: 10px 0 6px 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -314,8 +330,8 @@ function generateTpHtml(): string {
     }
     .section-header .tag {
       background: #334155;
-      font-size: 9.5pt;
-      padding: 2px 7px;
+      font-size: 8.5pt;
+      padding: 1.5px 6px;
       border-radius: 3px;
     }
 
@@ -324,31 +340,31 @@ function generateTpHtml(): string {
       border: 1.2px solid #bfdbfe;
       border-left: 4px solid #2563eb;
       border-radius: 4px;
-      padding: 10px 14px;
-      margin: 8px 0 12px 0;
-      font-size: 11pt;
-      line-height: 1.5;
+      padding: 8px 12px;
+      margin: 6px 0 8px 0;
+      font-size: 10pt;
+      line-height: 1.4;
       color: #1e3a8a;
       break-inside: avoid;
       page-break-inside: avoid;
     }
-    .notion-box strong { color: #1d4ed8; font-size: 11.5pt; }
+    .notion-box strong { color: #1d4ed8; font-size: 10.5pt; }
 
-    p { margin-bottom: 6px; font-size: 11.5pt; line-height: 1.55; }
-    ul, ol { margin-left: 20px; margin-bottom: 8px; }
-    li { margin-bottom: 6px; font-size: 11.5pt; line-height: 1.55; color: #1e293b; }
+    p { margin-bottom: 4px; font-size: 10.5pt; line-height: 1.42; }
+    ul, ol { margin-left: 18px; margin-bottom: 6px; }
+    li { margin-bottom: 4px; font-size: 10.5pt; line-height: 1.42; color: #1e293b; }
 
     .data-table {
       width: 100%;
       border-collapse: collapse;
-      margin: 10px 0;
-      font-size: 10.5pt;
+      margin: 6px 0;
+      font-size: 9.5pt;
       break-inside: avoid;
       page-break-inside: avoid;
     }
     .data-table th, .data-table td {
       border: 1.2px solid #cbd5e1;
-      padding: 8px 10px;
+      padding: 5px 8px;
       text-align: left;
     }
     .data-table th {
@@ -356,15 +372,16 @@ function generateTpHtml(): string {
       color: #0f172a;
       font-weight: 800;
       text-transform: uppercase;
-      font-size: 10pt;
+      font-size: 9pt;
     }
+
     .formula-code {
       font-family: "Courier New", Courier, monospace;
       background: #f1f5f9;
       color: #0f172a;
       font-weight: 700;
-      font-size: 11pt;
-      padding: 3px 6px;
+      font-size: 9.5pt;
+      padding: 2px 5px;
       border-radius: 3px;
       border: 1px solid #cbd5e1;
       display: inline-block;
@@ -374,10 +391,10 @@ function generateTpHtml(): string {
       background: #0f172a;
       color: #38bdf8;
       font-family: "Courier New", Courier, monospace;
-      font-size: 11pt;
-      padding: 10px 14px;
-      border-radius: 5px;
-      margin: 8px 0 10px 0;
+      font-size: 10pt;
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin: 6px 0 6px 0;
       border-left: 4px solid #38bdf8;
       break-inside: avoid;
       page-break-inside: avoid;
@@ -386,19 +403,19 @@ function generateTpHtml(): string {
     .eval-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 10.5pt;
-      margin-top: 8px;
+      font-size: 9pt;
+      margin-top: 6px;
       break-inside: avoid;
       page-break-inside: avoid;
     }
     .eval-table th, .eval-table td {
       border: 1.2px solid #cbd5e1;
-      padding: 7px 9px;
+      padding: 4px 6px;
     }
     .eval-table th {
       background: #0f172a;
       color: #fff;
-      font-size: 10pt;
+      font-size: 8.5pt;
       text-transform: uppercase;
       font-weight: 700;
     }
@@ -406,26 +423,26 @@ function generateTpHtml(): string {
     .sign-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      margin-top: 6px;
       border: 1.5px dashed #94a3b8;
-      border-radius: 5px;
-      font-size: 10.5pt;
+      border-radius: 4px;
+      font-size: 9pt;
       break-inside: avoid;
       page-break-inside: avoid;
     }
     .sign-table td {
-      padding: 8px 12px;
+      padding: 5px 10px;
       vertical-align: top;
-      font-size: 10.5pt;
+      font-size: 9pt;
     }
 
     .footer-bar {
       border-top: 1px solid #cbd5e1;
-      padding-top: 6px;
-      margin-top: 12px;
+      padding-top: 4px;
+      margin-top: 6px;
       display: flex;
       justify-content: space-between;
-      font-size: 9.5pt;
+      font-size: 8.5pt;
       color: #64748b;
     }
   </style>
@@ -443,7 +460,7 @@ function generateTpHtml(): string {
           <td class="title-cell">
             <div class="main-title">Karukera Logistique & Fret (KLF)</div>
             <div class="sub-title">Direction des Systèmes d'Information • Jarry (Guadeloupe)</div>
-            <span class="tp-badge">TP PALIER 2 • SÉANCE 8 (05/11/2026) — TICKET TCK-101</span>
+            <span class="tp-badge">TP PALIER 2 • SÉANCE 8 (05/11/2026) — <span style="white-space: nowrap;">TICKET TCK-101</span></span>
           </td>
           <td class="ref-cell">
             <strong>Qualiopi Ind. 4 & 5</strong><br>
@@ -467,7 +484,7 @@ function generateTpHtml(): string {
       </div>
 
       <div class="callout callout-blue">
-        <div class="callout-title">🛡️ Réflexe professionnel du technicien TIP avant toute modification</div>
+        <div class="callout-title"><span style="display: inline-block; padding-left: 3px; margin-right: 4px;">🛡️</span>Réflexe professionnel du technicien TIP avant toute modification</div>
         Ne modifiez <strong>JAMAIS</strong> directement un fichier corrompu en production ! Téléchargez le fichier brut <code>KLF_Manifeste_Arrivages_Corinne_BRUT.xlsx</code> et créez immédiatement une copie de sauvegarde horodatée <code>..._BRUT_SAVE.xlsx</code> sur votre poste de travail.
       </div>
 
@@ -1114,11 +1131,17 @@ async function run() {
   fs.writeFileSync(tpHtmlPath, tpHtmlContent, 'utf-8');
   console.log(`✅ LIVRABLE 2 (HTML) généré : ${tpHtmlPath}`);
 
-  console.log('⏳ Compilation du PDF Gotenberg officiel (2 pages A4)...');
+  console.log('⏳ Compilation du PDF Gotenberg officiel (strictement 4 pages A4)...');
   const tpPdfBuffer = await compilePdf(tpHtmlContent, 'TP_Consignes_Corinne_RECHERCHEV_Fiscalite_051126.pdf');
   const tpPdfPath = path.join(targetBrainDir, 'TP_Consignes_Corinne_RECHERCHEV_Fiscalite_051126.pdf');
   fs.writeFileSync(tpPdfPath, tpPdfBuffer);
-  console.log(`✅ LIVRABLE 2 (PDF Gotenberg) généré : ${tpPdfPath} (${tpPdfBuffer.length} octets)`);
+
+  const pageCount = getPdfPageCount(tpPdfBuffer);
+  console.log(`📄 Nombre de pages physiques détecté dans le PDF : ${pageCount} page(s)`);
+  if (pageCount !== 4) {
+    throw new Error(`ERREUR BLOQUANTE : Le PDF généré comporte ${pageCount} pages physiques au lieu de STRICTEMENT 4 pages !`);
+  }
+  console.log(`✅ LIVRABLE 2 (PDF Gotenberg) validé conforme : STRICTEMENT 4 PAGES (${tpPdfPath}, ${tpPdfBuffer.length} octets)`);
 
   // ---------------------------------------------------------------------------
   // 3. LIVRABLE 3 : Classeurs Excel Brut et Corrigé DSI (Formules Vives)
