@@ -114,10 +114,10 @@ export const MOCK_BADGES: Badge[] = [
 export const MOCK_TICKETS: TicketKLF[] = [
   {
     id: 'TCK-101',
-    service: 'Facturation & Douane',
-    demandeur: 'Corinne MONROSE',
-    titre: 'Urgent : Erreurs #N/A et calcul d\'Octroi de mer sur manifeste conteneurs',
-    description: 'Bonjour le support. Mon classeur de suivi des arrivages maritimes affiche #N/A sur toutes les lignes de transit, les taux d\'Octroi de mer (8.5% Guadeloupe) ne s\'appliquent plus lors de l\'étirement vers le bas et mes titres de colonnes disparaissent au défilement. La douane attend les déclarations avant 16h !',
+    service: 'Entrepôt Frigorifique & Stocks',
+    demandeur: 'Alain GOURGUE',
+    titre: 'Urgent : Erreurs #REF!, #DIV/0! et conflits d\'accès réseau sur le suivi de la chaîne du froid',
+    description: 'Bonjour le support IT. C\'est la panique au Quai Frigo n°1 : notre classeur partagé de contrôle des conteneurs réfrigérés (Suivi_Chaine_Froid_Jarry.xlsx sur le lecteur réseau Z:\\) est inutilisable avant l\'inspection sanitaire de 15h ! 1) Un préparateur a supprimé par erreur une colonne hier soir, affichant #REF! sur nos références. 2) Le calcul du taux de remplissage affiche #DIV/0! sur les chambres froides en maintenance (capacité à 0), ce qui bloque toute la synthèse. 3) J\'ai besoin d\'une formule automatique qui affiche "ALERTE RUPTURE FROID" dès que la température d\'un conteneur dépasse -18°C. 4) Enfin, quand deux agents ouvrent le fichier en même temps sur le réseau, on perd nos saisies. Aidez-moi d\'urgence !',
     urgence: 'P1',
     points_valeur: 150,
     statut: 'ouvert',

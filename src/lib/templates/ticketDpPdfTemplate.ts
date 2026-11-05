@@ -14,12 +14,12 @@ export function getDpDetailsForTicket(ticketId: string): DpTemplateData {
   switch (ticketId) {
     case 'TCK-101':
       return {
-        titreDp: 'Partage réseau sécurisé SMBv3, droits NTFS & politique de sauvegarde NAS (CCP 1)',
-        contexteDp: "Entreprise Karukera Logistique & Fret (Jarry). Sécurisation et fiabilisation des flux de données comptables et douaniers suite à des corruptions d'accès concurrents et des risques de pertes de données sur le réseau local.",
-        outilsMobilises: 'NAS Synology d’entreprise (RAID 5), protocole SMBv3 crypté, autorisations NTFS (ACL avancées), console Active Directory (groupes de sécurité), script de synchronisation automatisé.',
-        reussiteReflexive: "Mise en œuvre d'une arborescence réseau partitionnée avec droits stricts en lecture/écriture empêchant tout écrasement accidentel et automatisation des sauvegardes journalières.",
-        difficulteReflexive: "Analyser les verrous de fichiers (file locking) sous SMBv3 sans interrompre l'activité de facturation des déclarants en douane.",
-        enseignementReflexive: "La gestion des droits d'accès au niveau NTFS et le cloisonnement par groupes de sécurité AD sont les fondations indispensables de l'intégrité des données en entreprise."
+        titreDp: 'Partage réseau sécurisé SMBv3, restauration VSS, droits NTFS & surveillance chaîne du froid (CCP 1)',
+        contexteDp: "Entreprise Karukera Logistique & Fret (Jarry, Quai Frigo n°1). Sécurisation, restauration et fiabilisation du classeur de contrôle des conteneurs frigorifiques d'Alain GOURGUE suite à des corruptions de formules (#REF!, #DIV/0!) et des conflits d'accès concurrents sur le réseau.",
+        outilsMobilises: "Serveur NAS Synology (RAID 5, SMBv3 crypté), clichés instantanés VSS (Shadow Copies), autorisations NTFS et groupes Active Directory (GG_Exploitation_Frigo), tableur Excel (SIERREUR, SI conditionnel seuil -18°C).",
+        reussiteReflexive: "Restauration immédiate des formules par clichés instantanés VSS avant l'inspection sanitaire, éradication des erreurs de calcul et sécurisation du partage réseau SMBv3 avec droits stricts en lecture/écriture.",
+        difficulteReflexive: "Analyser les verrous de fichiers (file locking) et résoudre les conflits d'écrasement multi-utilisateurs tout en respectant l'urgence critique avant l'inspection sanitaire de 15h.",
+        enseignementReflexive: "La combinaison de clichés instantanés VSS réguliers et d'un contrôle d'accès rigoureux par groupes AD constitue le rempart indispensable contre les pertes de données et les corruptions en environnement de production."
       };
     case 'TCK-102':
       return {

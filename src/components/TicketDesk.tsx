@@ -8,7 +8,6 @@ import {
   Clock, 
   CheckCircle2, 
   ArrowRight, 
-  Calculator, 
   BookOpen, 
   Mail, 
   Send,
@@ -26,7 +25,6 @@ import confetti from 'canvas-confetti';
 import { submitTicketResolutionAction } from '@/app/admin/actions';
 import { TechnicianLoginScreen } from '@/components/tickets/TechnicianLoginScreen';
 import { logoutTechnicianAction, getTechnicianResolutionsAction } from '@/app/tickets/actions';
-import { calculateImportDutiesAntilles, ANTILLES_TAX_RATES } from '@/core/domain/antillesFiscal';
 
 interface TicketDeskProps {
   initialTickets: TicketKLF[];
@@ -149,17 +147,10 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
     }
   }, [activeTicket, currentResolution]);
 
-  // Calculateur simulateur pour Ticket #101 (Corinne Facturation) — État initial vierge (Anti-Dirty-State)
-  const [montantHTInput, setMontantHTInput] = useState<string>('');
-  const [tauxOctroiInput, setTauxOctroiInput] = useState<string>('');
-  const [tauxTVAInput, setTauxTVAInput] = useState<string>('');
   const [fieldErrors, setFieldErrors] = useState<{ demarche?: string; messageUsager?: string }>({});
 
-  // Reset du simulateur et des erreurs de champs lors du changement ou de la fermeture du ticket
+  // Reset des erreurs de champs lors du changement ou de la fermeture du ticket
   useEffect(() => {
-    setMontantHTInput('');
-    setTauxOctroiInput('');
-    setTauxTVAInput('');
     setFieldErrors({});
   }, [activeTicket]);
 
@@ -228,8 +219,8 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
     switch (ticketId) {
       case 'TCK-101':
         return {
-          titre: 'Partage réseau sécurisé & politique de sauvegarde NAS (CCP 1)',
-          description: "Pour votre DP, ne décrivez pas seulement la formule Excel, mais la sécurisation du classeur sur le réseau : création d'un partage SMB sur le NAS local, gestion des droits NTFS par groupes d'utilisateurs (Compta vs Commercial) et mise en place d'une tâche de sauvegarde automatique sur le serveur de stockage."
+          titre: 'Partage réseau SMBv3, clichés VSS & droits NTFS Entrepôt Frigo (CCP 1)',
+          description: "Pour votre DP, valorisez l'intervention d'infrastructure auprès d'Alain GOURGUE : restauration du classeur via les clichés instantanés VSS (Shadow Copies) sur le NAS Synology, migration vers un partage centralisé SMBv3 (\\\\NAS-KLF\\Entrepot_Frigo), gestion des permissions NTFS par groupes Active Directory (GG_Exploitation_Frigo) et automatisation de sauvegardes journalières."
         };
       case 'TCK-102':
         return {
@@ -313,13 +304,6 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
       }
     });
   };
-
-  // Calculs fiscaux Antilles (Domaine pur) pour Corinne
-  const dutiesCalc = calculateImportDutiesAntilles(
-    parseFloat(montantHTInput) || 0,
-    parseFloat(tauxOctroiInput) || 0,
-    parseFloat(tauxTVAInput) || 0
-  );
 
   // Si aucun apprenant n'est identifié et qu'on n'est pas formateur -> Affichage du sas PIN
   if (!activeStudent && !isFormateur) {
@@ -614,90 +598,76 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
 
               {/* Aides techniques spécifiques par scénario */}
               {activeTicket.id === 'TCK-101' && (
-                <div className="p-4 rounded-xl bg-teal-500/5 border border-teal-500/20 space-y-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="p-4 rounded-xl bg-teal-500/5 border border-teal-500/20 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-teal-500/20 pb-2.5">
                     <div className="flex items-center gap-2 text-xs font-semibold text-teal-300 font-['Lexend']">
-                      <Calculator className="w-4 h-4 text-teal-400" />
-                      Simulateur de formule tableur : Octroi de mer et TVA Antilles
+                      <ShieldCheck className="w-4 h-4 text-teal-400" />
+                      Guide de résolution technique ITIL : Suivi chaîne du froid (Alain GOURGUE)
                     </div>
-                    <div className="flex items-center gap-1.5 text-[10px] font-mono">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setTauxOctroiInput(String(ANTILLES_TAX_RATES.OCTROI_MER_STANDARD_PCT));
-                          setTauxTVAInput(String(ANTILLES_TAX_RATES.TVA_NORMALE_PCT));
-                        }}
-                        className="px-2 py-0.5 rounded bg-teal-500/15 hover:bg-teal-500/25 text-teal-300 border border-teal-500/30 transition-colors cursor-pointer"
-                      >
-                        Barème 971 (8,5 % / 8,5 %)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setTauxTVAInput(String(ANTILLES_TAX_RATES.TVA_REDUITE_PCT))}
-                        className="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-colors cursor-pointer"
-                      >
-                        TVA réduite (2,1 %)
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-3 gap-2 text-xs font-mono">
-                    <div>
-                      <label className="text-slate-400 block mb-1 text-[10px]">Valeur HT (€)</label>
-                      <input
-                        type="number"
-                        inputMode="decimal"
-                        min="0"
-                        step="0.01"
-                        placeholder="Ex : 1000"
-                        value={montantHTInput}
-                        onChange={(e) => setMontantHTInput(e.target.value)}
-                        className="w-full px-2.5 py-1 rounded bg-[#070F1E] border border-white/10 text-white placeholder-slate-600 focus:outline-none focus:border-teal-400"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-slate-400 block mb-1 text-[10px]">Taux Octroi (%)</label>
-                      <input
-                        type="number"
-                        inputMode="decimal"
-                        min="0"
-                        step="0.1"
-                        placeholder="Ex : 8.5"
-                        value={tauxOctroiInput}
-                        onChange={(e) => setTauxOctroiInput(e.target.value)}
-                        className="w-full px-2.5 py-1 rounded bg-[#070F1E] border border-white/10 text-white placeholder-slate-600 focus:outline-none focus:border-teal-400"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-slate-400 block mb-1 text-[10px]">TVA locale (%)</label>
-                      <input
-                        type="number"
-                        inputMode="decimal"
-                        min="0"
-                        step="0.1"
-                        placeholder="8.5 ou 2.1"
-                        value={tauxTVAInput}
-                        onChange={(e) => setTauxTVAInput(e.target.value)}
-                        className="w-full px-2.5 py-1 rounded bg-[#070F1E] border border-white/10 text-white placeholder-slate-600 focus:outline-none focus:border-teal-400"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="p-2.5 rounded bg-[#070F1E] border border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
-                    <span className="text-slate-400">
-                      HT : {dutiesCalc.montantHT.toFixed(2)} € | Octroi : {dutiesCalc.montantOctroi.toFixed(2)} € | TVA ({dutiesCalc.tauxTvaPct}%) : {dutiesCalc.montantTVA.toFixed(2)} €
-                    </span>
-                    <span className="text-teal-400 font-bold">
-                      Total TTC dédouané : {dutiesCalc.totalTTC.toFixed(2)} €
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-teal-500/10 text-teal-300 border border-teal-500/30">
+                      Entrepôt Frigorifique • Quai n°1
                     </span>
                   </div>
 
-                  <div className="text-[11px] text-slate-400 space-y-1">
-                    <div>
-                      Formule recherche exacte sans espace parasite : <code>=SIERREUR(RECHERCHEX(SUPPRESPACE(A2); Douane!$A$2:$A$50; Douane!$B$2:$B$50; 0; 0); 0)</code>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                    {/* 1. Réparation #REF! & Restauration VSS */}
+                    <div className="p-3 rounded-lg bg-[#070F1E] border border-white/5 space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-amber-300 font-semibold font-mono text-[11px]">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        1. Réparation #REF! &amp; Clichés VSS
+                      </div>
+                      <p className="text-[11px] text-slate-300 leading-relaxed">
+                        La suppression physique de la colonne détruit le pointeur mémoire des formules (<code>#REF!</code>).
+                      </p>
+                      <div className="text-[10px] text-slate-400 font-mono bg-white/5 p-2 rounded border border-white/5 space-y-0.5">
+                        <div><strong className="text-teal-300">Solution immédiate :</strong> Restaurer la version saine J-1 via l&apos;onglet <em>Versions précédentes (clichés instantanés VSS Shadow Copies)</em> sur le NAS Synology.</div>
+                        <div className="text-slate-400">💡 <em>Bonne pratique :</em> Masquer les colonnes superflues au lieu de les supprimer.</div>
+                      </div>
                     </div>
-                    <div>
-                      Formule TTC douane Antilles (verrouillage absolu F4) : <code>=C2*(1+$E$1)*(1+$E$2)</code>
+
+                    {/* 2. Éradication #DIV/0! */}
+                    <div className="p-3 rounded-lg bg-[#070F1E] border border-white/5 space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-teal-300 font-semibold font-mono text-[11px]">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+                        2. Taux de remplissage (#DIV/0!)
+                      </div>
+                      <p className="text-[11px] text-slate-300 leading-relaxed">
+                        Chambre froide en maintenance (capacité <code>C2 = 0</code>) : la division <code>=B2/C2</code> plante toute la synthèse.
+                      </p>
+                      <div className="text-[10px] text-slate-400 font-mono bg-white/5 p-2 rounded border border-white/5 space-y-0.5">
+                        <div><strong className="text-teal-300">Formule sécurisée :</strong> <code className="text-emerald-300">=SIERREUR(B2/C2; 0)</code></div>
+                        <div className="text-slate-400">Appliquer le format de cellule <strong>Pourcentage (%)</strong>.</div>
+                      </div>
+                    </div>
+
+                    {/* 3. Alerte sanitaire Seuil -18°C */}
+                    <div className="p-3 rounded-lg bg-[#070F1E] border border-white/5 space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-rose-300 font-semibold font-mono text-[11px]">
+                        <ShieldAlert className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                        3. Alerte sanitaire (Seuil -18°C)
+                      </div>
+                      <p className="text-[11px] text-slate-300 leading-relaxed">
+                        En température négative, <code>-12°C &gt; -18°C</code> (une valeur plus haute = danger de rupture de froid).
+                      </p>
+                      <div className="text-[10px] text-slate-400 font-mono bg-white/5 p-2 rounded border border-white/5">
+                        <strong className="text-teal-300">Formule conditionnelle :</strong> <br />
+                        <code className="text-rose-300">=SI(D2 &gt; -18; &quot;ALERTE RUPTURE FROID&quot;; &quot;CONFORME&quot;)</code>
+                      </div>
+                    </div>
+
+                    {/* 4. Conflits d'accès réseau (Z:\) */}
+                    <div className="p-3 rounded-lg bg-[#070F1E] border border-white/5 space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-cyan-300 font-semibold font-mono text-[11px]">
+                        <Network className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                        4. Conflits d&apos;écrasement réseau (Z:\)
+                      </div>
+                      <p className="text-[11px] text-slate-300 leading-relaxed">
+                        Pertes de données lors d&apos;écritures simultanées sur le lecteur réseau non managé.
+                      </p>
+                      <div className="text-[10px] text-slate-400 font-mono bg-white/5 p-2 rounded border border-white/5 space-y-0.5">
+                        <div><strong className="text-teal-300">Architecture :</strong> Migration sur partage SMBv3 NAS (<code>\\\\NAS-KLF\\Entrepot_Frigo</code>).</div>
+                        <div><strong className="text-teal-300">Droits NTFS :</strong> Groupe AD <code>GG_Exploitation_Frigo</code> (écriture responsables, lecture seule agents de quai).</div>
+                      </div>
                     </div>
                   </div>
                 </div>
