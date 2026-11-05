@@ -17,7 +17,9 @@ import {
   Building2,
   FileCheck2,
   Lock,
-  UserCheck
+  UserCheck,
+  ShieldCheck,
+  Download
 } from 'lucide-react';
 
 interface LabWorkbenchProps {
@@ -110,6 +112,28 @@ export const LabWorkbench: React.FC<LabWorkbenchProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Bandeau Formateur DSI si session administrateur */}
+      {isFormateur && (
+        <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-amber-300">
+            <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>
+              <strong>Mode formateur DSI actif</strong> : Supervision pédagogique en direct.
+            </span>
+          </div>
+          {lab.id === 'tp-bur-01-corinne' && (
+            <a
+              href="/api/admin/lab/download-corrige?labId=tp-bur-01-corinne"
+              download="KLF_Manifeste_Arrivages_Corinne_CORRIGE_DSI.xlsx"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-sm active:scale-95 shrink-0"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Télécharger le corrigé DSI (.xlsx)</span>
+            </a>
+          )}
+        </div>
+      )}
 
       {/* 2. Mise en situation & Consignes KLF */}
       <div className="p-5 rounded-2xl slate-glass border border-teal-500/20 bg-teal-950/10 space-y-3">

@@ -13,10 +13,27 @@ import {
   Search, 
   Filter,
   Eye,
-  ShieldCheck,
-  Send,
-  AlertCircle
+  EyeOff,
+  ShieldCheck, 
+  Send, 
+  AlertCircle,
+  FileSpreadsheet,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
+
+const CORINNE_CONTAINERS_CORRIGE = [
+  { lig: 4, id: 'CMAU-982144-0', navire: 'Fort Saint-Louis', armateur: 'CMA-CGM', cp: '97122', base: '12 500,00 €', transit: '280,00 €', octroi: '1 062,50 €', tvaDir: '1 062,50 €', ttc: '14 905,00 €' },
+  { lig: 5, id: 'MSCU-331209-1', navire: 'Caraïbes Express', armateur: 'MSC', cp: '01234', base: '4 850,50 €', transit: '310,00 €', octroi: '412,29 €', tvaDir: '412,29 €', ttc: '5 985,08 €' },
+  { lig: 6, id: 'MAEU-774011-8', navire: 'Fort Sainte-Marie', armateur: 'Maersk', cp: '97110', base: '8 920,00 €', transit: '295,00 €', octroi: '758,20 €', tvaDir: '758,20 €', ttc: '10 731,40 €' },
+  { lig: 7, id: 'HLCU-440912-3', navire: 'Atlantic Star', armateur: 'Hapag-Lloyd', cp: '97139', base: '15 400,00 €', transit: '340,00 €', octroi: '1 309,00 €', tvaDir: '1 309,00 €', ttc: '18 358,00 €' },
+  { lig: 8, id: 'CMAU-110294-7', navire: 'Fort Fleur d\'Épée', armateur: 'CMA-CGM', cp: '06000', base: '3 100,00 €', transit: '280,00 €', octroi: '263,50 €', tvaDir: '263,50 €', ttc: '3 907,00 €' },
+  { lig: 9, id: 'MSCU-889021-4', navire: 'Caraïbes Express', armateur: 'MSC', cp: '97120', base: '22 150,00 €', transit: '310,00 €', octroi: '1 882,75 €', tvaDir: '1 882,75 €', ttc: '26 225,50 €' },
+  { lig: 10, id: 'MAEU-661045-2', navire: 'Fort Saint-Louis', armateur: 'Maersk', cp: '97122', base: '7 300,00 €', transit: '295,00 €', octroi: '620,50 €', tvaDir: '620,50 €', ttc: '8 836,00 €' },
+  { lig: 11, id: 'CMAU-554109-9', navire: 'Fort Fleur d\'Épée', armateur: 'CMA-CGM', cp: '75001', base: '11 400,00 €', transit: '280,00 €', octroi: '969,00 €', tvaDir: '969,00 €', ttc: '13 618,00 €' },
+  { lig: 12, id: 'HLCU-992014-5', navire: 'Atlantic Star', armateur: 'Hapag-Lloyd', cp: '97139', base: '18 900,00 €', transit: '340,00 €', octroi: '1 606,50 €', tvaDir: '1 606,50 €', ttc: '22 453,00 €' },
+  { lig: 13, id: 'MSCU-443190-2', navire: 'Caraïbes Express', armateur: 'MSC', cp: '97110', base: '6 450,00 €', transit: '310,00 €', octroi: '548,25 €', tvaDir: '548,25 €', ttc: '7 856,50 €' },
+];
 
 interface AdminLabOverviewProps {
   submissions: LabSubmission[];
@@ -33,6 +50,7 @@ export const AdminLabOverview: React.FC<AdminLabOverviewProps> = ({
   const [isPending, startTransition] = useTransition();
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [showCorrigePanel, setShowCorrigePanel] = useState<boolean>(false);
 
   const filteredSubmissions = submissions.filter((sub) => {
     const student = sub.apprenant || students.find((s) => s.id === sub.apprenant_id);
@@ -71,6 +89,220 @@ export const AdminLabOverview: React.FC<AdminLabOverviewProps> = ({
 
   return (
     <div className="space-y-6">
+
+      {/* Carte Référentiel & Corrigé Formateur DSI (Atelier Corinne) */}
+      <div className="p-5 rounded-3xl slate-glass border border-teal-500/30 bg-teal-950/15 space-y-4 shadow-xl">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-teal-500/20 border border-teal-500/40 flex items-center justify-center text-teal-300 shrink-0 mt-0.5 shadow-md shadow-teal-950/40">
+              <ShieldCheck className="w-5 h-5 text-teal-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm font-bold text-white font-['Lexend']">
+                  Référentiel &amp; Corrigé Formateur DSI — Atelier Corinne (<code>tp-bur-01-corinne</code>)
+                </h3>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-teal-500/20 text-teal-300 border border-teal-500/30 font-semibold">
+                  Officiel DSI • 100% Validé (5/5 jalons)
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                Sauvetage du manifeste d&apos;arrivages maritimes de Corinne &amp; Fiscalité Antilles (Frais de transit, Octroi de mer 8,5%, TVA 8,5%, Total TTC).
+              </p>
+            </div>
+          </div>
+
+          {/* 3 boutons d'action rapide */}
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <a
+              href="/api/admin/lab/download-corrige?labId=tp-bur-01-corinne"
+              download="KLF_Manifeste_Arrivages_Corinne_CORRIGE_DSI.xlsx"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-mono font-bold bg-teal-500 hover:bg-teal-400 text-slate-950 transition-all active:scale-95 shadow-md"
+              title="Télécharger le classeur Excel corrigé officiel avec 100% de formules OpenXML actives (.f)"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Télécharger le CORRIGÉ DSI (.xlsx)</span>
+            </a>
+
+            <a
+              href="/api/lab/download-sample?labId=tp-bur-01-corinne"
+              download="KLF_Manifeste_Arrivages_Corinne_BRUT.xlsx"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono font-semibold bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 transition-all active:scale-95"
+              title="Télécharger le classeur élève brut tel qu'attribué aux stagiaires"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Classeur BRUT élève (.xlsx)</span>
+            </a>
+
+            <button
+              type="button"
+              onClick={() => setShowCorrigePanel(!showCorrigePanel)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono font-semibold bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 border border-teal-500/30 transition-all active:scale-95 cursor-pointer"
+            >
+              {showCorrigePanel ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              <span>{showCorrigePanel ? 'Masquer le corrigé détaillé' : 'Consulter le corrigé détaillé en direct'}</span>
+              {showCorrigePanel ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Panneau interactif du corrigé détaillé */}
+        {showCorrigePanel && (
+          <div className="pt-4 border-t border-white/10 space-y-5 animate-in fade-in duration-200">
+            {/* BLOC A : Les 5 Formules & Manipulations attendues */}
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-2 text-xs font-bold text-teal-300 font-mono uppercase tracking-wider">
+                <span>Bloc A • Les 5 formules et manipulations attendues (Jalons 1 à 5)</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs font-mono">
+                <div className="p-3 rounded-xl bg-[#070F1E] border border-white/5 space-y-1">
+                  <div className="text-teal-300 font-bold text-[11px]">Jalon 1 • Normalisation Codes Postaux (Col E)</div>
+                  <p className="text-[11px] text-slate-300 font-sans">
+                    Format texte préfixé d&apos;une apostrophe (<code>&apos;01234</code>, <code>&apos;06000</code>), format personnalisé <code>00000</code> ou formule <code>=TEXTE(E4; &quot;00000&quot;)</code>.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-[#070F1E] border border-white/5 space-y-1">
+                  <div className="text-teal-300 font-bold text-[11px]">Jalon 2 • Frais de Transit &amp; Anti-#N/A (Col G)</div>
+                  <div className="text-[10px] text-emerald-300 bg-white/5 p-1.5 rounded border border-white/5 break-all">
+                    =SIERREUR(RECHERCHEV(SUPPRESPACE(C4); Tarifs_Transit!$A$3:$B$6; 2; FAUX); 0)
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-sans">
+                    SUPPRESPACE nettoie les espaces parasites de fin; SIERREUR sécurise la correspondance.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-[#070F1E] border border-white/5 space-y-1">
+                  <div className="text-teal-300 font-bold text-[11px]">Jalon 3 • Octroi de Mer 8,5% (Col H)</div>
+                  <div className="text-[10px] text-emerald-300 bg-white/5 p-1.5 rounded border border-white/5 break-all">
+                    =F4*$H$2
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-sans">
+                    Verrouillage absolu de la cellule taux en H2 via le raccourci F4.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-[#070F1E] border border-white/5 space-y-1">
+                  <div className="text-teal-300 font-bold text-[11px]">Jalon 4 • TVA Locale 8,5% (Col I)</div>
+                  <div className="text-[10px] text-emerald-300 bg-white/5 p-1.5 rounded border border-white/5 break-all">
+                    =F4*$I$2 <span className="text-slate-400">ou</span> =(F4+H4)*$I$2
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-sans">
+                    Calcul direct sur Base HT ou assiette douanière Guadeloupe acceptée.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-[#070F1E] border border-white/5 space-y-1 md:col-span-2 lg:col-span-2">
+                  <div className="text-teal-300 font-bold text-[11px]">Jalon 5 • Total TTC (Col J), Totaux L14 &amp; Volets figés</div>
+                  <div className="text-[10px] text-emerald-300 bg-white/5 p-1.5 rounded border border-white/5 break-all">
+                    Col J : =F4+G4+H4+I4 (ou =SOMME(F4:I4)) | Totaux L14 : =SOMME(F4:F13) à =SOMME(J4:J13)
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-sans">
+                    Menu <em>Affichage &gt; Figer les volets</em> appliqué sous la ligne 3 pour maintenir visibles les en-têtes lors du défilement.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* BLOC B : Tableau récapitulatif des 10 conteneurs + Ligne 14 TOTAL */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-teal-300 font-mono uppercase tracking-wider">
+                  Bloc B • Valeurs numériques exactes attendues ligne par ligne
+                </span>
+                <span className="text-[10px] font-mono text-slate-400">
+                  10 conteneurs + Ligne 14 Total
+                </span>
+              </div>
+
+              <div className="overflow-x-auto rounded-xl border border-white/10 bg-[#070F1E]/90 max-w-full">
+                <table className="w-full text-left border-collapse text-[11px] font-mono min-w-[780px]">
+                  <thead>
+                    <tr className="border-b border-white/10 bg-[#0D1F38] text-slate-400 uppercase text-[10px]">
+                      <th className="py-2 px-3">Lig.</th>
+                      <th className="py-2 px-3">Conteneur</th>
+                      <th className="py-2 px-3">Armateur</th>
+                      <th className="py-2 px-3 text-center">CP Corrigé</th>
+                      <th className="py-2 px-3 text-right">Base HT</th>
+                      <th className="py-2 px-3 text-right">Transit (€)</th>
+                      <th className="py-2 px-3 text-right">Octroi 8,5%</th>
+                      <th className="py-2 px-3 text-right">TVA 8,5%</th>
+                      <th className="py-2 px-3 text-right text-teal-300 font-bold">Total TTC</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {CORINNE_CONTAINERS_CORRIGE.map((c) => (
+                      <tr key={c.lig} className="hover:bg-white/[0.02]">
+                        <td className="py-2 px-3 text-slate-500">{c.lig}</td>
+                        <td className="py-2 px-3 text-white font-semibold">{c.id}</td>
+                        <td className="py-2 px-3 text-slate-300">{c.armateur}</td>
+                        <td className="py-2 px-3 text-center text-amber-300 font-bold">{c.cp}</td>
+                        <td className="py-2 px-3 text-right text-slate-200">{c.base}</td>
+                        <td className="py-2 px-3 text-right text-teal-400">{c.transit}</td>
+                        <td className="py-2 px-3 text-right text-slate-200">{c.octroi}</td>
+                        <td className="py-2 px-3 text-right text-slate-200">{c.tvaDir}</td>
+                        <td className="py-2 px-3 text-right font-bold text-teal-300">{c.ttc}</td>
+                      </tr>
+                    ))}
+                    {/* Ligne 14 TOTAL */}
+                    <tr className="bg-teal-500/10 font-bold border-t-2 border-teal-500/30 text-white">
+                      <td className="py-2.5 px-3 text-teal-300 font-bold">14</td>
+                      <td colSpan={3} className="py-2.5 px-3 tracking-wider text-teal-200">
+                        TOTAL DU MANIFESTE (=SOMME)
+                      </td>
+                      <td className="py-2.5 px-3 text-right">110 970,50 €</td>
+                      <td className="py-2.5 px-3 text-right text-teal-300">3 040,00 €</td>
+                      <td className="py-2.5 px-3 text-right text-amber-300">9 432,49 €</td>
+                      <td className="py-2.5 px-3 text-right text-amber-300">9 432,49 €</td>
+                      <td className="py-2.5 px-3 text-right text-emerald-300 text-xs">132 875,48 €</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono italic">
+                * Note sur la TVA : Si l&apos;apprenant applique l&apos;assiette douanière complète Guadeloupe <code>=(Base HT + Octroi)*8,5%</code>, le total TVA s&apos;élève à 10 234,25 € et le Total TTC à 133 677,24 € (les deux approches sont validées à 100% par le moteur d&apos;auto-audit).
+              </div>
+            </div>
+
+            {/* BLOC C : Corrigé type du Carnet de Laboratoire Réflexif */}
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center gap-2 text-xs font-bold text-teal-300 font-mono uppercase tracking-wider">
+                <span>Bloc C • Corrigé type du carnet de laboratoire réflexif (Rédactionnel attendu)</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                <div className="p-3.5 rounded-xl bg-[#070F1E] border border-white/5 space-y-1.5">
+                  <div className="text-teal-300 font-bold text-[11px] font-['Lexend']">
+                    1. Démarche technique adoptée (au « Je »)
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed font-sans">
+                    « J&apos;ai débuté par le diagnostic du classeur corrompu. En premier lieu, j&apos;ai normalisé la colonne des codes postaux (Col E) en appliquant le format texte pour restaurer le zéro initial tronqué sur les communes 01234 et 06000. Ensuite, j&apos;ai résolu l&apos;erreur #N/A sur les frais de transit (Col G) en combinant SUPPRESPACE(C4) pour éliminer les espaces parasites des noms d&apos;armateurs et SIERREUR pour sécuriser la formule de recherche. Pour la fiscalité locale Guadeloupe, j&apos;ai automatisé l&apos;Octroi de mer 8,5 % (=F4*$H$2) et la TVA 8,5 % (=F4*$I$2) avec verrouillage absolu F4 de la ligne d&apos;en-tête, puis calculé le Total TTC (=F4+G4+H4+I4). Enfin, j&apos;ai consolidé les totaux par SOMME en ligne 14 et figé les volets sous la ligne 3 pour garantir une consultation ergonomique lors du défilement. »
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-[#070F1E] border border-white/5 space-y-1.5">
+                  <div className="text-amber-300 font-bold text-[11px] font-['Lexend']">
+                    2. Difficultés rencontrées &amp; Contournement
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed font-sans">
+                    « La principale difficulté résidait dans l&apos;erreur invisible #N/A causée par des espaces de fin dans le texte des armateurs (ex: &apos;CMA-CGM &apos; vs &apos;CMA-CGM&apos;). Un simple RECHERCHEV échouait. J&apos;ai utilisé SUPPRESPACE() pour nettoyer la chaîne avant la recherche matricielle. J&apos;ai également veillé à bloquer les cellules de taux ($H$2, $I$2) avec le signe $ pour éviter le décalage des références lors de l&apos;étirement vers le bas. »
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-[#070F1E] border border-white/5 space-y-1.5">
+                  <div className="text-emerald-300 font-bold text-[11px] font-['Lexend']">
+                    3. Enseignements DSI &amp; Bonnes pratiques
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed font-sans">
+                    « En production d&apos;entreprise, les données importées comportent fréquemment des anomalies de saisie (zéros tronqués, espaces invisibles). La standardisation systématique des types de données et l&apos;encapsulation préventive des formules dans des fonctions de contrôle (SUPPRESPACE, SIERREUR) garantissent l&apos;intégrité des tableaux de bord financiers et évitent les ruptures de traitement lors des clôtures douanières. »
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
       
       {/* En-tête & Filtres */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-2xl slate-glass border border-white/10">
