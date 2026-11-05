@@ -33,3 +33,4 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Erreur lors de la génération du corrigé officiel.' }, { status: 500 });
   }
 }
+
