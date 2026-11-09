@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useTransition } from 'react';
+import Link from 'next/link';
 import { TicketKLF, Apprenant, TicketResolution, TicketResolutionCategory, TicketUrgency } from '@/types/tip';
 import { 
   Ticket, 
@@ -19,7 +20,9 @@ import {
   FileText,
   LogOut,
   ShieldCheck,
-  Headphones
+  Headphones,
+  Shield,
+  ExternalLink
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { submitTicketResolutionAction } from '@/app/admin/actions';
@@ -375,6 +378,15 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
                   </option>
                 ))}
               </select>
+
+              <Link
+                href="/admin"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs font-mono transition-all shadow-sm active:scale-95 shrink-0"
+                title="Accéder au Cockpit d'évaluation des tickets (/admin)"
+              >
+                <Shield className="w-3.5 h-3.5" />
+                <span>Cockpit Admin ↗</span>
+              </Link>
             </div>
           ) : (
             <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 shrink-0">
@@ -501,7 +513,15 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
                     }`}
                   >
                     <span>
-                      {needsCorrection ? 'Corriger ma réponse' : isPendingReview ? 'Modifier ma saisie' : 'Prendre en charge'}
+                      {needsCorrection
+                        ? isFormateur
+                          ? 'Intervention à corriger'
+                          : 'Corriger ma réponse'
+                        : isPendingReview
+                        ? isFormateur
+                          ? 'Examiner la soumission'
+                          : 'Modifier ma saisie'
+                        : 'Prendre en charge'}
                     </span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
@@ -551,6 +571,25 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
             {/* Corps de la modale défilable */}
             <div className="py-4 space-y-4 max-h-[70vh] overflow-y-auto pr-2">
               
+              {/* Alerte inspection formateur */}
+              {isFormateur && currentResolution?.statut === 'en_attente_validation' && (
+                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>
+                      Vous inspectez la soumission en attente de <strong>{activeStudent?.prenom} {activeStudent?.nom}</strong>.
+                    </span>
+                  </div>
+                  <Link
+                    href="/admin"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] font-mono shrink-0 shadow-sm"
+                  >
+                    <span>Évaluer dans le Cockpit Admin</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </Link>
+                </div>
+              )}
+
               {/* Message initial usager */}
               <div className="p-3.5 rounded-xl bg-white/5 border border-white/5 text-xs leading-relaxed text-slate-300">
                 <strong className="text-white block mb-1">Message de l'utilisateur :</strong>
