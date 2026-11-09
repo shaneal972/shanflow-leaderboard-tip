@@ -96,7 +96,58 @@ export async function GET(request: NextRequest) {
     const cleanPrenom = student.prenom.replace(/[^a-zA-Z0-9]/g, '_');
     const filename = `Fiche-DP_CCP1_${cleanNom}_${cleanPrenom}_${ticketId}.pdf`;
 
-    // 5. Appel du webhook n8n / Gotenberg sécurisé
+    // Helper pour générer la vue d'impression autonome haute fidélité (Fallback Zéro-Défaut)
+    const renderAutonomousPrintView = (htmlContent: string) => {
+      const enhancedHtml = htmlContent.replace(
+        '</body>',
+        `
+        <div id="print-controls" style="position: fixed; top: 0; left: 0; right: 0; background: #0f172a; color: #f8fafc; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; z-index: 999999; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif; box-shadow: 0 4px 20px rgba(0,0,0,0.4); border-bottom: 2px solid #0284c7;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 16px;">📑</span>
+            <div>
+              <div style="font-size: 13px; font-weight: 700; color: #ffffff;">Fiche d'Activité Professionnelle (DP CCP 1)</div>
+              <div style="font-size: 11px; color: #94a3b8;">Format A4 Portrait certifié • Prêt à imprimer ou enregistrer en PDF</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button onclick="window.print()" style="background: #0284c7; color: white; border: none; padding: 8px 18px; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);">
+              🖨️ Imprimer / Enregistrer en PDF
+            </button>
+          </div>
+        </div>
+        <style>
+          @media screen {
+            body { padding-top: 55px !important; background: #334155 !important; }
+            .dp-container, table, div { box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
+          }
+          @media print {
+            #print-controls { display: none !important; }
+            body { padding-top: 0 !important; background: #ffffff !important; }
+          }
+        </style>
+        <script>
+          window.addEventListener('load', function() {
+            setTimeout(function() { window.print(); }, 400);
+          });
+        </script>
+      </body>`
+      );
+
+      return new NextResponse(enhancedHtml, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+        },
+      });
+    };
+
+    const format = searchParams.get('format');
+    if (format === 'html') {
+      return renderAutonomousPrintView(compiledHtml);
+    }
+
+    // 5. Appel du webhook n8n / Gotenberg sécurisé avec timeout et fallback automatique
     const webhookUrl =
       process.env.N8N_QUALIOPI_PDF_WEBHOOK_URL ||
       'https://n8n.shandev.cloud/webhook/qualiopi-pdf-generate';
@@ -104,46 +155,47 @@ export async function GET(request: NextRequest) {
       process.env.KLF_WEBHOOK_BEARER_TOKEN ||
       'klf_tip_bearer_secret_2026_jarry_secure!';
 
-    const n8nResponse = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${bearerToken}`,
-      },
-      body: JSON.stringify({
-        html: compiledHtml,
-        filename,
-      }),
-      cache: 'no-store',
-    });
-
-    if (!n8nResponse.ok) {
-      const errorText = await n8nResponse.text();
-      console.error('[DP PDF] Erreur webhook n8n:', n8nResponse.status, errorText);
-      return new NextResponse(
-        `Erreur du service d'impression Gotenberg (${n8nResponse.status}) : ${errorText.substring(0, 200)}`,
-        { status: 502 }
-      );
-    }
-
-    // 6. Récupération du buffer binaire PDF
-    const pdfBuffer = await n8nResponse.arrayBuffer();
-    if (!pdfBuffer || pdfBuffer.byteLength === 0) {
-      return new NextResponse("Le service d'impression Gotenberg a renvoyé un document vide.", {
-        status: 502,
+    try {
+      const n8nResponse = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${bearerToken}`,
+        },
+        body: JSON.stringify({
+          html: compiledHtml,
+          filename,
+        }),
+        cache: 'no-store',
+        signal: AbortSignal.timeout(4000), // Timeout 4s pour ne jamais bloquer l'usager
       });
-    }
 
-    // 7. Streaming direct vers le client
-    return new NextResponse(pdfBuffer, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${filename}"`,
-        'Content-Length': pdfBuffer.byteLength.toString(),
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-      },
-    });
+      if (!n8nResponse.ok) {
+        console.warn('[DP PDF] Service n8n indisponible (status ' + n8nResponse.status + '), activation du fallback autonome.');
+        return renderAutonomousPrintView(compiledHtml);
+      }
+
+      // 6. Récupération du buffer binaire PDF
+      const pdfBuffer = await n8nResponse.arrayBuffer();
+      if (!pdfBuffer || pdfBuffer.byteLength === 0) {
+        console.warn('[DP PDF] Buffer vide reçu de Gotenberg, bascule sur la vue autonome.');
+        return renderAutonomousPrintView(compiledHtml);
+      }
+
+      // 7. Streaming direct vers le client
+      return new NextResponse(pdfBuffer, {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="${filename}"`,
+          'Content-Length': pdfBuffer.byteLength.toString(),
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+        },
+      });
+    } catch (webhookError: any) {
+      console.warn('[DP PDF] Exception lors de l\'appel Gotenberg/n8n (' + webhookError.message + '), bascule sur la vue autonome.');
+      return renderAutonomousPrintView(compiledHtml);
+    }
   } catch (error: any) {
     console.error('[DP PDF] Exception:', error);
     return new NextResponse(
