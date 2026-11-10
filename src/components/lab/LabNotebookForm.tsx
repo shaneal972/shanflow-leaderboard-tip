@@ -1,7 +1,13 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
-import { Lab, LabSubmission, LabAuditSummary, Apprenant } from '@/types/tip';
+import {
+  Lab,
+  LabSubmission,
+  LabAuditSummary,
+  LabSubmissionStatus,
+  Apprenant,
+} from '@/types/tip';
 import { saveLabProgressAction } from '@/app/lab/actions';
 import { 
   FileText, 
@@ -23,6 +29,10 @@ interface LabNotebookFormProps {
   student: Apprenant;
   initialSubmission?: LabSubmission | null;
   currentAudit: LabAuditSummary | null;
+  onSubmissionSaved?: (result: {
+    statut: LabSubmissionStatus;
+    pointsAttribues: number;
+  }) => void;
 }
 
 export const LabNotebookForm: React.FC<LabNotebookFormProps> = ({
@@ -30,6 +40,7 @@ export const LabNotebookForm: React.FC<LabNotebookFormProps> = ({
   student,
   initialSubmission,
   currentAudit,
+  onSubmissionSaved,
 }) => {
   const [isPending, startTransition] = useTransition();
 
@@ -106,6 +117,12 @@ ${demarcheBlock}`;
       });
 
       if (res.success) {
+        if (onSubmissionSaved && res.statut) {
+          onSubmissionSaved({
+            statut: res.statut as LabSubmissionStatus,
+            pointsAttribues: res.pointsAttribues ?? 0,
+          });
+        }
         setNotification({
           type: 'success',
           message: isDraft

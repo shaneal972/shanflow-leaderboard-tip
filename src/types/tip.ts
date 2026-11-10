@@ -296,6 +296,8 @@ export interface LabAuditSummary {
 
 export type LabSubmissionStatus = 'brouillon' | 'en_cours' | 'soumis_en_revue' | 'homologue_dsi' | 'a_corriger';
 
+export type LabParticipantStatus = 'non_commence' | LabSubmissionStatus;
+
 export interface LabSubmission {
   id: string;
   lab_id: string;
@@ -314,4 +316,20 @@ export interface LabSubmission {
   evalue_par?: string | null;
   apprenant?: Apprenant;
   lab?: Lab;
+}
+
+export interface LabParticipantProgress {
+  apprenantId: string;
+  prenom: string;
+  nomDisplay: string;
+  equipe: string;
+  avatar_url: string;
+  scorePct: number;
+  jalonsValides: number;
+  totalJalons: number;
+  statut: LabParticipantStatus;
+  pointsAttribues: number;
+  soumisLe: string | null;
+  milestoneStatuses: LabMilestoneStatus[];
+  fullSubmission: LabSubmission | null;
 }

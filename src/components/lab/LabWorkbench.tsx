@@ -1,13 +1,26 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Lab, LabSubmission, LabAuditSummary, Apprenant } from '@/types/tip';
+import { useRouter } from 'next/navigation';
+import {
+  Lab,
+  LabSubmission,
+  LabAuditSummary,
+  LabParticipantProgress,
+  LabSubmissionStatus,
+  Apprenant,
+} from '@/types/tip';
+import {
+  applyLocalAuditToParticipants,
+  applyLocalSubmissionStatusToParticipants,
+} from '@/core/domain/labProgress';
 import { LabExcelAuditor } from './LabExcelAuditor';
 import { LabQuai3DualAuditor } from './LabQuai3DualAuditor';
 import { LabQuai3GuidePanel } from './LabQuai3GuidePanel';
 import { LabMilestoneList } from './LabMilestoneList';
 import { LabNotebookForm } from './LabNotebookForm';
+import { LabPromoProgressPanel } from './LabPromoProgressPanel';
 import { 
   ArrowLeft, 
   Sparkles, 
@@ -29,6 +42,7 @@ interface LabWorkbenchProps {
   student: Apprenant;
   initialSubmission?: LabSubmission | null;
   isFormateur?: boolean;
+  labParticipants?: LabParticipantProgress[];
 }
 
 export const LabWorkbench: React.FC<LabWorkbenchProps> = ({
@@ -36,13 +50,34 @@ export const LabWorkbench: React.FC<LabWorkbenchProps> = ({
   student,
   initialSubmission,
   isFormateur = false,
+  labParticipants = [],
 }) => {
+  const router = useRouter();
   const [currentAudit, setCurrentAudit] = useState<LabAuditSummary | null>(
     initialSubmission?.audit_results || null
   );
+  const [participants, setParticipants] =
+    useState<LabParticipantProgress[]>(labParticipants);
+
+  useEffect(() => {
+    setParticipants(labParticipants);
+  }, [labParticipants]);
 
   const handleAuditComplete = (summary: LabAuditSummary) => {
     setCurrentAudit(summary);
+    setParticipants((prev) =>
+      applyLocalAuditToParticipants(prev, student.id, lab, summary)
+    );
+  };
+
+  const handleSubmissionSaved = (result: {
+    statut: LabSubmissionStatus;
+    pointsAttribues: number;
+  }) => {
+    setParticipants((prev) =>
+      applyLocalSubmissionStatusToParticipants(prev, student.id, result)
+    );
+    router.refresh();
   };
 
   const auditDetails = currentAudit?.details || [];
@@ -189,6 +224,16 @@ export const LabWorkbench: React.FC<LabWorkbenchProps> = ({
         </div>
       </div>
 
+      {/* 2b. Liste des apprenants participants & Jauge /100 */}
+      {participants.length > 0 && (
+        <LabPromoProgressPanel
+          lab={lab}
+          participants={participants}
+          currentStudentId={student.id}
+          isFormateur={isFormateur}
+        />
+      )}
+
       {/* Guide Interactif 4h00 « Zéro Jargon » pour le Pack Quai n°3 */}
       {lab.id === 'tp-bur-03-quai3-pack' && <LabQuai3GuidePanel />}
 
@@ -245,6 +290,7 @@ export const LabWorkbench: React.FC<LabWorkbenchProps> = ({
               student={student}
               initialSubmission={initialSubmission}
               currentAudit={currentAudit}
+              onSubmissionSaved={handleSubmissionSaved}
             />
           </div>
 

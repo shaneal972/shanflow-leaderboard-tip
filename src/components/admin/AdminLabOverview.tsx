@@ -1,25 +1,37 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
-import { LabSubmission, Apprenant, Lab } from '@/types/tip';
+import React, { useEffect, useMemo, useState, useTransition } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import {
+  LabSubmission,
+  Apprenant,
+  Lab,
+  LabParticipantProgress,
+  LabParticipantStatus,
+} from '@/types/tip';
+import { ALL_LABS, getLabById } from '@/lib/lab/labData';
+import {
+  buildLabParticipantsProgress,
+  computeLabGlobalStats,
+  getProgressScorePalette,
+  sortLabParticipants,
+} from '@/core/domain/labProgress';
+import { LabScoreGauge } from '@/components/lab/LabScoreGauge';
 import { homologuerLabAction } from '@/app/lab/actions';
-import { 
-  FlaskConical, 
-  CheckCircle2, 
-  Clock, 
-  Download, 
-  Award, 
-  ExternalLink, 
-  Search, 
-  Filter,
+import {
+  FlaskConical,
+  CheckCircle2,
+  Download,
+  Award,
+  ExternalLink,
+  Search,
   Eye,
   EyeOff,
-  ShieldCheck, 
-  Send, 
-  AlertCircle,
-  FileSpreadsheet,
+  ShieldCheck,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Users,
 } from 'lucide-react';
 
 const CORINNE_CONTAINERS_CORRIGE = [
@@ -35,41 +47,160 @@ const CORINNE_CONTAINERS_CORRIGE = [
   { lig: 13, id: 'MSCU-443190-2', navire: 'Caraïbes Express', armateur: 'MSC', cp: '97110', base: '6 450,00 €', transit: '310,00 €', octroi: '548,25 €', tvaDir: '548,25 €', ttc: '7 856,50 €' },
 ];
 
+interface AdminLabRow extends LabParticipantProgress {
+  lab: Lab;
+  student: Apprenant;
+}
+
 interface AdminLabOverviewProps {
   submissions: LabSubmission[];
   students: Apprenant[];
+}
+
+function getAdminStatusBadge(
+  statut: LabParticipantStatus,
+  scorePct: number
+): { label: string; cls: string } {
+  switch (statut) {
+    case 'homologue_dsi':
+      return {
+        label: '✓ Homologué DSI',
+        cls: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/35',
+      };
+    case 'soumis_en_revue':
+      return {
+        label: 'À homologuer',
+        cls: 'bg-sky-500/20 text-sky-300 border-sky-500/35',
+      };
+    case 'a_corriger':
+      return {
+        label: 'À corriger',
+        cls: 'bg-rose-500/20 text-rose-300 border-rose-500/35',
+      };
+    case 'en_cours':
+      return {
+        label: `En cours (${scorePct}%)`,
+        cls: 'bg-amber-500/20 text-amber-300 border-amber-500/35',
+      };
+    case 'brouillon':
+      return {
+        label: 'Brouillon',
+        cls: 'bg-white/5 text-slate-300 border-white/15',
+      };
+    default:
+      return {
+        label: 'Non commencé (0/100)',
+        cls: 'bg-white/5 text-slate-400 border-white/10',
+      };
+  }
 }
 
 export const AdminLabOverview: React.FC<AdminLabOverviewProps> = ({
   submissions: initialSubmissions,
   students,
 }) => {
+  const router = useRouter();
   const [submissions, setSubmissions] = useState<LabSubmission[]>(initialSubmissions);
+  const [selectedLabId, setSelectedLabId] = useState<string>('tp-bur-01-corinne');
   const [selectedSub, setSelectedSub] = useState<LabSubmission | null>(null);
-  const [feedback, setFeedback] = useState<string>('Démarche technique rigoureuse et formules conformes aux spécifications KLF. Homologation accordée.');
+  const [feedback, setFeedback] = useState<string>(
+    'Démarche technique rigoureuse et formules conformes aux spécifications KLF. Homologation accordée.'
+  );
   const [isPending, startTransition] = useTransition();
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showCorrigePanel, setShowCorrigePanel] = useState<boolean>(false);
   const [showQuai3Panel, setShowQuai3Panel] = useState<boolean>(false);
 
-  const filteredSubmissions = submissions.filter((sub) => {
-    const student = sub.apprenant || students.find((s) => s.id === sub.apprenant_id);
-    const fullName = student ? `${student.prenom} ${student.nom}`.toLowerCase() : '';
-    const matchesSearch = fullName.includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || sub.statut === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  useEffect(() => {
+    setSubmissions(initialSubmissions);
+  }, [initialSubmissions]);
+
+  const studentsById = useMemo(
+    () => new Map(students.map((s) => [s.id, s])),
+    [students]
+  );
+
+  // Construction de la matrice complète des apprenants (!is_admin) croisée avec les soumissions
+  const allRows: AdminLabRow[] = useMemo(() => {
+    const labsToDisplay =
+      selectedLabId === 'all'
+        ? ALL_LABS
+        : [getLabById(selectedLabId) || ALL_LABS[0]];
+
+    const combined: AdminLabRow[] = [];
+    for (const lab of labsToDisplay) {
+      const participants = buildLabParticipantsProgress({
+        lab,
+        students,
+        submissions,
+        isFormateur: true,
+      });
+
+      for (const p of participants) {
+        const studentObj = studentsById.get(p.apprenantId);
+        if (!studentObj) continue;
+        combined.push({
+          ...p,
+          lab,
+          student: studentObj,
+        });
+      }
+    }
+
+    return sortLabParticipants(combined);
+  }, [selectedLabId, students, submissions, studentsById]);
+
+  const globalStats = useMemo(
+    () => computeLabGlobalStats(allRows),
+    [allRows]
+  );
+
+  const globalPalette = getProgressScorePalette(globalStats.averagePromoPct);
+
+  const filteredRows = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return allRows.filter((row) => {
+      const fullName = `${row.prenom} ${row.nomDisplay} ${row.equipe} ${row.lab.titre}`.toLowerCase();
+      const matchesSearch = !q || fullName.includes(q);
+
+      let matchesStatus = true;
+      if (statusFilter === 'actifs') {
+        matchesStatus = row.scorePct > 0;
+      } else if (statusFilter !== 'all') {
+        matchesStatus = row.statut === statusFilter;
+      }
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [allRows, searchQuery, statusFilter]);
+
+  const handleOpenInspect = (row: AdminLabRow) => {
+    if (!row.fullSubmission) return;
+    setSelectedSub({
+      ...row.fullSubmission,
+      apprenant: row.fullSubmission.apprenant || row.student,
+      lab: row.fullSubmission.lab || row.lab,
+    });
+  };
 
   const handleHomologuer = (sub: LabSubmission) => {
+    if (sub.statut === 'homologue_dsi') return;
     startTransition(async () => {
-      const pointsSolde = 100; // Solde pour atteindre 200 pts au total
+      const targetLab = getLabById(sub.lab_id) || sub.lab;
+      const totalLabPoints = targetLab?.points_total || 200;
+      const pointsSolde = Math.max(0, totalLabPoints - (sub.points_attribues || 0));
+
       const res = await homologuerLabAction({
         submissionId: sub.id,
         labId: sub.lab_id,
         studentId: sub.apprenant_id,
         pointsSolde,
-        badgeId: sub.lab?.badge_id || (sub.lab_id === 'tp-bur-03-quai3-pack' ? 'office_collab_pilot' : 'corinne_savior'),
+        badgeId:
+          targetLab?.badge_id ||
+          (sub.lab_id === 'tp-bur-03-quai3-pack'
+            ? 'office_collab_pilot'
+            : 'corinne_savior'),
         feedback,
       });
 
@@ -77,19 +208,334 @@ export const AdminLabOverview: React.FC<AdminLabOverviewProps> = ({
         setSubmissions((prev) =>
           prev.map((s) =>
             s.id === sub.id
-              ? { ...s, statut: 'homologue_dsi', points_attribues: 200, feedback_formateur: feedback }
+              ? {
+                  ...s,
+                  statut: 'homologue_dsi',
+                  points_attribues: totalLabPoints,
+                  feedback_formateur: feedback,
+                }
               : s
           )
         );
         setSelectedSub(null);
+        router.refresh();
       } else {
         alert("Erreur lors de l'homologation : " + (res.error || 'Inconnue'));
       }
     });
   };
 
+  const activeLabObj =
+    selectedLabId === 'all' ? null : getLabById(selectedLabId) || null;
+
   return (
     <div className="space-y-6">
+
+      {/* 1. Sélecteur d'atelier TP & Bandeau de jauge globale sur 100 */}
+      <div className="p-5 rounded-3xl slate-glass border border-teal-500/30 bg-[#0A192F]/80 space-y-4 shadow-xl">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-300 shrink-0">
+              <FlaskConical className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-white font-['Lexend']">
+                Supervision des ateliers KLF Tech Lab — Jauge promo /100
+              </h2>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Suivi complet des {students.filter((s) => !s.is_admin).length} apprenants de la promotion (y compris non commencés à 0/100) et homologation DSI.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            <select
+              value={selectedLabId}
+              onChange={(e) => setSelectedLabId(e.target.value)}
+              aria-label="Sélectionner un atelier TP"
+              className="px-3.5 py-2 rounded-xl bg-[#070F1E] border border-teal-500/35 text-xs text-white font-mono focus:outline-none focus:border-teal-400 cursor-pointer max-w-full sm:max-w-xs"
+            >
+              {ALL_LABS.map((lab) => (
+                <option key={lab.id} value={lab.id}>
+                  {lab.id === 'tp-bur-01-corinne'
+                    ? '★ TP Corinne — Manifeste maritime (tp-bur-01-corinne)'
+                    : lab.id === 'tp-bur-03-quai3-pack'
+                      ? 'Pack 4h Quai n°3 — Word/Excel/Docs/Sheets'
+                      : `${lab.titre} (${lab.statut === 'a_venir' ? 'À venir' : lab.id})`}
+                </option>
+              ))}
+              <option value="all">
+                Tous les ateliers de ALL_LABS ({ALL_LABS.length})
+              </option>
+            </select>
+
+            {activeLabObj && activeLabObj.statut === 'ouvert' && (
+              <Link
+                href={`/lab/${activeLabObj.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono font-semibold bg-teal-500/15 hover:bg-teal-500/25 text-teal-300 border border-teal-500/35 transition-all"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Ouvrir l&apos;atelier</span>
+              </Link>
+            )}
+          </div>
+        </div>
+
+        {/* Bandeau Jauge Globale de l'Atelier sur 100 */}
+        <div className="p-4 rounded-2xl bg-[#070F1E]/90 border border-white/10 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
+              <Users className="w-4 h-4 text-teal-400" />
+              <span className="font-bold">
+                Jauge globale de l&apos;atelier sur 100
+              </span>
+              {activeLabObj && (
+                <span className="px-2 py-0.5 rounded bg-white/5 text-[10px] text-slate-400 border border-white/10">
+                  {activeLabObj.jalons?.length || 5} jalons d&apos;audit
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 font-mono text-xs">
+              {globalStats.activeCount > 0 && (
+                <span className="text-slate-400">
+                  Moy. actifs :{' '}
+                  <strong className="text-cyan-300">
+                    {globalStats.averageActivePct} / 100
+                  </strong>
+                </span>
+              )}
+              <span className={`text-base font-extrabold ${globalPalette.textClass}`}>
+                {globalStats.averagePromoPct} / 100
+              </span>
+            </div>
+          </div>
+
+          <div
+            className="w-full h-3 rounded-full bg-white/10 overflow-hidden border border-white/5"
+            role="progressbar"
+            aria-valuenow={globalStats.averagePromoPct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${globalPalette.barClass}`}
+              style={{ width: `${globalStats.averagePromoPct}%` }}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+            <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between">
+              <span className="text-[11px] font-mono text-slate-400">
+                Participants actifs
+              </span>
+              <span className="text-xs font-mono font-bold text-teal-300">
+                {globalStats.activeCount} / {globalStats.totalParticipants}
+              </span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between">
+              <span className="text-[11px] font-mono text-emerald-200/80">
+                Validés à 100/100
+              </span>
+              <span className="text-xs font-mono font-bold text-emerald-300">
+                {globalStats.validated100Count}
+              </span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/25 flex items-center justify-between">
+              <span className="text-[11px] font-mono text-sky-200/80">
+                À homologuer
+              </span>
+              <span className="text-xs font-mono font-bold text-sky-300">
+                {globalStats.pendingReviewCount}
+              </span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between">
+              <span className="text-[11px] font-mono text-slate-400">
+                Non commencés
+              </span>
+              <span className="text-xs font-mono font-bold text-slate-300">
+                {globalStats.notStartedCount}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Barre recherche & filtre statut */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Filtrer un apprenant, une escouade..."
+              className="w-full pl-8 pr-3 py-2 rounded-xl bg-[#070F1E] border border-white/10 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-400 font-mono"
+            />
+          </div>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            aria-label="Filtrer par statut d'atelier"
+            className="px-3 py-2 rounded-xl bg-[#070F1E] border border-white/10 text-xs text-slate-200 focus:outline-none focus:border-teal-400 font-mono cursor-pointer"
+          >
+            <option value="all">Tous les statuts ({allRows.length})</option>
+            <option value="actifs">
+              Participants actifs (&gt; 0/100) ({allRows.filter((r) => r.scorePct > 0).length})
+            </option>
+            <option value="soumis_en_revue">
+              À homologuer ({globalStats.pendingReviewCount})
+            </option>
+            <option value="homologue_dsi">Homologués DSI (100/100)</option>
+            <option value="en_cours">En cours</option>
+            <option value="brouillon">Brouillons</option>
+            <option value="a_corriger">À corriger</option>
+            <option value="non_commence">
+              Non commencés (0/100) ({globalStats.notStartedCount})
+            </option>
+          </select>
+        </div>
+      </div>
+
+      {/* 2. Tableau complet des 12 apprenants avec jauge /100 */}
+      <div className="rounded-2xl border border-white/10 bg-[#0A192F]/60 overflow-hidden shadow-2xl">
+        <div className="overflow-x-auto max-w-full [webkit-overflow-scrolling:touch]">
+          <table className="w-full text-left border-collapse min-w-[880px]">
+            <thead>
+              <tr className="border-b border-white/10 bg-[#112240]/90 text-[11px] font-mono uppercase tracking-wider text-slate-400">
+                <th className="py-3 px-4">Technicien TIP</th>
+                <th className="py-3 px-4">Atelier KLF</th>
+                <th className="py-3 px-4">Progression / Score audit (/100)</th>
+                <th className="py-3 px-4 text-center">Points</th>
+                <th className="py-3 px-4 text-center">Statut</th>
+                <th className="py-3 px-4 text-center w-48 sticky right-0 z-[5] bg-[#112240] shadow-[-8px_0_16px_rgba(0,0,0,0.45)]">
+                  Actions formateur
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5 text-xs">
+              {filteredRows.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-slate-500 font-mono">
+                    Aucun apprenant trouvé pour ces critères.
+                  </td>
+                </tr>
+              ) : (
+                filteredRows.map((row) => {
+                  const statusBadge = getAdminStatusBadge(row.statut, row.scorePct);
+                  const initials = `${row.prenom.charAt(0)}${row.nomDisplay.charAt(0)}`.toUpperCase();
+                  const sub = row.fullSubmission;
+
+                  return (
+                    <tr
+                      key={`${row.lab.id}-${row.apprenantId}`}
+                      className="hover:bg-white/[0.02] transition-colors"
+                    >
+                      {/* Apprenant */}
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center font-bold text-teal-400 shrink-0 text-[10px] overflow-hidden">
+                            {row.avatar_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={row.avatar_url}
+                                alt={`${row.prenom} ${row.nomDisplay}`}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              initials
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-semibold text-slate-100 font-['Lexend']">
+                              {row.prenom} {row.nomDisplay}
+                            </div>
+                            <div className="text-[10px] text-slate-500 font-mono">
+                              {row.equipe}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Atelier */}
+                      <td className="py-3 px-4 max-w-[230px]">
+                        <div className="font-semibold text-slate-200 line-clamp-1">
+                          {row.lab.titre}
+                        </div>
+                        <div className="text-[10px] font-mono text-teal-400">
+                          {row.lab.id.toUpperCase()}
+                        </div>
+                      </td>
+
+                      {/* Progression / Score Audit sur 100 + pastilles J1..Jn */}
+                      <td className="py-3 px-4">
+                        <LabScoreGauge
+                          compact
+                          scorePct={row.scorePct}
+                          jalonsValides={row.jalonsValides}
+                          totalJalons={row.totalJalons}
+                          milestoneStatuses={row.milestoneStatuses}
+                          milestoneTitles={(row.lab.jalons || []).map((j) => j.titre)}
+                        />
+                      </td>
+
+                      {/* Points */}
+                      <td className="py-3 px-4 text-center font-mono font-bold text-amber-400 whitespace-nowrap">
+                        {row.pointsAttribues} pts
+                      </td>
+
+                      {/* Statut */}
+                      <td className="py-3 px-4 text-center font-mono whitespace-nowrap">
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold border ${statusBadge.cls}`}
+                        >
+                          {statusBadge.label}
+                        </span>
+                      </td>
+
+                      {/* Actions sticky */}
+                      <td className="py-3 px-4 text-center sticky right-0 z-[5] bg-[#0B1B34] shadow-[-8px_0_16px_rgba(0,0,0,0.45)]">
+                        {sub ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenInspect(row)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-mono bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-all cursor-pointer"
+                              title="Inspecter le carnet et les réponses"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>Inspecter</span>
+                            </button>
+
+                            <a
+                              href={`/api/lab/export-pdf?labId=${row.lab.id}&studentId=${row.apprenantId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-mono bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 transition-all"
+                              title="Télécharger le compte-rendu A4 Gotenberg"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              <span>PDF</span>
+                            </a>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] font-mono text-slate-500">
+                            En attente de dépôt
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 3. Cartes Référentiel & Corrigé Formateur DSI */}
 
       {/* Carte Référentiel & Corrigé Formateur DSI — Séance 10/11 Pack 4h Quai n°3 */}
       <div className="p-5 rounded-3xl slate-glass border border-amber-500/35 bg-amber-950/10 space-y-4 shadow-xl">
@@ -381,176 +827,6 @@ export const AdminLabOverview: React.FC<AdminLabOverviewProps> = ({
         )}
       </div>
       
-      {/* En-tête & Filtres */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-2xl slate-glass border border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 shrink-0">
-            <FlaskConical className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-sm font-bold text-white font-['Lexend']">
-              Supervision des ateliers KLF Tech Lab
-            </h2>
-            <p className="text-[11px] text-slate-400">
-              Contrôle des auto-audits, relecture réflexive et homologation des badges de formation.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          {/* Recherche */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Filtrer un apprenant..."
-              className="pl-8 pr-3 py-1.5 rounded-lg bg-[#070F1E] border border-white/10 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-400 font-mono"
-            />
-          </div>
-
-          {/* Filtre statut */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-1.5 rounded-lg bg-[#070F1E] border border-white/10 text-xs text-slate-200 focus:outline-none focus:border-teal-400 font-mono cursor-pointer"
-          >
-            <option value="all">Tous les statuts</option>
-            <option value="soumis_en_revue">À homologuer</option>
-            <option value="homologue_dsi">Homologués DSI</option>
-            <option value="brouillon">Brouillons</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Tableau des soumissions d'ateliers */}
-      <div className="rounded-2xl border border-white/10 bg-[#0A192F]/60 overflow-hidden shadow-2xl">
-        <div className="overflow-x-auto max-w-full">
-          <table className="w-full text-left border-collapse min-w-[750px]">
-            <thead>
-              <tr className="border-b border-white/10 bg-[#112240]/80 text-[11px] font-mono uppercase tracking-wider text-slate-400">
-                <th className="py-3 px-4">Technicien TIP</th>
-                <th className="py-3 px-4">Atelier KLF</th>
-                <th className="py-3 px-4 text-center">Score Audit</th>
-                <th className="py-3 px-4 text-center">Points</th>
-                <th className="py-3 px-4 text-center">Statut</th>
-                <th className="py-3 px-4 text-center w-48">Actions Formateur</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5 text-xs">
-              {filteredSubmissions.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-500 font-mono">
-                    Aucune soumission d&apos;atelier trouvée pour ces critères.
-                  </td>
-                </tr>
-              ) : (
-                filteredSubmissions.map((sub) => {
-                  const student = sub.apprenant || students.find((s) => s.id === sub.apprenant_id);
-                  const isHomologue = sub.statut === 'homologue_dsi';
-                  const isSoumis = sub.statut === 'soumis_en_revue';
-
-                  return (
-                    <tr key={sub.id} className="hover:bg-white/[0.02] transition-colors">
-                      {/* Apprenant */}
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center font-bold text-teal-400 shrink-0 text-[10px]">
-                            {student?.prenom?.[0]}{student?.nom?.[0]}
-                          </div>
-                          <div>
-                            <div className="font-semibold text-slate-100 font-['Lexend']">
-                              {student ? `${student.prenom} ${student.nom}` : sub.apprenant_id}
-                            </div>
-                            <div className="text-[10px] text-slate-500 font-mono">
-                              {student?.equipe || 'Support Jarry'}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Atelier */}
-                      <td className="py-3 px-4">
-                        <div className="font-semibold text-slate-200">
-                          {sub.lab?.titre || sub.lab_id}
-                        </div>
-                        <div className="text-[10px] font-mono text-teal-400">
-                          {sub.lab_id.toUpperCase()}
-                        </div>
-                      </td>
-
-                      {/* Score technique */}
-                      <td className="py-3 px-4 text-center">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded font-mono font-bold text-[11px] border ${
-                            sub.score_technique_pct === 100
-                              ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
-                              : 'bg-amber-500/10 text-amber-300 border-amber-500/30'
-                          }`}
-                        >
-                          {sub.score_technique_pct}% ({sub.jalons_valides}/5)
-                        </span>
-                      </td>
-
-                      {/* Points */}
-                      <td className="py-3 px-4 text-center font-mono font-bold text-amber-400">
-                        {sub.points_attribues} pts
-                      </td>
-
-                      {/* Statut */}
-                      <td className="py-3 px-4 text-center font-mono">
-                        {isHomologue && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                            ✓ Homologué DSI
-                          </span>
-                        )}
-                        {isSoumis && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                            À homologuer
-                          </span>
-                        )}
-                        {sub.statut === 'brouillon' && (
-                          <span className="px-2 py-0.5 rounded text-[10px] bg-white/5 text-slate-400 border border-white/10">
-                            Brouillon
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Actions */}
-                      <td className="py-3 px-4 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setSelectedSub(sub)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-mono bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-all"
-                            title="Inspecter le carnet et les réponses"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            <span>Inspecter</span>
-                          </button>
-
-                          <a
-                            href={`/api/lab/export-pdf?labId=${sub.lab_id}&studentId=${sub.apprenant_id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-mono bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 transition-all"
-                            title="Télécharger le compte-rendu A4 Gotenberg"
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                            <span>PDF</span>
-                          </a>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
       {/* Modal d'inspection & d'homologation formateur */}
       {selectedSub && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
@@ -583,11 +859,17 @@ export const AdminLabOverview: React.FC<AdminLabOverviewProps> = ({
             <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2 text-xs font-mono">
               <div className="flex justify-between text-slate-300">
                 <span>Conformité technique calculée :</span>
-                <span className="text-emerald-400 font-bold">{selectedSub.score_technique_pct}% ({selectedSub.jalons_valides}/5 jalons)</span>
+                <span className="text-emerald-400 font-bold">
+                  {selectedSub.score_technique_pct}% ({selectedSub.jalons_valides}/
+                  {getLabById(selectedSub.lab_id)?.jalons?.length || 5} jalons)
+                </span>
               </div>
               <div className="flex justify-between text-slate-300">
                 <span>Points actuels attribués :</span>
-                <span className="text-amber-400 font-bold">{selectedSub.points_attribues} pts / 200</span>
+                <span className="text-amber-400 font-bold">
+                  {selectedSub.points_attribues} pts /{' '}
+                  {getLabById(selectedSub.lab_id)?.points_total || 200}
+                </span>
               </div>
             </div>
 
@@ -634,19 +916,34 @@ export const AdminLabOverview: React.FC<AdminLabOverviewProps> = ({
               <button
                 type="button"
                 onClick={() => setSelectedSub(null)}
-                className="px-4 py-2 rounded-xl text-xs font-mono bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10"
+                className="px-4 py-2 rounded-xl text-xs font-mono bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 cursor-pointer"
               >
                 Fermer
               </button>
-              <button
-                type="button"
-                onClick={() => handleHomologuer(selectedSub)}
-                disabled={isPending}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-mono font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 transition-all shadow-md active:scale-95 disabled:opacity-50"
-              >
-                <Award className="w-4 h-4" />
-                <span>{isPending ? 'Homologation...' : 'Homologuer (+100 pts & Badge KLF)'}</span>
-              </button>
+              {selectedSub.statut === 'homologue_dsi' ? (
+                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Déjà homologué DSI</span>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleHomologuer(selectedSub)}
+                  disabled={isPending}
+                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-mono font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 transition-all shadow-md active:scale-95 disabled:opacity-50 cursor-pointer"
+                >
+                  <Award className="w-4 h-4" />
+                  <span>
+                    {isPending
+                      ? 'Homologation...'
+                      : `Homologuer (+${Math.max(
+                          0,
+                          (getLabById(selectedSub.lab_id)?.points_total || 200) -
+                            (selectedSub.points_attribues || 0)
+                        )} pts & Badge KLF)`}
+                  </span>
+                </button>
+              )}
             </div>
 
           </div>

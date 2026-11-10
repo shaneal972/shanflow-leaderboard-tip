@@ -3,7 +3,8 @@ import { notFound } from 'next/navigation';
 import { getLabById } from '@/lib/lab/labData';
 import { getActiveTechnicianId } from '@/lib/studentAuth';
 import { isAdminAuthenticated } from '@/lib/adminAuth';
-import { getApprenantById, supabaseServer } from '@/lib/supabase';
+import { getAllApprenantsAdmin, getApprenantById, supabaseServer } from '@/lib/supabase';
+import { buildLabParticipantsProgress } from '@/core/domain/labProgress';
 import { MOCK_APPRENANTS } from '@/data/mockData';
 import { LabWorkbench } from '@/components/lab/LabWorkbench';
 import { LabLockScreen } from '@/components/lab/LabLockScreen';
@@ -46,22 +47,32 @@ export default async function LabDetailPage({ params }: LabPageProps) {
   // En mode formateur seul, fallback pour visualisation de test
   const effectiveStudent = student || MOCK_APPRENANTS[0];
 
-  // Récupération de la soumission existante si présente
-  let initialSubmission: LabSubmission | null = null;
-  try {
-    const { data: subData } = await supabaseServer
-      .from('sf_lab_submissions')
-      .select('*')
-      .eq('lab_id', lab.id)
-      .eq('apprenant_id', effectiveStudent.id)
-      .maybeSingle();
+  // Chargement parallèle des apprenants de la promotion et des soumissions sur cet atelier
+  const [allApprenants, allSubmissions] = await Promise.all([
+    getAllApprenantsAdmin(),
+    (async (): Promise<LabSubmission[]> => {
+      try {
+        const { data } = await supabaseServer
+          .from('sf_lab_submissions')
+          .select('*')
+          .eq('lab_id', lab.id);
+        return (data || []) as LabSubmission[];
+      } catch {
+        // Si la table n'est pas encore créée, on retourne une liste vide
+        return [];
+      }
+    })(),
+  ]);
 
-    if (subData) {
-      initialSubmission = subData as LabSubmission;
-    }
-  } catch {
-    // Si la table n'est pas encore créée, initialSubmission reste null
-  }
+  const initialSubmission =
+    allSubmissions.find((sub) => sub.apprenant_id === effectiveStudent.id) || null;
+
+  const labParticipants = buildLabParticipantsProgress({
+    lab,
+    students: allApprenants,
+    submissions: allSubmissions,
+    isFormateur,
+  });
 
   return (
     <div className="w-full">
@@ -70,6 +81,7 @@ export default async function LabDetailPage({ params }: LabPageProps) {
         student={effectiveStudent}
         initialSubmission={initialSubmission}
         isFormateur={isFormateur}
+        labParticipants={labParticipants}
       />
     </div>
   );
