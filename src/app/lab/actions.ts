@@ -7,7 +7,7 @@ import { getLabById } from '@/lib/lab/labData';
 import { isAdminAuthenticated } from '@/lib/adminAuth';
 import { getActiveTechnicianId, isStudentAuthenticated } from '@/lib/studentAuth';
 import { calculatePalierForPoints } from '@/core/domain/gamification';
-import { LabAuditSummary, LabSubmission } from '@/types/tip';
+import { LabAuditSummary, LabSubmissionStatus } from '@/types/tip';
 
 // Sanitisation anti-XSS stricte
 const sanitizeString = (val: string) =>
@@ -76,38 +76,70 @@ export async function saveLabProgressAction(formData: {
     // Points auto-validés : si 100% des jalons validés, +100 pts immédiats
     const pointsAuto = isFullyValid ? lab.points_auto_validation : Math.round(lab.points_auto_validation * (scorePct / 100));
 
-    // 1. Récupération de l'ancienne soumission pour ne pas doubler les points
+    // 1. Récupération de l'ancienne soumission pour préserver les textes, le statut et éviter le doublon de points
     const { data: existingSub } = await supabaseServer
       .from('sf_lab_submissions')
-      .select('id, points_attribues, statut')
+      .select(
+        'id, points_attribues, statut, reponse_demarche, reponse_difficultes, reponse_enseignements, soumis_le'
+      )
       .eq('lab_id', labId)
       .eq('apprenant_id', studentId)
       .maybeSingle();
 
     const previousPoints = existingSub?.points_attribues || 0;
     const pointsToAdd = Math.max(0, pointsAuto - previousPoints);
+    const totalPointsAttribues = Math.max(previousPoints, pointsAuto);
 
-    const newStatut = isDraft ? 'brouillon' : (isFullyValid ? 'soumis_en_revue' : 'en_cours');
+    // Préservation des textes existants lors d'un auto-save d'audit (isDraft === true)
+    const finalDemarche =
+      isDraft && !reponseDemarche && existingSub?.reponse_demarche
+        ? existingSub.reponse_demarche
+        : reponseDemarche;
+    const finalDifficultes =
+      isDraft && !reponseDifficultes && existingSub?.reponse_difficultes
+        ? existingSub.reponse_difficultes
+        : reponseDifficultes;
+    const finalEnseignements =
+      isDraft && !reponseEnseignements && existingSub?.reponse_enseignements
+        ? existingSub.reponse_enseignements
+        : reponseEnseignements;
+
+    // Préservation des statuts déjà soumis / homologués lors d'un re-test en brouillon
+    let newStatut: LabSubmissionStatus;
+    if (
+      existingSub?.statut === 'homologue_dsi' ||
+      existingSub?.statut === 'soumis_en_revue'
+    ) {
+      newStatut = existingSub.statut;
+    } else if (isDraft) {
+      newStatut = auditResults
+        ? 'en_cours'
+        : ((existingSub?.statut as LabSubmissionStatus | undefined) || 'brouillon');
+    } else {
+      newStatut = isFullyValid ? 'soumis_en_revue' : 'en_cours';
+    }
+
+    const upsertPayload: Record<string, unknown> = {
+      lab_id: labId,
+      apprenant_id: studentId,
+      audit_results: auditResults,
+      jalons_valides: jalonsValides,
+      score_technique_pct: scorePct,
+      reponse_demarche: finalDemarche,
+      reponse_difficultes: finalDifficultes,
+      reponse_enseignements: finalEnseignements,
+      statut: newStatut,
+      points_attribues: totalPointsAttribues,
+    };
+
+    if (!isDraft) {
+      upsertPayload.soumis_le = new Date().toISOString();
+    }
 
     // 2. Upsert dans la table sf_lab_submissions
     const { error: upsertError } = await supabaseServer
       .from('sf_lab_submissions')
-      .upsert(
-        {
-          lab_id: labId,
-          apprenant_id: studentId,
-          audit_results: auditResults,
-          jalons_valides: jalonsValides,
-          score_technique_pct: scorePct,
-          reponse_demarche: reponseDemarche,
-          reponse_difficultes: reponseDifficultes,
-          reponse_enseignements: reponseEnseignements,
-          statut: newStatut,
-          points_attribues: Math.max(previousPoints, pointsAuto),
-          soumis_le: isDraft ? undefined : new Date().toISOString(),
-        },
-        { onConflict: 'lab_id,apprenant_id' }
-      );
+      .upsert(upsertPayload, { onConflict: 'lab_id,apprenant_id' });
 
     if (upsertError) {
       console.warn('Erreur upsert sf_lab_submissions (table peut-être en attente de DDL):', upsertError);
@@ -142,7 +174,7 @@ export async function saveLabProgressAction(formData: {
 
     return {
       success: true,
-      pointsAttribues: pointsAuto,
+      pointsAttribues: totalPointsAttribues,
       pointsNouveaux: pointsToAdd,
       statut: newStatut,
     };

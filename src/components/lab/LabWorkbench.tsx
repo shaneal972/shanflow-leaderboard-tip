@@ -15,6 +15,7 @@ import {
   applyLocalAuditToParticipants,
   applyLocalSubmissionStatusToParticipants,
 } from '@/core/domain/labProgress';
+import { saveLabProgressAction } from '@/app/lab/actions';
 import { LabExcelAuditor } from './LabExcelAuditor';
 import { LabQuai3DualAuditor } from './LabQuai3DualAuditor';
 import { LabQuai3GuidePanel } from './LabQuai3GuidePanel';
@@ -68,6 +69,31 @@ export const LabWorkbench: React.FC<LabWorkbenchProps> = ({
     setParticipants((prev) =>
       applyLocalAuditToParticipants(prev, student.id, lab, summary)
     );
+
+    // Auto-sauvegarde immédiate en base dès le dépôt et l'audit du fichier
+    saveLabProgressAction({
+      labId: lab.id,
+      studentId: student.id,
+      auditResults: summary,
+      reponseDemarche: initialSubmission?.reponse_demarche || '',
+      reponseDifficultes: initialSubmission?.reponse_difficultes || '',
+      reponseEnseignements: initialSubmission?.reponse_enseignements || '',
+      isDraft: true,
+    })
+      .then((res) => {
+        if (res.success) {
+          if (res.statut) {
+            setParticipants((prev) =>
+              applyLocalSubmissionStatusToParticipants(prev, student.id, {
+                statut: res.statut as LabSubmissionStatus,
+                pointsAttribues: res.pointsAttribues ?? 0,
+              })
+            );
+          }
+          router.refresh();
+        }
+      })
+      .catch((err) => console.error('Erreur auto-save audit:', err));
   };
 
   const handleSubmissionSaved = (result: {

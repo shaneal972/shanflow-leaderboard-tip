@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState, useTransition } from 'react';
+import React, { useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Lab,
@@ -81,6 +81,17 @@ export const LabPromoProgressPanel: React.FC<LabPromoProgressPanelProps> = ({
   const [isRefreshing, startRefresh] = useTransition();
   const [inspectedParticipant, setInspectedParticipant] =
     useState<LabParticipantProgress | null>(null);
+
+  // Rafraîchissement silencieux automatique toutes les 15 secondes pour le formateur
+  useEffect(() => {
+    if (!isFormateur) return;
+
+    const intervalId = setInterval(() => {
+      router.refresh();
+    }, 15000);
+
+    return () => clearInterval(intervalId);
+  }, [isFormateur, router]);
 
   const sortedParticipants = useMemo(
     () => sortLabParticipants(participants),
@@ -501,3 +512,4 @@ export const LabPromoProgressPanel: React.FC<LabPromoProgressPanelProps> = ({
     </section>
   );
 };
+
