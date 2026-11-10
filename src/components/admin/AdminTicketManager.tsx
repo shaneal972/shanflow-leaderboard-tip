@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useTransition } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { TicketKLF, Apprenant, TicketResolution } from '@/types/tip';
+import { getTicketScenarioSolution } from '@/core/domain/ticketSolutions';
 import { 
   Plus, 
   CheckCircle2, 
@@ -12,15 +14,14 @@ import {
   X, 
   Check, 
   Ticket, 
-  Building2, 
-  User,
   Inbox,
-  Send,
   MessageSquare,
-  Sparkles,
   FileText,
   Filter,
-  ArrowRight
+  ArrowRight,
+  Eye,
+  ShieldCheck,
+  ExternalLink
 } from 'lucide-react';
 import { 
   createTicketAction, 
@@ -83,9 +84,14 @@ export const AdminTicketManager: React.FC<AdminTicketManagerProps> = ({
   const [urgence, setUrgence] = useState<'P1' | 'P2' | 'P3'>('P2');
   const [pointsValeur, setPointsValeur] = useState(150);
 
+  const learnerStudents = students.filter((s) => !s.is_admin);
+
+  // Modal énoncé complet & corrigé DSI
+  const [viewingTicket, setViewingTicket] = useState<TicketKLF | null>(null);
+
   // Modal attribution manuelle de ticket
   const [awardingTicket, setAwardingTicket] = useState<TicketKLF | null>(null);
-  const [selectedStudentId, setSelectedStudentId] = useState<string>(students[0]?.id || '');
+  const [selectedStudentId, setSelectedStudentId] = useState<string>(learnerStudents[0]?.id || '');
 
   const pendingCount = resolutionsList.filter((r) => r.statut === 'en_attente_validation').length;
 
@@ -495,13 +501,25 @@ export const AdminTicketManager: React.FC<AdminTicketManagerProps> = ({
                   key={ticket.id}
                   className="flex flex-col justify-between p-4 rounded-xl slate-glass border border-white/10 hover:border-teal-500/30 transition-all"
                 >
-                  <div className="space-y-2">
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setViewingTicket(ticket)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setViewingTicket(ticket);
+                      }
+                    }}
+                    className="space-y-2 cursor-pointer group text-left"
+                    title="Cliquer pour afficher l'énoncé complet et le corrigé DSI"
+                  >
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-xs font-bold text-teal-400">{ticket.id}</span>
                       {getUrgenceBadge(ticket.urgence)}
                     </div>
 
-                    <h3 className="font-semibold text-sm text-white font-['Lexend'] line-clamp-1">
+                    <h3 className="font-semibold text-sm text-white font-['Lexend'] line-clamp-1 group-hover:text-teal-300 transition-colors">
                       {ticket.titre}
                     </h3>
 
@@ -514,11 +532,20 @@ export const AdminTicketManager: React.FC<AdminTicketManagerProps> = ({
                     </p>
                   </div>
 
-                  <div className="pt-4 mt-3 border-t border-white/5 space-y-3">
+                  <div className="pt-4 mt-3 border-t border-white/5 space-y-2.5">
                     <div className="flex items-center justify-between text-xs font-mono">
                       <span className="text-amber-400 font-bold">+{ticket.points_valeur} pts</span>
                       <span className="text-slate-400 text-[11px]">{valCount} validés / {resCount} soumissions</span>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setViewingTicket(ticket)}
+                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 border border-teal-500/30 transition-all active:scale-95 cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-teal-400" />
+                      <span>👁️ Voir l&apos;énoncé &amp; Corrigé DSI</span>
+                    </button>
 
                     <div className="flex items-center justify-between gap-2">
                       <select
@@ -535,10 +562,10 @@ export const AdminTicketManager: React.FC<AdminTicketManagerProps> = ({
                       <button
                         type="button"
                         onClick={() => setAwardingTicket(ticket)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 transition-all active:scale-95"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 transition-all active:scale-95 cursor-pointer"
                       >
                         <Award className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Attribuer</span>
+                        <span>🏆 Créditer un élève</span>
                       </button>
                     </div>
                   </div>
@@ -805,6 +832,162 @@ export const AdminTicketManager: React.FC<AdminTicketManagerProps> = ({
         </div>
       )}
 
+      {/* MODALE D'INSPECTION DE L'ÉNONCÉ COMPLET & CORRIGÉ FORMATEUR DSI */}
+      {viewingTicket && (() => {
+        const solution = getTicketScenarioSolution(viewingTicket);
+        const categoryLabels: Record<string, string> = {
+          materiel: 'Matériel & Périphériques',
+          systeme: "Système d'exploitation & Sécurité",
+          reseau: 'Réseau & Infrastructure',
+          applicatif: 'Applicatif & Bureautique',
+        };
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <div className="relative w-full max-w-3xl rounded-2xl border border-teal-500/30 bg-[#0A192F] p-6 shadow-2xl text-slate-200">
+              {/* En-tête */}
+              <div className="flex items-start justify-between gap-4 pb-4 border-b border-white/10">
+                <div className="space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono text-xs font-bold text-teal-400 px-2 py-0.5 rounded bg-teal-500/10 border border-teal-500/30">
+                      {viewingTicket.id}
+                    </span>
+                    {getUrgenceBadge(viewingTicket.urgence)}
+                    <span className="font-mono text-xs font-bold text-amber-400 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30">
+                      +{viewingTicket.points_valeur} pts
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-bold text-white font-['Lexend']">
+                    {viewingTicket.titre}
+                  </h3>
+                  <p className="text-xs text-slate-400 font-mono">
+                    Demandeur : <strong className="text-slate-200">{viewingTicket.demandeur}</strong> • Service : <strong className="text-slate-200">{viewingTicket.service}</strong>
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setViewingTicket(null)}
+                  className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5 cursor-pointer"
+                  aria-label="Fermer la fenêtre"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Corps défilable */}
+              <div className="py-4 space-y-4 max-h-[68vh] overflow-y-auto pr-2 text-xs">
+                {/* Bloc 1 : Énoncé intégral du ticket */}
+                <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
+                  <div className="flex items-center gap-2 font-mono font-bold text-[11px] uppercase tracking-wider text-teal-300">
+                    <FileText className="w-3.5 h-3.5 text-teal-400" />
+                    <span>Bloc 1 • Énoncé intégral du ticket (message complet de l&apos;usager)</span>
+                  </div>
+                  <p className="text-slate-200 leading-relaxed whitespace-pre-wrap">
+                    {viewingTicket.description}
+                  </p>
+                </div>
+
+                {/* Bloc 2 : Données techniques du scénario & Éléments de diagnostic */}
+                <div className="p-4 rounded-xl bg-teal-500/5 border border-teal-500/25 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 font-mono font-bold text-[11px] uppercase tracking-wider text-teal-300">
+                      <ShieldCheck className="w-4 h-4 text-teal-400" />
+                      <span>Bloc 2 • {solution.diagnosticTitle}</span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-teal-500/15 text-teal-200 border border-teal-500/30">
+                      {solution.diagnosticBadge}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    {solution.diagnosticPoints.map((pt, idx) => (
+                      <div
+                        key={idx}
+                        className="p-3 rounded-lg bg-[#070F1E] border border-white/10 space-y-1"
+                      >
+                        <div className="font-mono font-bold text-[11px] text-amber-300">
+                          {pt.label}
+                        </div>
+                        <p className="text-[11px] text-slate-300 leading-relaxed">
+                          {pt.detail}
+                        </p>
+                        {pt.code && (
+                          <div className="mt-1 p-1.5 rounded bg-white/5 border border-white/10 font-mono text-[10px] text-emerald-300 break-all">
+                            {pt.code}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Bloc 3 : Corrigé type ITIL en 3 étapes */}
+                <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/25 space-y-3">
+                  <div className="flex items-center gap-2 font-mono font-bold text-[11px] uppercase tracking-wider text-amber-300">
+                    <Award className="w-4 h-4 text-amber-400" />
+                    <span>Bloc 3 • Corrigé type ITIL en 3 étapes (attendu formateur)</span>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <div className="p-3 rounded-lg bg-[#070F1E] border border-white/10 flex flex-wrap items-center gap-4 font-mono">
+                      <span>
+                        <strong className="text-slate-400">Étape 1 (Catégorie) :</strong>{' '}
+                        <span className="text-teal-300 font-bold">
+                          {categoryLabels[solution.expectedCategory] || solution.expectedCategory}
+                        </span>
+                      </span>
+                      <span className="text-slate-600">•</span>
+                      <span>
+                        <strong className="text-slate-400">Urgence :</strong>{' '}
+                        <span className="text-amber-300 font-bold">{solution.expectedUrgency}</span>
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-[#070F1E] border border-white/10 space-y-1">
+                      <div className="font-mono font-bold text-[11px] text-teal-300">
+                        Étape 2 • Démarche technique complète (rédigée au « Je » / chronologique) :
+                      </div>
+                      <p className="text-[11px] text-slate-200 leading-relaxed whitespace-pre-wrap">
+                        {solution.expectedDemarche}
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-[#070F1E] border border-white/10 space-y-1">
+                      <div className="font-mono font-bold text-[11px] text-emerald-300">
+                        Étape 3 • Message de clôture bienveillant à l&apos;usager :
+                      </div>
+                      <p className="text-[11px] text-slate-200 leading-relaxed italic whitespace-pre-wrap">
+                        &quot;{solution.expectedMessageUsager}&quot;
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pied de modale */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-white/10">
+                <Link
+                  href="/tickets"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-mono font-bold bg-teal-500 hover:bg-teal-400 text-slate-950 transition-all shadow-md active:scale-95"
+                >
+                  <span>🚀 Tester ce ticket dans le Ticket Desk (/tickets)</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => setViewingTicket(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-mono bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 cursor-pointer"
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* MODAL ATTRIBUTION MANUELLE */}
       {awardingTicket && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
@@ -835,7 +1018,7 @@ export const AdminTicketManager: React.FC<AdminTicketManagerProps> = ({
                   onChange={(e) => setSelectedStudentId(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg bg-[#070F1E] border border-white/10 text-white text-xs cursor-pointer focus:outline-none focus:border-teal-400"
                 >
-                  {students.map((s) => (
+                  {learnerStudents.map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.prenom} {s.nom} ({s.equipe}) • {s.points_total} pts
                     </option>

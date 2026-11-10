@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useTransition } from 'react';
+import React, { useMemo, useState, useEffect, useTransition } from 'react';
 import Link from 'next/link';
 import { TicketKLF, Apprenant, TicketResolution, TicketResolutionCategory, TicketUrgency } from '@/types/tip';
+import { getTicketScenarioSolution } from '@/core/domain/ticketSolutions';
 import { 
-  Ticket, 
   AlertTriangle, 
   Clock, 
   CheckCircle2, 
@@ -20,9 +20,9 @@ import {
   FileText,
   LogOut,
   ShieldCheck,
-  Headphones,
   Shield,
-  ExternalLink
+  ExternalLink,
+  Lightbulb
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { submitTicketResolutionAction } from '@/app/admin/actions';
@@ -37,6 +37,19 @@ interface TicketDeskProps {
   adminStudents?: Apprenant[];
 }
 
+const VIRTUAL_FORMATEUR_FALLBACK: Apprenant = {
+  id: 'e9e8382e-92e0-45b5-bea9-988a8ba32771',
+  prenom: 'David',
+  nom: 'JACQUA (Mode Test)',
+  email: 'david.jacqua@shanflow.cloud',
+  avatar_url: 'https://api.dicebear.com/7.x/bottts/svg?seed=david',
+  points_total: 0,
+  palier_actuel: 'Formateur Référent',
+  equipe: 'Direction DSI',
+  is_admin: true,
+  consentement_rgpd: true,
+};
+
 export const TicketDesk: React.FC<TicketDeskProps> = ({ 
   initialTickets, 
   currentStudent = null,
@@ -48,11 +61,24 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
   const [student, setStudent] = useState<Apprenant | null>(currentStudent);
   const [resolutions, setResolutions] = useState<TicketResolution[]>(initialResolutions);
   const [activeTicket, setActiveTicket] = useState<TicketKLF | null>(null);
-  
-  // Apprenant actif ou apprenant supervisé
+
+  const effectiveAdminProfiles = useMemo(() => {
+    if (!isFormateur) return [];
+    const existingAdmin = adminStudents.find((s) => s.is_admin);
+    const formateurEntry = existingAdmin || VIRTUAL_FORMATEUR_FALLBACK;
+    const learners = adminStudents.filter((s) => !s.is_admin);
+    return [formateurEntry, ...learners];
+  }, [isFormateur, adminStudents]);
+
+  // Apprenant actif ou poste formateur en première position par défaut
   const [selectedStudentId, setSelectedStudentId] = useState<string>(() => {
+    if (isFormateur) {
+      const firstAdmin = adminStudents.find((s) => s.is_admin);
+      if (firstAdmin) return firstAdmin.id;
+      if (currentStudent?.is_admin) return currentStudent.id;
+      return VIRTUAL_FORMATEUR_FALLBACK.id;
+    }
     if (currentStudent) return currentStudent.id;
-    if (isFormateur && adminStudents.length > 0) return adminStudents[0].id;
     return '';
   });
 
@@ -68,8 +94,12 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
   }, [initialResolutions]);
 
   const activeStudent = isFormateur
-    ? (adminStudents.find((s) => s.id === selectedStudentId) || student)
+    ? (effectiveAdminProfiles.find((s) => s.id === selectedStudentId) ||
+        effectiveAdminProfiles[0] ||
+        student)
     : student;
+
+  const isTrainerTestMode = Boolean(isFormateur && activeStudent?.is_admin);
 
   const handleFormateurStudentChange = (id: string) => {
     setSelectedStudentId(id);
@@ -218,39 +248,14 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
     );
   };
 
-  const getNetworkDPSuggestion = (ticketId: string) => {
-    switch (ticketId) {
-      case 'TCK-101':
-        return {
-          titre: 'Partage réseau SMBv3, clichés VSS & droits NTFS Entrepôt Frigo (CCP 1)',
-          description: "Pour votre DP, valorisez l'intervention d'infrastructure auprès d'Alain GOURGUE : restauration du classeur via les clichés instantanés VSS (Shadow Copies) sur le NAS Synology, migration vers un partage centralisé SMBv3 (\\\\NAS-KLF\\Entrepot_Frigo), gestion des permissions NTFS par groupes Active Directory (GG_Exploitation_Frigo) et automatisation de sauvegardes journalières."
-        };
-      case 'TCK-102':
-        return {
-          titre: 'Déploiement et segmentation Wi-Fi industriel (CCP 1)',
-          description: "Valorisez devant le jury la couverture sans-fil de l'entrepôt : configuration d'un SSID dédié pour les tablettes Zebra, segmentation réseau via un VLAN Quai isolé, plage DHCP réservée et analyse du signal radio (roaming entre bornes AP pour éviter les coupures)."
-        };
-      case 'TCK-103':
-        return {
-          titre: 'Mise en service d\'une imprimante réseau départementale (CCP 1)',
-          description: "Raccrochez ce publipostage à une épreuve d'infrastructure : raccordement RJ45 d'une imprimante multifonction, attribution d'une IP statique hors DHCP, configuration du pilote sur le serveur d'impression et déploiement automatisé par stratégie de groupe (GPO)."
-        };
-      case 'TCK-104':
-        return {
-          titre: 'Sécurisation des flux de messagerie & filtrage DNS/SMTP (CCP 1)',
-          description: "Pour valoriser la cyber en CCP 1 : diagnostic des protocoles de messagerie (relais SMTP, MX), inspection des enregistrements DNS (TXT SPF, clé publique DKIM, politique DMARC), analyse des en-têtes MIME bruts et paramétrage du filtrage antispam sur la passerelle de sécurité (UTM)."
-        };
-      case 'TCK-105':
-        return {
-          titre: "Plan d'adressage IP statique & diagnostic de connectivité réseau (CCP 1)",
-          description: "L'activité réseau par excellence pour votre DP : analyse du plan d'adressage IP local, exclusion de plage DHCP et réservation par adresse MAC, configuration statique de l'imprimante (IP, masque /24, passerelle par défaut), tests de connectivité (Ping, résolution ARP) et validation du port sur le switch (VLAN Quai)."
-        };
-      default:
-        return {
-          titre: 'Diagnostic de connectivité et configuration réseau (CCP 1)',
-          description: "Mettez en avant le plan d'adressage IP statique, le paramétrage de la passerelle par défaut et les tests de connectivité (Ping, Traceroute, DNS) pour prouver au jury votre maîtrise des flux réseau."
-        };
-    }
+  const handlePrefillSolution = () => {
+    if (!activeTicket) return;
+    const solution = getTicketScenarioSolution(activeTicket);
+    setCategorie(solution.expectedCategory);
+    setUrgence(solution.expectedUrgency);
+    setDemarche(solution.expectedDemarche);
+    setMessageUsager(solution.expectedMessageUsager);
+    setFieldErrors({});
   };
 
   const handleSubmitResolution = (e: React.FormEvent) => {
@@ -271,6 +276,45 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
       return;
     }
     setFieldErrors({});
+
+    // Mode Test Formateur : simulation locale sans impacter aucun dossier élève ni la file /admin
+    if (isTrainerTestMode) {
+      const simulatedResolution: TicketResolution = {
+        id: `test-mode-${activeTicket.id}`,
+        ticket_id: activeTicket.id,
+        apprenant_id: effectiveStudentId,
+        diagnostic_categorie: categorie,
+        diagnostic_urgence: urgence,
+        demarche_technique: demarche.trim(),
+        message_usager: messageUsager.trim(),
+        statut: 'en_attente_validation',
+        points_attribues: 0,
+        soumis_le: new Date().toISOString(),
+        apprenant: activeStudent || undefined,
+        ticket: activeTicket,
+      };
+
+      setResolutions((prev) => {
+        const filtered = prev.filter(
+          (r) => !(r.ticket_id === activeTicket.id && r.apprenant_id === effectiveStudentId)
+        );
+        return [simulatedResolution, ...filtered];
+      });
+
+      setSuccessMessage('Mode Test Formateur : simulation validée localement (aucun dossier élève impacté) !');
+      confetti({
+        particleCount: 60,
+        spread: 50,
+        origin: { y: 0.6 },
+        colors: ['#00B4D8', '#F59E0B', '#10B981'],
+      });
+
+      setTimeout(() => {
+        setActiveTicket(null);
+        setSuccessMessage(null);
+      }, 2200);
+      return;
+    }
 
     startTransition(async () => {
       const res = await submitTicketResolutionAction({
@@ -363,18 +407,23 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
                   🛡️ Supervision formateur (David)
                 </div>
                 <div className="text-xs text-slate-300 font-mono">
-                  Inspecter un technicien :
+                  {isTrainerTestMode
+                    ? 'Mode Test Formateur actif (aucun impact élève)'
+                    : 'Inspection d’un technicien :'}
                 </div>
               </div>
 
               <select
                 value={selectedStudentId}
                 onChange={(e) => handleFormateurStudentChange(e.target.value)}
+                aria-label="Sélectionner le poste formateur ou un technicien"
                 className="px-2.5 py-1.5 rounded-lg bg-[#070F1E] border border-amber-500/40 text-xs text-amber-200 focus:outline-none focus:border-amber-400 cursor-pointer"
               >
-                {adminStudents.map((s) => (
+                {effectiveAdminProfiles.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.prenom} {s.nom} ({s.points_total} pts)
+                    {s.is_admin
+                      ? '🛡️ David JACQUA (Mon poste Formateur / Mode Test)'
+                      : `${s.prenom} ${s.nom} (${s.points_total} pts)`}
                   </option>
                 ))}
               </select>
@@ -514,11 +563,13 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
                   >
                     <span>
                       {needsCorrection
-                        ? isFormateur
+                        ? isFormateur && !isTrainerTestMode
                           ? 'Intervention à corriger'
                           : 'Corriger ma réponse'
                         : isPendingReview
-                        ? isFormateur
+                        ? isTrainerTestMode
+                          ? 'Modifier mon test'
+                          : isFormateur
                           ? 'Examiner la soumission'
                           : 'Modifier ma saisie'
                         : 'Prendre en charge'}
@@ -571,8 +622,8 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
             {/* Corps de la modale défilable */}
             <div className="py-4 space-y-4 max-h-[70vh] overflow-y-auto pr-2">
               
-              {/* Alerte inspection formateur */}
-              {isFormateur && currentResolution?.statut === 'en_attente_validation' && (
+              {/* Alerte inspection formateur (hors mode test personnel) */}
+              {isFormateur && !isTrainerTestMode && currentResolution?.statut === 'en_attente_validation' && (
                 <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <Shield className="w-4 h-4 text-amber-400 shrink-0" />
@@ -806,18 +857,18 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
 
               {/* 💡 ENCART PÉDAGOGIQUE : SUGGESTION D'EXTENSION RÉSEAU POUR LE DP */}
               {(() => {
-                const suggestion = getNetworkDPSuggestion(activeTicket.id);
+                const suggestion = getTicketScenarioSolution(activeTicket);
                 return (
                   <div className="p-4 rounded-xl bg-gradient-to-r from-blue-950/40 to-indigo-950/30 border border-indigo-500/30 space-y-2">
                     <div className="flex items-center gap-2 text-xs font-bold text-indigo-300 font-['Lexend']">
                       <Network className="w-4 h-4 text-indigo-400" />
-                      💡 Suggestion d'extension réseau pour votre Dossier Professionnel (DP REAC)
+                      💡 Suggestion d&apos;extension réseau pour votre Dossier Professionnel (DP REAC)
                     </div>
                     <div className="text-xs text-slate-200 font-semibold">
-                      {suggestion.titre}
+                      {suggestion.dpExtensionTitle}
                     </div>
                     <p className="text-[11px] text-slate-300 leading-relaxed">
-                      {suggestion.description}
+                      {suggestion.dpExtensionDescription}
                     </p>
                   </div>
                 );
@@ -825,6 +876,26 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
 
               {/* Formulaire de résolution ITIL en 3 étapes */}
               <form noValidate onSubmit={handleSubmitResolution} className="space-y-4 pt-2">
+
+                {/* Bouton formateur : Afficher / Pré-remplir avec le corrigé type DSI */}
+                {isFormateur && (
+                  <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2 text-xs text-amber-200">
+                      <Lightbulb className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>
+                        <strong>Mode formateur DSI :</strong> Pré-remplissez les 3 étapes ITIL pour projeter ou vérifier le corrigé type.
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handlePrefillSolution}
+                      disabled={currentResolution?.statut === 'valide' && !isTrainerTestMode}
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-sm active:scale-95 disabled:opacity-50 cursor-pointer shrink-0"
+                    >
+                      <span>💡 Afficher / Pré-remplir avec le corrigé type DSI</span>
+                    </button>
+                  </div>
+                )}
                 
                 {/* Étape 1 : Qualification ITIL */}
                 <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-3">
