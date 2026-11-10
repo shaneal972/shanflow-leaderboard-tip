@@ -74,6 +74,15 @@ export const MOCK_BADGES: Badge[] = [
     rarete: 'epique',
   },
   {
+    id: 'office_collab_pilot',
+    titre: 'Pilote collaboratif M365 & Google',
+    description: 'Maîtrise double écosystème (Word, Excel, Google Docs & Sheets) sur le cas pratique complet du Quai n°3.',
+    palier: 'Palier 2',
+    points_requis: 200,
+    icone_url: '⚡',
+    rarete: 'epique',
+  },
+  {
     id: 'rh_mailmerge_ace',
     titre: 'As du publipostage RH',
     description: 'Exécution de la campagne de publipostage de 60 contrats et attestations sans aucun décalage pour Élodie.',

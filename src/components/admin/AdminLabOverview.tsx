@@ -51,6 +51,7 @@ export const AdminLabOverview: React.FC<AdminLabOverviewProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showCorrigePanel, setShowCorrigePanel] = useState<boolean>(false);
+  const [showQuai3Panel, setShowQuai3Panel] = useState<boolean>(false);
 
   const filteredSubmissions = submissions.filter((sub) => {
     const student = sub.apprenant || students.find((s) => s.id === sub.apprenant_id);
@@ -68,7 +69,7 @@ export const AdminLabOverview: React.FC<AdminLabOverviewProps> = ({
         labId: sub.lab_id,
         studentId: sub.apprenant_id,
         pointsSolde,
-        badgeId: 'corinne_savior',
+        badgeId: sub.lab?.badge_id || (sub.lab_id === 'tp-bur-03-quai3-pack' ? 'office_collab_pilot' : 'corinne_savior'),
         feedback,
       });
 
@@ -89,6 +90,82 @@ export const AdminLabOverview: React.FC<AdminLabOverviewProps> = ({
 
   return (
     <div className="space-y-6">
+
+      {/* Carte Référentiel & Corrigé Formateur DSI — Séance 10/11 Pack 4h Quai n°3 */}
+      <div className="p-5 rounded-3xl slate-glass border border-amber-500/35 bg-amber-950/10 space-y-4 shadow-xl">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 shrink-0 mt-0.5 shadow-md">
+              <ShieldCheck className="w-5 h-5 text-amber-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm font-bold text-white font-['Lexend']">
+                  Référentiel &amp; Corrigé Formateur DSI — Pack 4h Quai n°3 (<code>tp-bur-03-quai3-pack</code>)
+                </h3>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold">
+                  Séance 10/11 • Word + Excel + Docs + Sheets
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                Double corrigé DSI (Tableur 100 % formules OpenXML vives + Guide Caristes Word/Docs aux normes avec Styles, saut de page et mini-tableau).
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <a
+              href="/api/admin/lab/download-corrige?labId=tp-bur-03-quai3-pack&part=xlsx"
+              download="KLF_Palette_Quai3_CORRIGE_DSI_101126.xlsx"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all active:scale-95 shadow-md"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Corrigé Tableur (.xlsx)</span>
+            </a>
+
+            <a
+              href="/api/admin/lab/download-corrige?labId=tp-bur-03-quai3-pack&part=docx"
+              download="KLF_Guide_Caristes_CORRIGE_DSI_101126.docx"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono font-bold bg-sky-500 hover:bg-sky-400 text-slate-950 transition-all active:scale-95 shadow-md"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Corrigé Guide (.docx)</span>
+            </a>
+
+            <button
+              type="button"
+              onClick={() => setShowQuai3Panel(!showQuai3Panel)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-200 border border-amber-500/30 transition-all active:scale-95 cursor-pointer"
+            >
+              {showQuai3Panel ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              <span>{showQuai3Panel ? 'Masquer formules Quai n°3' : 'Voir formules & chiffres clés'}</span>
+            </button>
+          </div>
+        </div>
+
+        {showQuai3Panel && (
+          <div className="pt-3 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs font-mono">
+            <div className="p-3 rounded-xl bg-[#070F1E] border border-white/5 space-y-1">
+              <div className="text-emerald-300 font-bold text-[11px]">Col G &amp; J • Poids &amp; TVA bloquée ($)</div>
+              <div className="text-[11px] text-amber-300">=E4*F4 | =I4*$J$2 | =I4+J4</div>
+            </div>
+            <div className="p-3 rounded-xl bg-[#070F1E] border border-white/5 space-y-1">
+              <div className="text-emerald-300 font-bold text-[11px]">Col H • Alerte 2 500 kg ($H$2)</div>
+              <div className="text-[11px] text-amber-300">=SI(G4&gt;$H$2; &quot;SURCHARGE - 2 PASSAGES&quot;; &quot;OK CHARIOT&quot;)</div>
+            </div>
+            <div className="p-3 rounded-xl bg-[#070F1E] border border-white/5 space-y-1">
+              <div className="text-emerald-300 font-bold text-[11px]">Col D • Liaison sans #N/A</div>
+              <div className="text-[11px] text-amber-300">=SIERREUR(RECHERCHEV(SUPPRESPACE(C4);Zones_Quais!$A$3:$C$6;2;FAUX);&quot;Zone inconnue&quot;)</div>
+            </div>
+            <div className="p-3 rounded-xl bg-[#070F1E] border border-white/5 space-y-1 md:col-span-2 lg:col-span-3">
+              <div className="text-sky-300 font-bold text-[11px]">Synthèse B18:B23 (Chiffres de contrôle exacts)</div>
+              <div className="text-[11px] text-slate-200">
+                Poids Total = 26 065 kg | Moyenne = 2 172,08 kg | Max = 3 600 kg | Min = 600 kg | Surcharges (=NB.SI) = 4 palettes | Total TTC = 17 202,68 €
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Carte Référentiel & Corrigé Formateur DSI (Atelier Corinne) */}
       <div className="p-5 rounded-3xl slate-glass border border-teal-500/30 bg-teal-950/15 space-y-4 shadow-xl">

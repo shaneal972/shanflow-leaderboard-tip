@@ -1,5 +1,84 @@
 import { Lab } from '@/types/tip';
 
+export const LAB_BUR_03_QUAI3: Lab = {
+  id: 'tp-bur-03-quai3-pack',
+  titre: 'Pack 4h Word / Google Docs & Excel / Google Sheets — Sécurité Quai n°3',
+  description:
+    "TP guidé complet de 4 heures pour maîtriser les 4 logiciels (Excel, Google Sheets, Word, Google Docs) avec explications simples de chaque mot et formule. Acte 1 : réparer le calculateur de poids et TVA des palettes de Jarry. Acte 2 : mettre en page le mode d'emploi illustré des caristes.",
+  domaine: 'bureautique',
+  palier: 'Palier 2',
+  points_total: 200,
+  points_auto_validation: 100,
+  badge_id: 'office_collab_pilot',
+  ticket_id: 'TCK-105',
+  fichier_modele_nom: 'KLF_Palette_Quai3_BRUT_101126.xlsx',
+  fichier_modele_url: '/api/lab/download-sample?labId=tp-bur-03-quai3-pack',
+  duree_estimee: '4h00',
+  statut: 'ouvert',
+  objectifs: [
+    'Comprendre sans jargon chaque mot clé et chaque formule de tableur (Excel = Google Sheets).',
+    'Automatiser le poids des palettes, la TVA Guadeloupe (8,5 %) avec cadenas $ (F4) et l’alerte chariot 2 500 kg (=SI).',
+    'Relier deux onglets avec RECHERCHEV et supprimer les erreurs rouges (#N/A) avec SUPPRESPACE et SIERREUR.',
+    'Réparer et illustrer un document Word / Google Docs avec de vrais Styles, un saut de page, un sommaire automatique et 2 captures d’écran (Win + Maj + S).',
+  ],
+  consignes_etapes: [
+    "Acte 1 (08h30–11h00, pause 10h00–10h20) : Téléchargez le tableur KLF_Palette_Quai3_BRUT_101126.xlsx (ou importez-le dans Google Sheets via Fichier > Importer).",
+    "Complétez les colonnes manquantes pas à pas grâce au guide interactif ci-dessous (Poids, TVA 8,5 %, Alerte SI, RECHERCHEV + SIERREUR, puis SOMME/MOYENNE/MAX/MIN/NB.SI).",
+    "Acte 2 (11h00–12h10) : Téléchargez KLF_Guide_Caristes_BRUT_101126.docx (Word ou Google Docs), nettoyez les lignes vides, appliquez Titre 1 / Titre 2, insérez le sommaire et collez vos 2 captures + mini-tableau.",
+    "Acte 3 (12h10–12h30) : Déposez vos deux fichiers (.xlsx et .docx) dans l'auto-auditeur ci-dessous, rédigez votre carnet et exportez le PDF.",
+  ],
+  jalons: [
+    {
+      id: 'q1_poids_tva',
+      ordre: 1,
+      titre: 'Tableur : Poids Total (=E*F) & TVA 8,5 % avec cadenas $ ($J$2)',
+      description: 'Calculer automatiquement le poids total de chaque palette et bloquer le taux de TVA 8,5 % grâce à la touche F4.',
+      points: 15,
+      critereAudit: 'Formules actives de multiplication en Col G et référence absolue $ en Col J.',
+    },
+    {
+      id: 'q2_si_alerte',
+      ordre: 2,
+      titre: 'Tableur : Alerte Sécurité Chariot avec =SI(>2500 kg)',
+      description: 'Afficher automatiquement "SURCHARGE - 2 PASSAGES" dès que la palette dépasse 2 500 kg ($H$2).',
+      points: 15,
+      critereAudit: 'Formule conditionnelle SI/IF sur les 12 lignes avec alerte déclenchée sur les palettes lourdes.',
+    },
+    {
+      id: 'q3_recherchev_sierreur',
+      ordre: 3,
+      titre: 'Tableur : Liaison Zones (RECHERCHEV + SUPPRESPACE + SIERREUR)',
+      description: 'Aller chercher le nom de la zone dans le 2e onglet sans déclencher d’erreur #N/A sur l’espace en trop ni sur Z-99.',
+      points: 20,
+      critereAudit: 'Présence de RECHERCHEV/VLOOKUP, 0 erreur (#N/A, #VALEUR!, #REF!) dans tout le classeur.',
+    },
+    {
+      id: 'q4_stats_synthese',
+      ordre: 4,
+      titre: 'Tableur : Synthèse du quai (SOMME, MOYENNE, MAX, MIN, NB.SI)',
+      description: 'Remplir le bloc statistiques du bas du tableau pour piloter l’activité de la matinée.',
+      points: 15,
+      critereAudit: 'Présence d’au moins 3 familles de formules statistiques actives.',
+    },
+    {
+      id: 'q5_docx_structure',
+      ordre: 5,
+      titre: 'Word / Docs : Vrais Styles (Titre 1/2), saut de page & zéro ligne vide',
+      description: 'Nettoyer les 12 retours Entrée, appliquer les styles de titres et insérer un saut de page propre (Ctrl + Entrée).',
+      points: 20,
+      critereAudit: 'Styles Titre 1/Heading 1 détectés dans le .docx et absence d’empilement de paragraphes vides.',
+    },
+    {
+      id: 'q6_docx_captures_tableau',
+      ordre: 6,
+      titre: 'Word / Docs : Captures d’écran (Win+Maj+S) + Mini-tableau insérés',
+      description: 'Intégrer au moins 1 capture d’écran du tableur/graphique et coller le mini-tableau de synthèse.',
+      points: 15,
+      critereAudit: 'Présence d’image(s) dans word/media et d’un tableau Word/Docs (<w:tbl>).',
+    },
+  ],
+};
+
 export const LAB_BUR_01: Lab = {
   id: 'tp-bur-01-corinne',
   titre: "Sauvetage du manifeste d'arrivages maritimes de Corinne & Fiscalité Antilles",
@@ -76,6 +155,7 @@ export const LAB_BUR_01: Lab = {
 };
 
 export const ALL_LABS: Lab[] = [
+  LAB_BUR_03_QUAI3,
   LAB_BUR_01,
   {
     id: 'tp-bur-02-elodie',

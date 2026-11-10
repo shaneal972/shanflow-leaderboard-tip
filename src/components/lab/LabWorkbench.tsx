@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Lab, LabSubmission, LabAuditSummary, Apprenant } from '@/types/tip';
 import { LabExcelAuditor } from './LabExcelAuditor';
+import { LabQuai3DualAuditor } from './LabQuai3DualAuditor';
+import { LabQuai3GuidePanel } from './LabQuai3GuidePanel';
 import { LabMilestoneList } from './LabMilestoneList';
 import { LabNotebookForm } from './LabNotebookForm';
 import { 
@@ -72,7 +74,9 @@ export const LabWorkbench: React.FC<LabWorkbenchProps> = ({
           <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
             <span className="flex items-center gap-1.5">
               <Building2 className="w-3.5 h-3.5 text-slate-500" />
-              Service Facturation & Douane (Jarry)
+              {lab.id === 'tp-bur-03-quai3-pack'
+                ? 'Logistique Quai n°3 & Support DSI (Jarry)'
+                : 'Service Facturation & Douane (Jarry)'}
             </span>
             <span>•</span>
             <span className="flex items-center gap-1.5">
@@ -132,6 +136,26 @@ export const LabWorkbench: React.FC<LabWorkbenchProps> = ({
               <span>Télécharger le corrigé DSI (.xlsx)</span>
             </a>
           )}
+          {lab.id === 'tp-bur-03-quai3-pack' && (
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <a
+                href="/api/admin/lab/download-corrige?labId=tp-bur-03-quai3-pack&part=xlsx"
+                download="KLF_Palette_Quai3_CORRIGE_DSI_101126.xlsx"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-sm active:scale-95"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Corrigé Tableur (.xlsx)</span>
+              </a>
+              <a
+                href="/api/admin/lab/download-corrige?labId=tp-bur-03-quai3-pack&part=docx"
+                download="KLF_Guide_Caristes_CORRIGE_DSI_101126.docx"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-amber-500/80 hover:bg-amber-400 text-slate-950 transition-all shadow-sm active:scale-95"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Corrigé Word/Docs (.docx)</span>
+              </a>
+            </div>
+          )}
         </div>
       )}
 
@@ -165,19 +189,24 @@ export const LabWorkbench: React.FC<LabWorkbenchProps> = ({
         </div>
       </div>
 
+      {/* Guide Interactif 4h00 « Zéro Jargon » pour le Pack Quai n°3 */}
+      {lab.id === 'tp-bur-03-quai3-pack' && <LabQuai3GuidePanel />}
+
       {/* 3. Établi Technique Écran Scindé (Workbench) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* Volet Gauche : Auto-auditeur Excel & Checklist Jalons (7 colonnes) */}
+        {/* Volet Gauche : Auto-auditeur & Checklist Jalons (7 colonnes) */}
         <div className="lg:col-span-7 space-y-5">
           <div className="p-5 sm:p-6 rounded-3xl slate-glass border border-white/10 space-y-5">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <div>
                 <h2 className="text-sm font-bold text-white font-['Lexend']">
-                  Inspecteur & Auto-audit en direct
+                  Inspecteur &amp; Auto-audit en direct
                 </h2>
                 <p className="text-[11px] text-slate-400">
-                  Déposez votre fichier .xlsx pour vérifier automatiquement les 5 jalons d&apos;inspection.
+                  {lab.id === 'tp-bur-03-quai3-pack'
+                    ? `Déposez votre tableur (.xlsx) et votre guide (.docx) pour valider les ${lab.jalons.length} jalons.`
+                    : `Déposez votre fichier .xlsx pour vérifier automatiquement les ${lab.jalons.length} jalons d'inspection.`}
                 </p>
               </div>
               <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-white/5 text-slate-400 border border-white/5">
@@ -186,11 +215,19 @@ export const LabWorkbench: React.FC<LabWorkbenchProps> = ({
             </div>
 
             {/* Zone de glisser-déposer */}
-            <LabExcelAuditor
-              lab={lab}
-              initialAudit={currentAudit}
-              onAuditComplete={handleAuditComplete}
-            />
+            {lab.id === 'tp-bur-03-quai3-pack' ? (
+              <LabQuai3DualAuditor
+                lab={lab}
+                initialAudit={currentAudit}
+                onAuditComplete={handleAuditComplete}
+              />
+            ) : (
+              <LabExcelAuditor
+                lab={lab}
+                initialAudit={currentAudit}
+                onAuditComplete={handleAuditComplete}
+              />
+            )}
 
             {/* Liste des jalons */}
             <LabMilestoneList

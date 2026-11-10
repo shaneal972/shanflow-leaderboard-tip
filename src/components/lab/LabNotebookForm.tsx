@@ -57,15 +57,23 @@ export const LabNotebookForm: React.FC<LabNotebookFormProps> = ({
       return;
     }
 
-    const auditSnippet = `[PREUVE D'AUDIT KLF ENGINE - ${currentAudit.fileName}]
-- Conformité globale : ${currentAudit.scorePct}% (${currentAudit.validCount}/5 jalons atteints)
-${currentAudit.details.map((d) => `• ${d.status === 'valide' ? '✓' : '✗'} ${d.message}`).join('\n')}
-
-DÉMARCHE TECHNIQUE OPÉRATIONNELLE :
+    const totalJalons = currentAudit.milestonesCount || lab.jalons.length || 5;
+    const demarcheBlock =
+      lab.id === 'tp-bur-03-quai3-pack'
+        ? `DÉMARCHE TECHNIQUE OPÉRATIONNELLE (QUAI N°3) :
+1. Acte 1 (Excel / Google Sheets) : calcul du poids total (=E4*F4), TVA Guadeloupe (8,5 %) bloquée par $J$2, alerte sécurité chariot 2 500 kg (=SI), liaison RECHERCHEV + SUPPRESPACE + SIERREUR, statistiques SOMME/MOYENNE/MAX/MIN/NB.SI et graphique.
+2. Acte 2 (Word / Google Docs) : suppression des appuis Entrée multiples, application des Styles Titre 1/2, saut de page (Ctrl+Entrée), sommaire automatique, insertion des 2 captures Win+Maj+S et du mini-tableau.`
+        : `DÉMARCHE TECHNIQUE OPÉRATIONNELLE :
 1. Rétablissement des codes postaux : application du format texte sur 5 positions sans perte des zéros.
 2. Éradication des #N/A : utilisation de SUPPRESPACE pour purger les espaces parasites en fin de chaîne.
 3. Fiscalité locale : calcul dynamique Octroi de mer (8.5%) et TVA (8.5%) avec références bloquées ($H$2 et $I$2).
 4. Ergonomie usager : figeage des volets et recette du total général TTC.`;
+
+    const auditSnippet = `[PREUVE D'AUDIT KLF ENGINE - ${currentAudit.fileName}]
+- Conformité globale : ${currentAudit.scorePct}% (${currentAudit.validCount}/${totalJalons} jalons atteints)
+${currentAudit.details.map((d) => `• ${d.status === 'valide' ? '✓' : '✗'} ${d.message}`).join('\n')}
+
+${demarcheBlock}`;
 
     setDemarche((prev) => (prev ? `${prev}\n\n${auditSnippet}` : auditSnippet));
     setNotification({

@@ -547,6 +547,209 @@ export const RESSOURCES_DATA: BureautiqueRessource[] = [
         explication: 'La fonction =SIERREUR(formule; valeur_alternative) intercepte n\'importe quelle erreur (comme #N/A, #DIV/0!, #VALEUR!) et affiche le texte de remplacement choisi à la place.'
       }
     ]
+  },
+  {
+    id: 'sheets-excel-decodeur-formules-quai3',
+    slug: 'sheets-excel-decodeur-formules-quai3',
+    titre: 'Tableur sans jargon : chaque mot et formule expliqués simplement (Excel & Sheets)',
+    outil: 'sheets',
+    categorie: 'Fondations & Zéro-Jargon',
+    palier: 'Palier 2',
+    tempsLecture: '10-12 min',
+    resume: 'Comprendre en français clair tous les mots techniques (cellule, plage, cadenas $, #N/A) et traduire à voix haute les 7 formules essentielles dans Excel et Google Sheets.',
+    ticketAssocieId: 'TCK-105',
+    badgeAssocieId: 'office_collab_pilot',
+    objectifsPeda: [
+      'Traduire immédiatement les mots difficiles (cellule, plage, référence absolue $, séparateur ;) en images concrètes.',
+      'Lire à voix haute les formules SOMME, MOYENNE, MAX, MIN, SI, NB.SI, RECHERCHEV et SIERREUR avant de les écrire.',
+      'Passer d’Excel à Google Sheets sans blocage sur les menus et les téléchargements.'
+    ],
+    prerequis: [
+      'Avoir un poste connecté ou le classeur KLF_Palette_Quai3_BRUT_101126.xlsx.'
+    ],
+    miseEnSituationKLF: 'Au Quai n°3 de Jarry, les caristes utilisent Google Sheets sur tablette tandis que le bureau expédition utilise Microsoft Excel. Lorsqu’une palette dépasse 2 500 kg, le tableau doit alerter en rouge et appliquer la TVA locale de 8,5 % sans jamais afficher d’erreur #N/A.',
+    raccourcisCles: [
+      { touche: 'F4', action: 'Poser le cadenas ($) sur la cellule de taux pour qu’elle ne glisse pas à la recopie', plateforme: 'windows' },
+      { touche: 'Ctrl + Entrée', action: 'Valider la formule en restant dans la même cellule', plateforme: 'windows' },
+      { touche: 'Ctrl + Z', action: 'Annuler immédiatement la dernière erreur sans paniquer', plateforme: 'universel' }
+    ],
+    etapesDetaillees: [
+      {
+        numero: 1,
+        titre: 'Comprendre Cellule, Plage (:) et Point-virgule (;)',
+        detail: 'Une cellule est une boîte identifiée par une lettre et un chiffre (G4). Deux-points (:) signifie « jusqu’à » : G4:G15 veut dire toutes les boîtes de G4 jusqu’à G15. Le point-virgule (;) sert à séparer les morceaux d’une formule en français.',
+        exempleCode: '=SOMME(G4:G15)  ->  Additionne toutes les cases de G4 jusqu’à G15.'
+      },
+      {
+        numero: 2,
+        titre: 'Le cadenas ($) avec la touche F4',
+        detail: 'Quand on tire une formule vers le bas, Excel et Sheets décalent les numéros de ligne tout seuls. Pour garder la case du taux TVA (J2) ou la limite chariot (H2) bloquée, on appuie sur F4 afin d’afficher des dollars : $J$2 et $H$2.',
+        exempleCode: '=I4*$J$2  ->  Multiplie le montant HT par le taux bloqué en J2.'
+      },
+      {
+        numero: 3,
+        titre: 'Lire la formule =SI(...) à voix haute',
+        detail: 'La fonction SI fonctionne comme une phrase en trois morceaux : SI [condition] ; ALORS [ce qu’on écrit si c’est vrai] ; SINON [ce qu’on écrit si c’est faux]. Tout mot écrit dans la formule se place entre guillemets.',
+        exempleCode: '=SI(G4>$H$2; "SURCHARGE - 2 PASSAGES"; "OK CHARIOT")'
+      },
+      {
+        numero: 4,
+        titre: 'Relier deux onglets sans erreur #N/A (RECHERCHEV + SIERREUR)',
+        detail: 'RECHERCHEV va lire un code dans un autre onglet (Zones_Quais) et ramène le nom de la zone (colonne 2). SUPPRESPACE retire les espaces oubliés à la fin du mot, et SIERREUR remplace #N/A par un message humain.',
+        exempleCode: '=SIERREUR(RECHERCHEV(SUPPRESPACE(C4); Zones_Quais!$A$3:$C$6; 2; FAUX); "Zone inconnue")'
+      },
+      {
+        numero: 5,
+        titre: 'Synthèse et travail sur Google Sheets',
+        detail: 'Pour ouvrir un fichier Excel dans Google Sheets : ouvrez Sheets > Fichier > Importer. Une fois fini, exportez via Fichier > Télécharger > Microsoft Excel (.xlsx) pour le déposer dans l’auto-auditeur KLF.',
+        exempleCode: '=MOYENNE(G4:G15) | =MAX(G4:G15) | =MIN(G4:G15) | =NB.SI(H4:H15; "SURCHARGE - 2 PASSAGES")'
+      }
+    ],
+    piegesAEviter: [
+      'Oublier les guillemets " " autour d’un mot dans une formule (provoque #NOM?).',
+      'Oublier le cadenas $ sur le taux de TVA (provoque 0 € sur les lignes suivantes).',
+      'Laisser un espace invisible à la fin d’un code zone sans utiliser SUPPRESPACE.'
+    ],
+    exerciceApplication: {
+      enonce: 'Rendez-vous dans Tech Lab > Atelier Quai n°3 (tp-bur-03-quai3-pack), téléchargez KLF_Palette_Quai3_BRUT_101126.xlsx, complétez toutes les formules et déposez votre fichier pour validation automatique.',
+      criteresReussite: [
+        'Aucune erreur #N/A, #VALEUR! ou ### visible dans le classeur.',
+        'TVA 8,5 % et alerte 2 500 kg utilisent le cadenas $.',
+        'Les 4 indicateurs statistiques (SOMME, MOYENNE, MAX/MIN, NB.SI) sont justes.'
+      ]
+    },
+    miniQuiz: [
+      {
+        question: 'Dans la formule =SOMME(G4:G15), que signifie le symbole deux-points (:) ?',
+        options: [
+          'Il divise automatiquement la colonne par deux.',
+          'Il bloque la cellule pour éviter le décalage.',
+          'Il signifie « jusqu’à », pour inclure toute la plage de G4 à G15.',
+          'Il force le texte à s’aligner à gauche de la cellule.'
+        ],
+        reponseCorrecte: 2,
+        explication: 'Le deux-points (:) relie deux cellules extrêmes pour former une plage continue (de G4 jusqu’à G15).'
+      },
+      {
+        question: 'Que se passe-t-il si vous oubliez les dollars ($) sur $J$2 avant de recopier votre formule TVA vers le bas ?',
+        options: [
+          'La référence glisse vers J3, J4, J5 et fausse les calculs suivants.',
+          'Le tableur verrouille la feuille en lecture seule immédiate.',
+          'La formule s’affiche en anglais au lieu du français.',
+          'Le classeur est automatiquement converti en document Word.'
+        ],
+        reponseCorrecte: 0,
+        explication: 'Sans cadenas ($), chaque ligne recopiée vers le bas décale automatiquement le numéro de ligne vers les cellules suivantes.'
+      },
+      {
+        question: 'À quoi sert SIERREUR autour d’une formule RECHERCHEV ?',
+        options: [
+          'À colorier la cellule en vert dès que le résultat est exact.',
+          'À afficher un texte propre choisi par le technicien au lieu de #N/A.',
+          'À calculer la moyenne des dix dernières lignes du tableau.',
+          'À insérer un saut de page automatique avant l’impression.'
+        ],
+        reponseCorrecte: 1,
+        explication: 'SIERREUR attrape les codes inconnus (#N/A) et affiche une réponse lisible par l’utilisateur, comme « Zone inconnue ».'
+      }
+    ]
+  },
+  {
+    id: 'docs-word-guide-illustre-styles',
+    slug: 'docs-word-guide-illustre-styles',
+    titre: 'Rédiger un guide illustré clair sans casser la mise en page (Word & Google Docs)',
+    outil: 'docs',
+    categorie: 'Documentation & Preuves REAC',
+    palier: 'Palier 2',
+    tempsLecture: '8-10 min',
+    resume: 'Passer d’un brouillon plein de lignes vides à un tutoriel professionnel dans Word et Google Docs : Styles Titre 1/2, saut de page, sommaire automatique, captures Win+Maj+S et export PDF.',
+    ticketAssocieId: 'TCK-105',
+    badgeAssocieId: 'office_collab_pilot',
+    miseEnSituationKLF: 'Les caristes du Quai n°3 à Jarry doivent recevoir un mode d’emploi illustré propre, sans textes décalés ni images écrasées, pouvant être consulté aussi bien sur Microsoft Word au bureau que sur Google Docs sur tablette.',
+    objectifsPeda: [
+      'Remplacer les lignes vides répétées (Entrée) par un vrai saut de page (Ctrl + Entrée).',
+      'Structurer le document avec les Styles Titre 1 et Titre 2 pour générer le sommaire en 2 clics.',
+      'Capturer des extraits d’écran ciblés (Win + Maj + S) et exporter en PDF figé.'
+    ],
+    raccourcisCles: [
+      { touche: 'Ctrl + Entrée', action: 'Insérer un vrai saut de page propre (Word et Google Docs)', plateforme: 'universel' },
+      { touche: 'Win + Maj + S', action: 'Capturer une zone précise de l’écran pour la coller (Ctrl + V)', plateforme: 'windows' },
+      { touche: 'Ctrl + H', action: 'Rechercher et remplacer les doubles espaces en une seconde', plateforme: 'windows' }
+    ],
+    etapesDetaillees: [
+      {
+        numero: 1,
+        titre: 'Nettoyer les défauts invisibles avec le bouton ¶',
+        detail: 'Dans Word, cliquez sur le symbole ¶ (Afficher tout) pour voir les espaces et appuis Entrée en trop. Dans Google Docs, utilisez Ctrl+H pour remplacer deux espaces par un seul.',
+        exempleCode: 'Règle d’or : jamais plus d’une ligne vide d’affilée, jamais d’espace avant une virgule ou un point.'
+      },
+      {
+        numero: 2,
+        titre: 'Appliquer les vrais Styles Titre 1 et Titre 2',
+        detail: 'Sélectionnez chaque titre de chapitre et choisissez « Titre 1 » (ou « Titre 2 » pour un sous-chapitre) dans le menu Styles, au lieu d’agrandir la police à la main.',
+        exempleCode: 'Word : Accueil > Styles | Google Docs : menu Texte normal > Titre 1 / Titre 2'
+      },
+      {
+        numero: 3,
+        titre: 'Saut de page et Sommaire automatique',
+        detail: 'Placez le curseur avant le premier chapitre et tapez Ctrl + Entrée. Revenez en page 1 et insérez la table des matières automatique.',
+        exempleCode: 'Word : Références > Table des matières | Google Docs : Insertion > Table des matières'
+      },
+      {
+        numero: 4,
+        titre: 'Coller les captures d’écran et exporter en PDF',
+        detail: 'Faites Win + Maj + S autour de votre tableau ou graphique, puis Ctrl + V dans votre document. Terminez par En-tête, numéro de page et Export PDF.',
+        exempleCode: 'Pour l’auto-audit KLF depuis Google Docs : Fichier > Télécharger > Microsoft Word (.docx)'
+      }
+    ],
+    piegesAEviter: [
+      'Appuyer 15 fois sur Entrée pour descendre à la page suivante (tout se décale à l’ajout d’une image).',
+      'Grossir les titres à la main en gras sans appliquer le Style Titre 1 (le sommaire reste vide).',
+      'Envoyer un fichier modifiable au lieu d’un PDF figé au destinataire final.'
+    ],
+    exerciceApplication: {
+      enonce: 'Dans Tech Lab > Atelier Quai n°3, téléchargez KLF_Guide_Caristes_BRUT_101126.docx, réparez la mise en page, collez vos 2 captures et le mini-tableau puis passez l’auto-audit.',
+      criteresReussite: [
+        'Zéro empilement de lignes vides.',
+        'Styles Titre 1 / Titre 2 et saut de page Ctrl + Entrée appliqués.',
+        'Au moins 2 captures Win+Maj+S et le tableau des statistiques intégrés.'
+      ]
+    },
+    miniQuiz: [
+      {
+        question: 'Quel raccourci clavier permet de passer proprement à la page suivante sans appuyer 10 fois sur Entrée ?',
+        options: [
+          'Alt + F4 (ferme la fenêtre)',
+          'Ctrl + Maj + N (nouveau dossier)',
+          'Tab + Espace (retrait texte)',
+          'Ctrl + Entrée (saut de page)'
+        ],
+        reponseCorrecte: 3,
+        explication: 'Ctrl + Entrée insère un saut de page instantané dans Microsoft Word comme dans Google Docs.'
+      },
+      {
+        question: 'Pourquoi faut-il appliquer les Styles Titre 1 et Titre 2 au lieu d’agrandir le texte manuellement ?',
+        options: [
+          'Pour que Word et Docs fabriquent automatiquement le sommaire avec les numéros de page.',
+          'Pour réduire la taille du fichier afin de l’envoyer plus facilement en pièce jointe.',
+          'Pour autoriser l’ajout de formules mathématiques dans les paragraphes du document.',
+          'Pour traduire automatiquement les intitulés de chapitres lors de l’exportation PDF.'
+        ],
+        reponseCorrecte: 0,
+        explication: 'La table des matières automatique repère exclusivement les paragraphes étiquetés avec les Styles Titre 1, Titre 2, etc.'
+      },
+      {
+        question: 'Quel raccourci Windows permet de capturer une zone précise de son tableur pour la coller dans Word ou Docs ?',
+        options: [
+          'Ctrl + Alt + Suppr',
+          'Win + Maj + S',
+          'Ctrl + Maj + V',
+          'Alt + Tab + Esc'
+        ],
+        reponseCorrecte: 1,
+        explication: 'Win + Maj + S ouvre l’outil capture d’écran Windows : il suffit ensuite d’appuyer sur Ctrl + V dans Word ou Google Docs.'
+      }
+    ]
   }
 ];
 
