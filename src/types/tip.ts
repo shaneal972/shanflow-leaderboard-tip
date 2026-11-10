@@ -294,7 +294,7 @@ export interface LabAuditSummary {
   details: LabAuditDetail[];
 }
 
-export type LabSubmissionStatus = 'brouillon' | 'soumis_en_revue' | 'homologue_dsi' | 'a_corriger';
+export type LabSubmissionStatus = 'brouillon' | 'en_cours' | 'soumis_en_revue' | 'homologue_dsi' | 'a_corriger';
 
 export interface LabSubmission {
   id: string;
