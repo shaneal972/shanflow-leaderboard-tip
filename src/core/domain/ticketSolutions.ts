@@ -246,3 +246,4 @@ export function getTicketScenarioSolution(
     expectedMessageUsager: `Bonjour ${ticket.demandeur}, votre incident (${ticket.id}) a bien été analysé et résolu par le support DSI. Vous pouvez reprendre votre activité normalement ; n'hésitez pas à nous solliciter en cas de besoin. Bien cordialement, Support DSI KLF.`,
   };
 }
+

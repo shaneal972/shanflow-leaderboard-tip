@@ -97,3 +97,4 @@ export const LabScoreGauge: React.FC<LabScoreGaugeProps> = ({
     </div>
   );
 };
+

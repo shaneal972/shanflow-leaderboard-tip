@@ -275,3 +275,4 @@ export function getProgressScorePalette(scorePct: number): ProgressScorePalette 
     badgeClass: 'bg-white/5 text-slate-400 border-white/10',
   };
 }
+
