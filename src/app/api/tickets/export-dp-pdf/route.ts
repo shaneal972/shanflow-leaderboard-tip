@@ -3,6 +3,7 @@ import { supabaseServer } from '@/lib/supabase';
 import { isAdminAuthenticated } from '@/lib/adminAuth';
 import { getActiveTechnicianId, isStudentAuthenticated } from '@/lib/studentAuth';
 import { MOCK_APPRENANTS, MOCK_TICKETS } from '@/data/mockData';
+import { getTicketScenarioSolution } from '@/core/domain/ticketSolutions';
 import { generateTicketDpPdfHtml } from '@/lib/templates/ticketDpPdfTemplate';
 import { TicketKLF, Apprenant, TicketResolution } from '@/types/tip';
 
@@ -259,6 +260,25 @@ function getDefaultResolutionForTicket(ticket: TicketKLF, studentId: string): Ti
         points_attribues: 0,
         soumis_le: new Date().toISOString(),
       };
+    case 'TCK-106':
+    case 'TCK-107':
+    case 'TCK-108':
+    case 'TCK-109':
+    case 'TCK-110': {
+      const scenario = getTicketScenarioSolution(ticket);
+      return {
+        id: `draft-${ticket.id.toLowerCase()}`,
+        ticket_id: ticket.id,
+        apprenant_id: studentId,
+        diagnostic_categorie: scenario.expectedCategory,
+        diagnostic_urgence: scenario.expectedUrgency,
+        demarche_technique: scenario.expectedDemarche,
+        message_usager: scenario.expectedMessageUsager,
+        statut: 'en_attente_validation',
+        points_attribues: 0,
+        soumis_le: new Date().toISOString(),
+      };
+    }
     case 'TCK-103':
     default:
       return {

@@ -207,6 +207,205 @@ const SCENARIO_SOLUTIONS: Record<string, TicketScenarioSolution> = {
     expectedMessageUsager:
       'Bonjour Sébastien, l’imprimante thermique Zebra ZT410 est de nouveau opérationnelle sur l’adresse 192.168.10.45. Elle était passée en adresse APIPA (169.254.12.88) après la coupure EDF ; j’ai fixé son IP en statique avec réservation MAC pour éviter que l’incident ne se reproduise et validé l’impression d’une étiquette test. Bien cordialement, Support DSI KLF.',
   },
+  'TCK-106': {
+    ticketId: 'TCK-106',
+    diagnosticBadge: 'Facturation & Douane • Excel + Lecteur SMB Y:\\',
+    diagnosticTitle:
+      'Données techniques & éléments de diagnostic (Corinne BÉVILLE)',
+    diagnosticPoints: [
+      {
+        label: '1. Erreurs #N/A sur RECHERCHEV',
+        detail:
+          'Nettoyage des espaces invisibles dans les codes conteneurs avec SUPPRESPACE et encapsulation anti-erreur SIERREUR :',
+        code: '=SIERREUR(RECHERCHEV(SUPPRESPACE(A4); Grilles!$A$2:$D$50; 3; FAUX); "Code inconnu")',
+      },
+      {
+        label: '2. Décalage TVA 8,5 % & Octroi de mer',
+        detail:
+          'Verrouillage des cellules de taux ($H$2 TVA Guadeloupe 8,5 % et $I$2 Octroi de mer) par la touche F4 (références absolues $) avant recopie vers le bas :',
+        code: '=D4*$H$2  |  =D4*$I$2',
+      },
+      {
+        label: '3. Diagnostic réseau DNS & SMB',
+        detail:
+          'Test de joignabilité du serveur de tarifs (ping + résolution FQDN) puis contrôle du montage SMB :',
+        code: 'nslookup srv-klf-tarifs.klf.local && ping 192.168.20.250',
+      },
+      {
+        label: '4. Reconnexion persistante lecteur Y:\\',
+        detail:
+          'Purge de la session réseau bloquée et remappage persistant du partage douanier en invite de commandes :',
+        code: 'net use Y: /delete && net use Y: \\\\192.168.20.250\\Douane /persistent:yes',
+      },
+    ],
+    dpExtensionTitle:
+      'Modélisation Excel fiable (RECHERCHEV / F4) & restauration de partage réseau SMB (CCP 1 & CCP 3)',
+    dpExtensionDescription:
+      "Valorisez devant le jury le double volet bureautique et réseau : assainissement des formules Excel (SUPPRESPACE, SIERREUR, références absolues $ pour la TVA 8,5 % et l'Octroi de mer) couplé au diagnostic DNS (nslookup), à la vérification IP (ping) et au remappage persistant d'un lecteur réseau SMB (net use /persistent:yes) lié aux liaisons externes du classeur.",
+    expectedCategory: 'applicatif',
+    expectedUrgency: 'P1',
+    expectedDemarche:
+      '1. Diagnostic réseau du lecteur Y:\\ en erreur : exécution de nslookup srv-klf-tarifs.klf.local et ping 192.168.20.250, puis purge et reconnexion persistante du partage SMB via net use Y: /delete suivi de net use Y: \\\\192.168.20.250\\Douane /persistent:yes.\n2. Actualisation des liaisons externes dans Excel (Données > Modifier les liens d’accès) après rétablissement du lecteur Y:\\.\n3. Éradication des erreurs #N/A dans RECHERCHEV en nettoyant les espaces parasites et en sécurisant le renvoi : =SIERREUR(RECHERCHEV(SUPPRESPACE(A4); Grilles!$A$2:$D$50; 3; FAUX); "Code inconnu").\n4. Verrouillage des cellules de taux TVA Guadeloupe 8,5 % ($H$2) et Octroi de mer ($I$2) avec la touche F4 ($), étirement complet de la colonne et vérification des totaux TTC avant dédouanement.',
+    expectedMessageUsager:
+      'Bonjour Corinne, votre lecteur réseau Y:\\ (\\\\srv-klf-tarifs.klf.local\\Douane) a été rétabli de façon persistante et vos liaisons Excel sont à jour. J’ai également corrigé les formules RECHERCHEV (#N/A) avec SUPPRESPACE/SIERREUR et bloqué les taux de TVA 8,5 % et d’Octroi de mer en référence absolue ($) pour éviter tout décalage lors de la recopie. Vous pouvez finaliser la facturation douanière. Bien cordialement, Support DSI KLF.',
+  },
+  'TCK-107': {
+    ticketId: 'TCK-107',
+    diagnosticBadge: 'Coordination Maritime • Outlook + DNS Autodiscover',
+    diagnosticTitle:
+      'Données techniques & éléments de diagnostic (Jean-Marc BÉLÉNUS)',
+    diagnosticPoints: [
+      {
+        label: '1. Diagnostic DNS & ports messagerie',
+        detail:
+          'Rétablissement du serveur DNS interne KLF (192.168.10.10) sur la carte réseau, purge du cache et test Autodiscover (HTTPS 443 / SMTPS 587) :',
+        code: 'ipconfig /flushdns && nslookup autodiscover.klf.local',
+      },
+      {
+        label: '2. Reprise mode connecté & cache .ost',
+        detail:
+          'Désactivation de « Travailler hors connexion » (onglet Envoyer/Recevoir) et vérification/réparation du fichier local .ost via SCANPST.EXE ou recréation du profil Mail.',
+      },
+      {
+        label: '3. Calendrier partagé Planning_Quais_Jarry',
+        detail:
+          'Rattachement du calendrier partagé d’équipe (Ajouter un calendrier > À partir du carnet d’adresses) et contrôle des droits « Peut modifier ».',
+      },
+      {
+        label: '4. Règle serveur & signature KLF',
+        detail:
+          'Création de la règle de tri automatique sur l’objet [AVIS-ARRIVEE] vers le dossier « Urgences Port » et application de la signature HTML officielle KLF.',
+      },
+    ],
+    dpExtensionTitle:
+      'Dépannage client Outlook (.ost), DNS Autodiscover & délégation d’agenda (CCP 1 & CCP 3)',
+    dpExtensionDescription:
+      "Mettez en avant votre démarche ITIL complète : identification d'une cause réseau sous-jacente (DNS externe bloquant la résolution autodiscover.klf.local et les flux M365/Exchange), remise en ligne d'Outlook, contrôle d'intégrité du cache local .ost (SCANPST.EXE) et configuration collaborative (agenda partagé et règle côté serveur).",
+    expectedCategory: 'applicatif',
+    expectedUrgency: 'P1',
+    expectedDemarche:
+      '1. Diagnostic de connectivité réseau : constat d’un serveur DNS externe erroné sur la carte réseau bloquant Outlook. Réattribution du DNS interne KLF (192.168.10.10), vidage du cache avec ipconfig /flushdns et validation de nslookup autodiscover.klf.local (ports HTTPS 443 et SMTPS 587 joignables).\n2. Sortie du mode « Travailler hors connexion » dans Outlook (onglet Envoyer/Recevoir), vérification d’intégrité du cache local .ost via SCANPST.EXE et libération des e-mails coincés dans la Boîte d’envoi.\n3. Réattachement du calendrier partagé Planning_Quais_Jarry avec vérification des droits d’édition pour les créneaux camions.\n4. Paramétrage d’une règle côté serveur acheminant tout message contenant [AVIS-ARRIVEE] vers le dossier « Urgences Port » et déploiement de la signature HTML KLF.',
+    expectedMessageUsager:
+      'Bonjour Jean-Marc, votre messagerie Outlook est de nouveau connectée et vos messages en attente ont bien été expédiés : l’incident venait d’un paramétrage DNS erroné sur votre carte réseau. Le calendrier partagé Planning_Quais_Jarry, la règle de classement [AVIS-ARRIVEE] vers « Urgences Port » et votre signature KLF sont opérationnels. Bien cordialement, Support DSI KLF.',
+  },
+  'TCK-108': {
+    ticketId: 'TCK-108',
+    diagnosticBadge: 'Qualité, HSE & Douane • Word + Verrou SMB NAS',
+    diagnosticTitle:
+      'Données techniques & éléments de diagnostic (Nadia KANCEL)',
+    diagnosticPoints: [
+      {
+        label: '1. Fermeture de session SMB fantôme',
+        detail:
+          'Déverrouillage du fichier sur le serveur de fichiers via la console Dossiers partagés (Fichiers ouverts) et suppression du fichier temporaire caché :',
+        code: 'fsmgmt.msc  ->  supprimer ~$Manuel_HSE_Portuaire_2026.docx',
+      },
+      {
+        label: '2. Assainissement marques ¶ & sauts',
+        detail:
+          'Affichage des caractères non imprimables (Ctrl + Maj + 8), suppression des 15 retours Entrée vides et remplacement par des sauts de page (Ctrl + Entrée).',
+      },
+      {
+        label: '3. Styles hiérarchiques & sommaire',
+        detail:
+          'Application des styles Titre 1 / Titre 2 et actualisation de la Table des matières (Références > Mettre à jour toute la table).',
+      },
+      {
+        label: '4. Saut de section Paysage (page 4)',
+        detail:
+          'Encadrement de la page 4 par deux sauts de section (Page suivante) pour isoler l’orientation Paysage et activation de « Répéter la ligne d’en-tête » sur le tableau.',
+      },
+    ],
+    dpExtensionTitle:
+      'Gestion des verrous réseau SMB (fsmgmt.msc) & structuration documentaire Word (CCP 1 & CCP 3)',
+    dpExtensionDescription:
+      "Démontrez au jury comment résoudre un blocage collaboratif sur NAS : diagnostic d'un verrou SMB orphelin laissé par un arrêt brutal (console fsmgmt.msc + fichier verrou ~$), suivi d'une remise aux normes documentaires (styles hiérarchiques, sommaire dynamique et sauts de section mixtes Portrait/Paysage).",
+    expectedCategory: 'applicatif',
+    expectedUrgency: 'P2',
+    expectedDemarche:
+      '1. Déverrouillage réseau sur \\\\NAS-KLF\\Qualite : ouverture de fsmgmt.msc (Dossiers partagés > Fichiers ouverts) pour fermer la session SMB fantôme de Nadia KANCEL, puis suppression du fichier verrou caché ~$Manuel_HSE_Portuaire_2026.docx.\n2. Affichage des marques de mise en forme (¶ via Ctrl + Maj + 8) dans Word, suppression des retours chariot superflus et insertion de vrais sauts de page (Ctrl + Entrée).\n3. Normalisation des titres via les styles Titre 1 et Titre 2, puis génération et mise à jour complète de la Table des matières automatique.\n4. Insertion de deux sauts de section (Page suivante) avant et après le grand tableau de la page 4 pour passer uniquement cette page en orientation Paysage et activer la répétition des en-têtes du tableau.',
+    expectedMessageUsager:
+      'Bonjour Nadia, le verrou réseau qui bloquait votre rapport en lecture seule suite au plantage de votre PC a été levé sur le NAS. J’ai également assaini la mise en page (suppression des retours Entrée parasites, sommaire automatique mis à jour) et passé la page 4 du grand tableau en format Paysage grâce aux sauts de section. Vous pouvez exporter en PDF pour la capitainerie. Bien cordialement, Support DSI KLF.',
+  },
+  'TCK-109': {
+    ticketId: 'TCK-109',
+    diagnosticBadge: 'Logistique Inter-Îles • SharePoint / OneDrive + Proxy',
+    diagnosticTitle:
+      'Données techniques & éléments de diagnostic (Stéphane ZÉPHIR)',
+    diagnosticPoints: [
+      {
+        label: '1. Réseau : Proxy obsolète & reset agent',
+        detail:
+          'Désactivation du proxy manuel erroné dans inetcpl.cpl bloquant *.sharepoint.com (code 0x8004de40), test nslookup et réinitialisation de l’agent :',
+        code: '%localappdata%\\Microsoft\\OneDrive\\onedrive.exe /reset',
+      },
+      {
+        label: '2. Restauration historique de versions',
+        detail:
+          'Restauration de la version saine de 08h00 depuis SharePoint / Excel (Fichier > Informations > Historique des versions) sans perte du journal d’audit.',
+      },
+      {
+        label: '3. Correction des 3 fichiers bloqués',
+        detail:
+          'Renommage des fichiers contenant des caractères interdits (* : ? / \\) et raccourcissement des sous-dossiers dépassant 255 caractères.',
+      },
+      {
+        label: '4. Partage externe sécurisé RGPD',
+        detail:
+          'Remplacement du lien public par un partage « Personnes spécifiques » limité au transitaire avec vérification par code OTP et date d’expiration.',
+      },
+    ],
+    dpExtensionTitle:
+      'Synchronisation hybride OneDrive/SharePoint, diagnostic Proxy/HTTPS & gouvernance RGPD (CCP 1 & CCP 3)',
+    dpExtensionDescription:
+      "Illustrez la dimension Cloud hybride du nouveau REAC TIP : diagnostic d'erreur réseau 0x8004de40 (proxy HTTP obsolète bloquant TLS/HTTPS vers Microsoft 365 et réinitialisation du démon onedrive.exe /reset), restauration collaborative par historique de versions et sécurisation RGPD des liens externes.",
+    expectedCategory: 'applicatif',
+    expectedUrgency: 'P2',
+    expectedDemarche:
+      '1. Résolution de l’erreur réseau 0x8004de40 sur le poste : désactivation du serveur proxy manuel obsolète dans inetcpl.cpl (Options Internet > Connexions > Paramètres réseau), test nslookup et relance propre de la synchronisation via onedrive.exe /reset.\n2. Restauration immédiate de l’onglet écrasé via l’Historique des versions SharePoint (version de 08h00 restaurée avant la modification du stagiaire).\n3. Traitement des 3 fichiers en erreur de synchronisation : suppression des caractères interdits (*, :, ?) et réduction de la longueur de chemin sous la limite de 255 caractères.\n4. Configuration du partage externe vers le transitaire en mode « Personnes spécifiques » (authentification par code OTP par e-mail et expiration automatique à 15 jours, conformément au RGPD).',
+    expectedMessageUsager:
+      'Bonjour Stéphane, l’onglet des expéditions a été restauré à son état de 08h00 grâce à l’historique de versions SharePoint. La croix rouge OneDrive venait d’un ancien proxy réseau bloquant la connexion sécurisée et de 3 noms de fichiers contenant des caractères non autorisés : tout est resynchronisé. Le lien pour votre transitaire est configuré en accès nominatif sécurisé avec expiration automatique. Bien cordialement, Support DSI KLF.',
+  },
+  'TCK-110': {
+    ticketId: 'TCK-110',
+    diagnosticBadge: 'Contrôle de Gestion • CSV UTF-8 + TCD + Pare-feu SMB',
+    diagnosticTitle:
+      'Données techniques & éléments de diagnostic (Valérie LÉOTIN)',
+    diagnosticPoints: [
+      {
+        label: '1. Réseau : Profil Public bloquant TCP 445',
+        detail:
+          'Bascule de l’interface Ethernet du profil « Public » vers « Privé / Domaine » pour autoriser le port SMB 445 dans le pare-feu Windows et test UNC :',
+        code: 'Set-NetConnectionProfile -InterfaceAlias "Ethernet" -NetworkCategory Private',
+      },
+      {
+        label: '2. Test de joignabilité serveur ERP',
+        detail:
+          'Vérification de la couche IP avant montage du dossier réseau :',
+        code: 'ping 192.168.10.80 -n 4 && dir \\\\192.168.10.80\\Exports_ERP',
+      },
+      {
+        label: '3. Import CSV UTF-8 & typage monétaire',
+        detail:
+          'Importation via Données > À partir d’un fichier texte/CSV (encodage 65001 Unicode UTF-8, délimiteur « ; ») et conversion des décimales point en virgule.',
+      },
+      {
+        label: '4. Tableau Croisé Dynamique & PowerPoint',
+        detail:
+          'Création du TCD (CA HT et tonnage par quai et département 971/972), ajout d’un segment de filtre et collage lié du graphique dans PowerPoint.',
+      },
+    ],
+    dpExtensionTitle:
+      'Importation de données ERP (UTF-8 / TCD) & déblocage pare-feu Windows SMB port 445 (CCP 1 & CCP 3)',
+    dpExtensionDescription:
+      "Mettez en valeur l'articulation entre exploitation de données décisionnelles (Power Query / import CSV encodé 65001 UTF-8, TCD, segments et liaison dynamique PowerPoint) et sécurité réseau poste client (diagnostic d'un profil réseau Windows passé en Public qui filtrait le port TCP 445 SMB).",
+    expectedCategory: 'applicatif',
+    expectedUrgency: 'P2',
+    expectedDemarche:
+      '1. Diagnostic réseau sur le poste Ethernet : constat que la carte réseau a basculé en profil « Public » après rebranchement, activant le blocage du port TCP 445 (SMB) dans le pare-feu Windows Defender. Bascule en profil Privé/Domaine (Set-NetConnectionProfile) et validation par ping 192.168.10.80 et accès à \\\\192.168.10.80\\Exports_ERP.\n2. Importation propre de Tonnage_Quais_2026.csv dans Excel via Données > À partir d’un fichier texte/CSV en sélectionnant l’encodage 65001 : Unicode (UTF-8) et le séparateur Point-virgule (;).\n3. Conversion des séparateurs décimaux (point vers virgule) pour typer les montants HT en format numérique monétaire €.\n4. Création du Tableau Croisé Dynamique par quai et par département (971/972) avec un segment de filtre et collage du graphique croisé dynamique lié dans la présentation PowerPoint.',
+    expectedMessageUsager:
+      'Bonjour Valérie, l’accès au dossier réseau \\\\192.168.10.80\\Exports_ERP est rétabli : Windows avait classé votre câble rebranché en réseau « Public », ce qui bloquait le partage de fichiers dans le pare-feu. Votre export CSV a été réimporté en UTF-8 avec toutes les colonnes et montants HT exploitables, et votre Tableau Croisé Dynamique est lié à votre présentation PowerPoint pour 14h. Bien cordialement, Support DSI KLF.',
+  },
 };
 
 export function getTicketScenarioSolution(

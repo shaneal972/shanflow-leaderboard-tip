@@ -48,6 +48,51 @@ export function getDpDetailsForTicket(ticketId: string): DpTemplateData {
         difficulteReflexive: "Traduire l'analyse technique des en-têtes DNS/SMTP en consignes de sécurité compréhensibles et applicables immédiatement par le personnel non technique.",
         enseignementReflexive: "La sécurité de proximité repose sur le couplage d'un filtrage réseau rigoureux (protocoles d'authentification e-mail) et de la sensibilisation continue des collaborateurs."
       };
+    case 'TCK-106':
+      return {
+        titreDp: 'Modélisation Excel (RECHERCHEV / F4 TVA 8,5 %) & reconnexion de lecteur réseau SMB (CCP 1 & CCP 3)',
+        contexteDp: "Service Facturation & Douane KLF (Jarry). Fiabilisation du classeur Facturation_Transit_Jarry.xlsx de Corinne BÉVILLE suite aux erreurs #N/A, au décalage de formules fiscales (TVA 8,5 %, Octroi de mer) et à la coupure du partage réseau Y:\\.",
+        outilsMobilises: 'Microsoft Excel (RECHERCHEV, SUPPRESPACE, SIERREUR, références absolues $ via F4), outils CLI réseau (nslookup, ping, net use /delete et /persistent:yes), partage SMB Windows.',
+        reussiteReflexive: "Rétablissement persistant du lecteur réseau Y:\\ en ligne de commande, actualisation des liaisons externes Excel et fiabilisation des calculs douaniers avant le dédouanement.",
+        difficulteReflexive: "Isoler que la rupture des liaisons externes provenait d'une session SMB déconnectée et nettoyer les espaces invisibles responsables des erreurs #N/A.",
+        enseignementReflexive: "Un incident bureautique avec liaisons externes impose d'abord un contrôle réseau méthodique (DNS, ping, montage SMB) avant de corriger les formules.",
+      };
+    case 'TCK-107':
+      return {
+        titreDp: 'Dépannage client Outlook (.ost), diagnostic DNS Autodiscover & gestion d’agenda partagé (CCP 1 & CCP 3)',
+        contexteDp: "Coordination Maritime KLF (Jarry). Remise en service de la messagerie Outlook de Jean-Marc BÉLÉNUS bloquée en mode hors connexion, restauration du calendrier partagé Planning_Quais_Jarry et automatisation du tri.",
+        outilsMobilises: 'Microsoft Outlook (mode connecté, réparation .ost via SCANPST.EXE, profil Mail, règles serveur, signature HTML), diagnostic réseau CLI (ipconfig /flushdns, nslookup autodiscover.klf.local).',
+        reussiteReflexive: "Identification rapide du DNS externe erroné bloquant l'autodiscover, réexpédition des messages en attente et mise en service du calendrier partagé d'équipe.",
+        difficulteReflexive: "Distinguer une panne applicative Outlook d'un dysfonctionnement réseau DNS tout en préservant l'intégrité du cache local .ost.",
+        enseignementReflexive: "La résolution DNS interne conditionne l'accès aux services collaboratifs : vérifier ipconfig /all et nslookup en amont accélère le diagnostic helpdesk.",
+      };
+    case 'TCK-108':
+      return {
+        titreDp: 'Déverrouillage de session SMB sur NAS (fsmgmt.msc) & mise en page avancée Word (CCP 1 & CCP 3)',
+        contexteDp: "Qualité, HSE & Douane KLF (Jarry). Déblocage du rapport Manuel_HSE_Portuaire_2026.docx verrouillé en lecture seule sur \\\\NAS-KLF\\Qualite après un arrêt brutal, puis normalisation documentaire avant envoi capitainerie.",
+        outilsMobilises: 'Console Dossiers partagés Windows (fsmgmt.msc, gestion des fichiers ouverts SMB, suppression verrou ~$), Microsoft Word (marques ¶, Styles Titre 1/2, Table des matières, sauts de section Paysage).',
+        reussiteReflexive: "Fermeture propre de la session SMB fantôme sans perte de données et refonte complète du rapport (sommaire dynamique et page 4 en Paysage).",
+        difficulteReflexive: "Isoler l'orientation Paysage sur la seule page du tableau de synthèse via deux sauts de section sans casser la numérotation du reste du rapport.",
+        enseignementReflexive: "Maîtriser les verrous SMB côté serveur évite les copies parallèles anarchiques, tandis que les styles et sauts de section garantissent des documents pérennes.",
+      };
+    case 'TCK-109':
+      return {
+        titreDp: 'Synchronisation hybride OneDrive/SharePoint, diagnostic Proxy & gouvernance RGPD (CCP 1 & CCP 3)',
+        contexteDp: "Cellule Logistique Inter-Îles (971 / 972). Restauration d'un onglet écrasé en co-édition sur SharePoint pour Stéphane ZÉPHIR, levée de l'erreur de synchronisation 0x8004de40 et sécurisation d'un partage externe.",
+        outilsMobilises: 'SharePoint Online (Historique des versions, partage Personnes spécifiques avec OTP et expiration RGPD), agent OneDrive (onedrive.exe /reset), diagnostic réseau (inetcpl.cpl, nslookup).',
+        reussiteReflexive: "Récupération intégrale de la version saine de 08h00 en 2 minutes, correction des 3 noms de fichiers invalides et suppression d'un proxy obsolète bloquant HTTPS.",
+        difficulteReflexive: "Identifier conjointement une cause réseau locale (proxy obsolète) et des contraintes applicatives (caractères interdits et chemins supérieurs à 255 caractères).",
+        enseignementReflexive: "L'historique des versions cloud constitue un filet de sécurité indispensable, complété par des liens nominatifs expirables conformes au RGPD.",
+      };
+    case 'TCK-110':
+      return {
+        titreDp: 'Import CSV UTF-8, Tableau Croisé Dynamique & déblocage pare-feu SMB port 445 (CCP 1 & CCP 3)',
+        contexteDp: "Contrôle de Gestion & Direction KLF (Jarry). Déblocage de l'accès réseau \\\\192.168.10.80\\Exports_ERP pour Valérie LÉOTIN et transformation d'un export CSV UTF-8 brut en Tableau Croisé Dynamique lié à PowerPoint.",
+        outilsMobilises: 'Pare-feu Windows Defender & profils réseau (Set-NetConnectionProfile Private, port TCP 445 SMB, ping), Excel (assistant import UTF-8 65001, TCD, segments), PowerPoint (collage avec liaison).',
+        reussiteReflexive: "Rétablissement immédiat du partage réseau en basculant le profil Ethernet de Public à Privé, puis génération d'un tableau de bord dynamique exploitable pour le comité de direction.",
+        difficulteReflexive: "Diagnostiquer que le blocage réseau survenait uniquement suite au changement automatique du profil pare-feu Windows après débranchement du câble Ethernet.",
+        enseignementReflexive: "Le contrôle du profil réseau (Domaine/Privé vs Public) et la maîtrise des encodages UTF-8 sont deux réflexes clés du technicien support bureautique.",
+      };
     case 'TCK-105':
     default:
       return {

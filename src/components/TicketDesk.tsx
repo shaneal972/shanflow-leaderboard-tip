@@ -171,6 +171,9 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
         else if (activeTicket.id === 'TCK-103') setCategorie('applicatif');
         else if (activeTicket.id === 'TCK-104') setCategorie('systeme');
         else if (activeTicket.id === 'TCK-105') setCategorie('reseau');
+        else if (['TCK-106', 'TCK-107', 'TCK-108', 'TCK-109', 'TCK-110'].includes(activeTicket.id)) {
+          setCategorie('applicatif');
+        }
         else setCategorie('systeme');
 
         setUrgence(activeTicket.urgence);
@@ -854,6 +857,42 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
                   </p>
                 </div>
               )}
+
+              {['TCK-106', 'TCK-107', 'TCK-108', 'TCK-109', 'TCK-110'].includes(activeTicket.id) && (() => {
+                const scenario = getTicketScenarioSolution(activeTicket);
+                return (
+                  <div className="p-4 rounded-xl bg-teal-500/5 border border-teal-500/20 space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-teal-500/20 pb-2.5">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-teal-300 font-['Lexend']">
+                        <ShieldCheck className="w-4 h-4 text-teal-400" />
+                        {scenario.diagnosticTitle}
+                      </div>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-teal-500/10 text-teal-300 border border-teal-500/30">
+                        {scenario.diagnosticBadge}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                      {scenario.diagnosticPoints.map((pt, idx) => (
+                        <div key={idx} className="p-3 rounded-lg bg-[#070F1E] border border-white/5 space-y-1.5">
+                          <div className="flex items-center gap-1.5 text-teal-300 font-semibold font-mono text-[11px]">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+                            <span>{pt.label}</span>
+                          </div>
+                          <p className="text-[11px] text-slate-300 leading-relaxed">
+                            {pt.detail}
+                          </p>
+                          {pt.code && (
+                            <div className="text-[10px] text-emerald-300 font-mono bg-white/5 p-2 rounded border border-white/5 break-all">
+                              {pt.code}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* 💡 ENCART PÉDAGOGIQUE : SUGGESTION D'EXTENSION RÉSEAU POUR LE DP */}
               {(() => {
