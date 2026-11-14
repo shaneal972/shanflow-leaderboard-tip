@@ -131,23 +131,26 @@ export async function getBadgesWithStatus(apprenantId: string): Promise<Badge[]>
   }
 }
 
+const sortTicketsById = (tickets: TicketKLF[]): TicketKLF[] =>
+  [...tickets].sort((a, b) => a.id.localeCompare(b.id, 'fr', { numeric: true }));
+
 /**
- * Récupère les tickets du Helpdesk KLF.
+ * Récupère les tickets du Helpdesk KLF triés par identifiant croissant (TCK-101 à TCK-110).
  */
 export async function getTicketsData(): Promise<TicketKLF[]> {
   try {
     const { data, error } = await supabaseServer
       .from('sf_tickets_klf')
       .select('*')
-      .order('urgence', { ascending: true });
+      .order('id', { ascending: true });
 
     if (error || !data || data.length === 0) {
-      return MOCK_TICKETS;
+      return sortTicketsById(MOCK_TICKETS);
     }
 
-    return data;
+    return sortTicketsById(data);
   } catch {
-    return MOCK_TICKETS;
+    return sortTicketsById(MOCK_TICKETS);
   }
 }
 

@@ -57,7 +57,10 @@ export const TicketDesk: React.FC<TicketDeskProps> = ({
   isFormateur = false,
   adminStudents = [],
 }) => {
-  const [tickets] = useState<TicketKLF[]>(initialTickets);
+  const tickets = useMemo(
+    () => [...initialTickets].sort((a, b) => a.id.localeCompare(b.id, 'fr', { numeric: true })),
+    [initialTickets]
+  );
   const [student, setStudent] = useState<Apprenant | null>(currentStudent);
   const [resolutions, setResolutions] = useState<TicketResolution[]>(initialResolutions);
   const [activeTicket, setActiveTicket] = useState<TicketKLF | null>(null);
